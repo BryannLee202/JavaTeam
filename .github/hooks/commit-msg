@@ -1,0 +1,46 @@
+#!/bin/sh
+# =============================================================================
+# Git Hook: commit-msg
+# =============================================================================
+# Bắt buộc commit message phải chứa mã Jira (JAV-xxx).
+# Ví dụ hợp lệ:
+#   "JAV-42 thêm trang login"
+#   "[JAV-42] fix bug auth"
+#   "JAV-42: refactor component"
+#
+# Ví dụ KHÔNG hợp lệ:
+#   "thêm trang login"
+#   "fix bug"
+# =============================================================================
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Pattern: JAV- followed by 1+ digits (case insensitive)
+JIRA_PATTERN="JAV-[0-9]+"
+
+if ! echo "$COMMIT_MSG" | grep -qEi "$JIRA_PATTERN"; then
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════╗"
+    echo "║  ❌ COMMIT BỊ TỪ CHỐI — Thiếu mã Jira!                ║"
+    echo "╠══════════════════════════════════════════════════════════╣"
+    echo "║                                                        ║"
+    echo "║  Commit message phải chứa mã task Jira (JAV-xxx).     ║"
+    echo "║                                                        ║"
+    echo "║  ✅ Đúng:  JAV-42 thêm trang login                    ║"
+    echo "║  ✅ Đúng:  [JAV-42] fix bug auth                      ║"
+    echo "║  ❌ Sai:   thêm trang login                            ║"
+    echo "║                                                        ║"
+    echo "║  👉 Xem task của bạn tại:                              ║"
+    echo "║  https://taileminh2202.atlassian.net/jira/software/    ║"
+    echo "║  projects/JAV/boards/3                                 ║"
+    echo "║                                                        ║"
+    echo "╚══════════════════════════════════════════════════════════╝"
+    echo ""
+    exit 1
+fi
+
+# Extract and display the Jira key for confirmation
+JIRA_KEY=$(echo "$COMMIT_MSG" | grep -oEi "$JIRA_PATTERN" | head -1 | tr '[:lower:]' '[:upper:]')
+echo "✅ Jira key found: $JIRA_KEY"
+exit 0
