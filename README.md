@@ -36,3 +36,4 @@ bash .github/hooks/setup-hooks.sh     # macOS / Linux
 ```
 
 Chi tiết: [CONTRIBUTING.md](CONTRIBUTING.md)
+test
