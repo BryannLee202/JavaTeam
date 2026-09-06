@@ -1,0 +1,181 @@
+# =============================================================================
+# Jira ↔ GitHub Automation: PR Merged
+# =============================================================================
+# Trigger: Khi PR được merge vào frontend hoặc main
+# Actions:
+#   1. Chuyển Jira issue → "Done"
+#   2. Comment "✅ Merged" lên Jira issue
+# =============================================================================
+
+name: "Jira: PR Merged → Done"
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - frontend
+      - main
+
+permissions:
+  pull-requests: read
+
+jobs:
+  transition-jira:
+    name: Move Jira issue to Done
+    # Only run if PR was actually merged (not just closed)
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Step 1: Extract Jira key from branch name or PR title
+      # -----------------------------------------------------------------------
+      - name: Extract Jira issue key
+        id: jira
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          # Try branch name first, then PR title
+          JIRA_KEY=$(echo "$BRANCH" | grep -oEi 'JAV-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
+          if [ -z "$JIRA_KEY" ]; then
+            JIRA_KEY=$(echo "$PR_TITLE" | grep -oEi 'JAV-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
+          fi
+
+          if [ -z "$JIRA_KEY" ]; then
+            echo "⚠️ No Jira key (JAV-xxx) found in branch '$BRANCH' or PR title '$PR_TITLE'"
+            echo "found=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✅ Found Jira key: $JIRA_KEY"
+          echo "key=$JIRA_KEY" >> $GITHUB_OUTPUT
+          echo "found=true" >> $GITHUB_OUTPUT
+
+      # -----------------------------------------------------------------------
+      # Step 2: Get available transitions and find "Done"
+      # -----------------------------------------------------------------------
+      - name: Get Jira transitions
+        if: steps.jira.outputs.found == 'true'
+        id: transitions
+        run: |
+          JIRA_KEY="${{ steps.jira.outputs.key }}"
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${JIRA_KEY}/transitions")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Failed to get transitions (HTTP $HTTP_CODE): $BODY"
+            exit 1
+          fi
+
+          # Find transition ID for "Done" (case insensitive)
+          TRANSITION_ID=$(echo "$BODY" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          for t in data.get('transitions', []):
+              if t['name'].lower().strip() == 'done':
+                  print(t['id'])
+                  break
+          " 2>/dev/null)
+
+          if [ -z "$TRANSITION_ID" ]; then
+            echo "⚠️ 'Done' transition not found. Available transitions:"
+            echo "$BODY" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          for t in data.get('transitions', []):
+              print(f\"  - {t['name']} (id: {t['id']})\")
+          " 2>/dev/null
+            echo "transition_found=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "✅ Found 'Done' transition ID: $TRANSITION_ID"
+          echo "transition_id=$TRANSITION_ID" >> $GITHUB_OUTPUT
+          echo "transition_found=true" >> $GITHUB_OUTPUT
+
+      # -----------------------------------------------------------------------
+      # Step 3: Transition issue to "Done"
+      # -----------------------------------------------------------------------
+      - name: Transition to Done
+        if: steps.jira.outputs.found == 'true' && steps.transitions.outputs.transition_found == 'true'
+        run: |
+          JIRA_KEY="${{ steps.jira.outputs.key }}"
+          TRANSITION_ID="${{ steps.transitions.outputs.transition_id }}"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"transition\": {\"id\": \"${TRANSITION_ID}\"}}" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${JIRA_KEY}/transitions")
+
+          if [ "$HTTP_CODE" = "204" ]; then
+            echo "✅ $JIRA_KEY → Done"
+          else
+            echo "❌ Failed to transition (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      # -----------------------------------------------------------------------
+      # Step 4: Add "Merged" comment on Jira issue
+      # -----------------------------------------------------------------------
+      - name: Comment merged on Jira
+        if: steps.jira.outputs.found == 'true'
+        run: |
+          JIRA_KEY="${{ steps.jira.outputs.key }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          MERGED_BY="${{ github.event.pull_request.merged_by.login }}"
+          TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
+
+          # Atlassian Document Format (ADF) for Jira Cloud
+          COMMENT_BODY=$(cat <<EOF
+          {
+            "body": {
+              "version": 1,
+              "type": "doc",
+              "content": [
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "✅ "},
+                    {"type": "text", "text": "Pull Request #${PR_NUMBER}", "marks": [{"type": "strong"}]},
+                    {"type": "text", "text": " has been merged into "},
+                    {"type": "text", "text": "${TARGET_BRANCH}", "marks": [{"type": "code"}]},
+                    {"type": "text", "text": " by "},
+                    {"type": "text", "text": "${MERGED_BY}", "marks": [{"type": "strong"}]}
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "content": [
+                    {"type": "text", "text": "📎 "},
+                    {"type": "text", "text": "View PR", "marks": [{"type": "link", "attrs": {"href": "${PR_URL}"}}]}
+                  ]
+                }
+              ]
+            }
+          }
+          EOF
+          )
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "$COMMENT_BODY" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${JIRA_KEY}/comment")
+
+          if [ "$HTTP_CODE" = "201" ]; then
+            echo "✅ Commented merge info on $JIRA_KEY"
+          else
+            echo "⚠️ Failed to add comment (HTTP $HTTP_CODE)"
+          fi
