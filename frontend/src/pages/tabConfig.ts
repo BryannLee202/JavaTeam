@@ -26,4 +26,42 @@ export const TAB_DEFS: TabDef[] = [
     component: lazy(() => import("@/pages/tabs/JudgesMentorsTab")),
     owner: "P3",
   },
+  // P6 (JAV-15) — bọc qua withP6Tab vì các tab này nhận {eventId, rounds, tracks}
+  // chứ không phải {event} như khung tab của P3.
+  {
+    id: "tieu-chi",
+    label: "Tiêu chí chấm",
+    component: lazy(async () => {
+      const [{ withP6Tab }, mod] = await Promise.all([
+        import("@/pages/tabs/P6TabAdapter"),
+        import("@/pages/coordinator/CriteriaTab"),
+      ]);
+      return { default: withP6Tab(mod.default) };
+    }),
+    owner: "P6",
+  },
+  {
+    id: "giai-thuong",
+    label: "Giải thưởng",
+    component: lazy(async () => {
+      const [{ withP6Tab }, mod] = await Promise.all([
+        import("@/pages/tabs/P6TabAdapter"),
+        import("@/pages/coordinator/PrizesTab"),
+      ]);
+      return { default: withP6Tab(mod.default) };
+    }),
+    owner: "P6",
+  },
+  {
+    id: "vi-pham",
+    label: "Xử lý vi phạm",
+    component: lazy(async () => {
+      const [{ withP6Tab }, mod] = await Promise.all([
+        import("@/pages/tabs/P6TabAdapter"),
+        import("@/pages/coordinator/DisqualificationsTab"),
+      ]);
+      return { default: withP6Tab(mod.default) };
+    }),
+    owner: "P6",
+  },
 ];
