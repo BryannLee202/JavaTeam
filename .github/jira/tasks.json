@@ -6,38 +6,24 @@
     "khớp một phần là đủ). Nếu không tìm thấy ai khớp, task vẫn được tạo nhưng ĐỂ TRỐNG",
     "người thực hiện — đúng yêu cầu với thành viên chưa được thêm vào project.",
     "",
-    "Khối lượng ghi trong description là số liệu đo thật từ nhánh main-backup, không ước lượng."
+    "Khối lượng ghi trong description là số liệu đo thật từ nhánh main-backup, không ước lượng.",
+    "",
+    "cancel_issues: danh sách issue cần đóng lại (chuyển sang Done) khi chạy chế độ update-tasks."
   ],
-
   "project_key": "JAV",
   "issue_type": "Task",
-
   "tasks": [
-    {
-      "summary": "[BE-0] Khôi phục backend/ và bff/ từ main-backup vào main",
-      "assignee_match": "Long",
-      "labels": ["backend", "bff", "blocker"],
-      "description": [
-        "VIỆC NÀY PHẢI XONG TRƯỚC MỌI TASK BACKEND KHÁC.",
-        "",
-        "Hiện trạng: commit c06fd80 đã dọn main về trạng thái trống để xây lại frontend. Toàn bộ backend (Spring Boot) và bff (NestJS) vẫn còn nguyên trên nhánh main-backup nhưng KHÔNG còn trên main.",
-        "",
-        "Cần làm:",
-        "- Đưa thư mục backend/ (273 file, gồm 21 controller, 22 service, 20 repository, 10 lớp test) và bff/ từ main-backup về main.",
-        "- Kèm docker-compose.yml và .env.example ở gốc.",
-        "- KHÔNG lấy lại frontend/ từ main-backup — frontend trên main đã là bản mới, lấy về sẽ đè mất.",
-        "- Xác nhận backend build được: cd backend && ./mvnw -q test",
-        "- Xác nhận bff build được: cd bff && npm ci && npm test",
-        "",
-        "Lý do gộp một lần thay vì mỗi người tự khôi phục phần của mình: 6 người cùng thêm file vào cùng cây thư mục sẽ xung đột rất nặng."
-      ]
-    },
     {
       "summary": "[BE-1] Xác thực, phân quyền và quản trị người dùng (backend + bff)",
       "assignee_match": "Long",
-      "labels": ["backend", "bff"],
+      "labels": [
+        "backend",
+        "bff"
+      ],
       "description": [
-        "Khối lượng đo thật: 17 file, 772 dòng (backend) + khoảng 410 dòng (bff auth/common).",
+        "Khối lượng bản cũ trên main-backup (dùng để ước lượng công sức): 17 file, 772 dòng (backend) + khoảng 410 dòng (bff auth/common).",
+        "",
+        "CÁCH DÙNG main-backup: nhánh này chỉ là BẢN THAM CHIẾU để đọc, không bê nguyên về main. Đọc code cũ để hiểu nghiệp vụ và cấu trúc dữ liệu, rồi tự viết lại phần của mình trên nhánh tách từ main. Main được cố tình dọn trống để cả nhóm dựng lại và gộp dần vào, nên mỗi người chỉ mang đúng phần mình phụ trách — không ai khôi phục hộ ai.",
         "",
         "Phạm vi backend (backend/src/main/java/com/seal/hackathon/):",
         "- controller: AuthController, AdminUserController, AuditLogController",
@@ -48,7 +34,7 @@
         "- auth/ (auth.controller.ts, auth.service.ts, auth.controller.spec.ts)",
         "- common/ (cookies.ts, csrf.guard.ts và 2 file spec)",
         "",
-        "Việc cần làm: rà soát luồng đăng nhập, cấp/refresh JWT, đặt cookie httpOnly, chống CSRF double-submit, và phân quyền theo role. Bổ sung test cho phần chưa có.",
+        "Việc cần làm: viết lại luồng đăng nhập, cấp/refresh JWT, đặt cookie httpOnly, chống CSRF double-submit, và phân quyền theo role. Bổ sung test cho phần chưa có.",
         "",
         "Liên quan: frontend đã có sẵn AuthContext, ProtectedRoute và api/client.ts gọi các endpoint /api/auth/me, /login, /logout, /refresh — cần đảm bảo backend khớp đúng hợp đồng này.",
         "",
@@ -58,9 +44,14 @@
     {
       "summary": "[BE-2] Trang công khai, bình chọn khán giả, mentor và xuất báo cáo",
       "assignee_match": "Giang",
-      "labels": ["backend", "bff"],
+      "labels": [
+        "backend",
+        "bff"
+      ],
       "description": [
-        "Khối lượng đo thật: 13 file, 694 dòng (backend) + 54 dòng (bff voting).",
+        "Khối lượng bản cũ trên main-backup (dùng để ước lượng công sức): 13 file, 694 dòng (backend) + 54 dòng (bff voting).",
+        "",
+        "CÁCH DÙNG main-backup: nhánh này chỉ là BẢN THAM CHIẾU để đọc, không bê nguyên về main. Đọc code cũ để hiểu nghiệp vụ và cấu trúc dữ liệu, rồi tự viết lại phần của mình trên nhánh tách từ main. Main được cố tình dọn trống để cả nhóm dựng lại và gộp dần vào, nên mỗi người chỉ mang đúng phần mình phụ trách — không ai khôi phục hộ ai.",
         "",
         "Phạm vi backend:",
         "- PublicVotingController + PublicVotingService (bình chọn khán giả, chống bỏ phiếu trùng)",
@@ -70,15 +61,19 @@
         "Phạm vi bff:",
         "- voting/voting.controller.ts",
         "",
-        "Việc cần làm: rà soát ràng buộc chống bỏ phiếu trùng (đây là chỗ từng có lỗi vote-lockout theo lịch sử commit 2d367e5), kiểm tra phân trang và định dạng file xuất. Bổ sung test."
+        "Việc cần làm: viết lại, chú ý ràng buộc chống bỏ phiếu trùng (đây là chỗ từng có lỗi vote-lockout theo lịch sử commit 2d367e5), kiểm tra phân trang và định dạng file xuất. Bổ sung test."
       ]
     },
     {
       "summary": "[BE-3] Cấu trúc cuộc thi: sự kiện, hạng mục, vòng thi",
       "assignee_match": "Nguyên",
-      "labels": ["backend"],
+      "labels": [
+        "backend"
+      ],
       "description": [
-        "Khối lượng đo thật: 21 file, 909 dòng.",
+        "Khối lượng bản cũ trên main-backup (dùng để ước lượng công sức): 21 file, 909 dòng.",
+        "",
+        "CÁCH DÙNG main-backup: nhánh này chỉ là BẢN THAM CHIẾU để đọc, không bê nguyên về main. Đọc code cũ để hiểu nghiệp vụ và cấu trúc dữ liệu, rồi tự viết lại phần của mình trên nhánh tách từ main. Main được cố tình dọn trống để cả nhóm dựng lại và gộp dần vào, nên mỗi người chỉ mang đúng phần mình phụ trách — không ai khôi phục hộ ai.",
         "",
         "Phạm vi: EventController/Service, TrackController/Service, RoundController/Service, RoundCriterionController/Service cùng các DTO và repository tương ứng.",
         "",
@@ -92,32 +87,38 @@
     {
       "summary": "[BE-4] Đội thi và bài nộp",
       "assignee_match": "Vy",
-      "labels": ["backend"],
+      "labels": [
+        "backend"
+      ],
       "description": [
-        "Khối lượng đo thật: 25 file, 1041 dòng.",
+        "Khối lượng bản cũ trên main-backup (dùng để ước lượng công sức): 25 file, 1041 dòng.",
+        "",
+        "CÁCH DÙNG main-backup: nhánh này chỉ là BẢN THAM CHIẾU để đọc, không bê nguyên về main. Đọc code cũ để hiểu nghiệp vụ và cấu trúc dữ liệu, rồi tự viết lại phần của mình trên nhánh tách từ main. Main được cố tình dọn trống để cả nhóm dựng lại và gộp dần vào, nên mỗi người chỉ mang đúng phần mình phụ trách — không ai khôi phục hộ ai.",
         "",
         "Phạm vi: TeamController/Service, SubmissionController/Service cùng DTO và repository tương ứng.",
         "",
-        "Việc cần làm: kiểm tra ràng buộc mỗi đội 3-5 thành viên, đúng một trưởng nhóm, đăng ký theo hạng mục; kiểm tra hạn nộp bài và trạng thái on_time/late/missing.",
+        "Việc cần làm: viết lại, giữ ràng buộc mỗi đội 3-5 thành viên, đúng một trưởng nhóm, đăng ký theo hạng mục; kiểm tra hạn nộp bài và trạng thái on_time/late/missing.",
         "",
-        "Phần frontend đi kèm (làm trước hoặc song song): tab Đội thi tại frontend/src/pages/tabs/TeamsTab.tsx hiện vẫn là stub. Lớp dữ liệu đã dựng sẵn trong commit 773dda4 — kiểu Team/TeamInput/TeamMember, sáu hàm eventsApi (listTeams, getTeam, createTeam, updateTeam, deleteTeam, changeTeamStatus), 3 đội mẫu và 4 test. Chỉ còn viết giao diện, tham khảo TracksTab.tsx cùng dạng bảng + form.",
         "",
-        "Lưu ý về nhánh: nhánh JAV-14-doi-thi hiện tại chứa một scaffold Vite riêng sẽ đụng độ nặng với frontend/ trên main. Hãy tạo nhánh mới từ main thay vì merge nhánh cũ:",
-        "  git fetch origin main && git checkout -b JAV-14-teams-tab origin/main"
+        "Phần giao diện của tab Đội thi đã tách thành task [FE-1] riêng, không làm trong task này."
       ]
     },
     {
       "summary": "[BE-5] Chấm điểm, hiệu chuẩn, phân công giám khảo và xếp hạng",
       "assignee_match": "Toàn",
-      "labels": ["backend"],
+      "labels": [
+        "backend"
+      ],
       "description": [
-        "Khối lượng đo thật: 27 file, 1179 dòng — mảng nặng nhất.",
+        "Khối lượng bản cũ trên main-backup (dùng để ước lượng công sức): 27 file, 1179 dòng — mảng nặng nhất.",
+        "",
+        "CÁCH DÙNG main-backup: nhánh này chỉ là BẢN THAM CHIẾU để đọc, không bê nguyên về main. Đọc code cũ để hiểu nghiệp vụ và cấu trúc dữ liệu, rồi tự viết lại phần của mình trên nhánh tách từ main. Main được cố tình dọn trống để cả nhóm dựng lại và gộp dần vào, nên mỗi người chỉ mang đúng phần mình phụ trách — không ai khôi phục hộ ai.",
         "",
         "Phạm vi: ScoreController/Service, CalibrationController/Service, JudgeAssignmentController/Service, RankingController/Service, VarianceDashboardService cùng DTO và repository tương ứng.",
         "",
         "Giao cho người này vì đã làm đúng mảng này ở frontend (JAV-13: JudgePage, ScoreSlider, calibration).",
         "",
-        "Việc cần làm: rà soát công thức điểm có trọng số, luồng chốt điểm (finalize), quy tắc thăng vòng topNPerTrack, và phần phân tích độ lệch giữa các giám khảo.",
+        "Việc cần làm: viết lại, giữ đúng công thức điểm có trọng số, luồng chốt điểm (finalize), quy tắc thăng vòng topNPerTrack, và phần phân tích độ lệch giữa các giám khảo.",
         "",
         "Chú ý bảo mật: lịch sử commit 54fd4ba ghi nhận đã vá lỗ hổng phân quyền IDOR ở RankingController. Khi sửa mảng này cần giữ nguyên các ràng buộc đó và bổ sung test hồi quy."
       ]
@@ -125,24 +126,29 @@
     {
       "summary": "[BE-6] Tiêu chí chấm, giải thưởng và xử lý vi phạm",
       "assignee_match": "Tài",
-      "labels": ["backend"],
+      "labels": [
+        "backend"
+      ],
       "description": [
-        "Khối lượng đo thật: 19 file, 703 dòng.",
+        "Khối lượng bản cũ trên main-backup (dùng để ước lượng công sức): 19 file, 703 dòng.",
+        "",
+        "CÁCH DÙNG main-backup: nhánh này chỉ là BẢN THAM CHIẾU để đọc, không bê nguyên về main. Đọc code cũ để hiểu nghiệp vụ và cấu trúc dữ liệu, rồi tự viết lại phần của mình trên nhánh tách từ main. Main được cố tình dọn trống để cả nhóm dựng lại và gộp dần vào, nên mỗi người chỉ mang đúng phần mình phụ trách — không ai khôi phục hộ ai.",
         "",
         "Phạm vi: CriteriaTemplateController/Service, PrizeController/Service, DisqualificationController/Service cùng DTO và repository tương ứng.",
         "",
         "Giao cho người này vì đã làm đúng mảng này ở frontend (JAV-15: CriteriaTab, PrizesTab, DisqualificationsTab).",
         "",
-        "Việc cần làm: kiểm tra ràng buộc tổng trọng số tiêu chí bằng 100, quy tắc chặn sửa tiêu chí sau khi vòng đã có điểm (backend trả 409), thu hồi giải thưởng, và ghi vết quyết định loại đội.",
+        "Việc cần làm: viết lại, giữ ràng buộc tổng trọng số tiêu chí bằng 100, quy tắc chặn sửa tiêu chí sau khi vòng đã có điểm (backend trả 409), thu hồi giải thưởng, và ghi vết quyết định loại đội.",
         "",
         "Việc còn nợ ở frontend: ba tab này hiện gọi API thật, không có lớp mock riêng như mảng cấu trúc cuộc thi. Sau khi backend chạy được thì bỏ phần fixture tạm trong frontend/src/devMock.ts (chế độ ?mock=coordinator)."
       ]
     },
-
     {
       "summary": "[DOC-1] Viết lại README.md gốc cho kiến trúc hiện tại",
       "assignee_match": "Long",
-      "labels": ["documentation"],
+      "labels": [
+        "documentation"
+      ],
       "description": [
         "README.md trên main hiện chỉ còn 38 dòng, trong khi bản trên main-backup dài 532 dòng nhưng mô tả kiến trúc cũ đã bị thay.",
         "",
@@ -154,7 +160,9 @@
     {
       "summary": "[DOC-2] Cập nhật backend/README.md",
       "assignee_match": "Nguyên",
-      "labels": ["documentation"],
+      "labels": [
+        "documentation"
+      ],
       "description": [
         "Bản trên main-backup dài 88 dòng. Cần rà lại sau khi khôi phục backend về main.",
         "",
@@ -164,7 +172,9 @@
     {
       "summary": "[DOC-3] Cập nhật bff/README.md",
       "assignee_match": "Giang",
-      "labels": ["documentation"],
+      "labels": [
+        "documentation"
+      ],
       "description": [
         "Bản trên main-backup dài 80 dòng. Cần rà lại sau khi khôi phục bff về main.",
         "",
@@ -174,7 +184,9 @@
     {
       "summary": "[DOC-4] Viết lại frontend/README.md cho scaffold mới",
       "assignee_match": "Vy",
-      "labels": ["documentation"],
+      "labels": [
+        "documentation"
+      ],
       "description": [
         "Frontend đã được xây lại hoàn toàn (Vite + React 19 + TypeScript + React Router 7), nên bản README cũ 59 dòng trên main-backup không còn đúng.",
         "",
@@ -188,7 +200,9 @@
     {
       "summary": "[DOC-5] Cập nhật CONTRIBUTING.md theo quy trình nhánh hiện tại",
       "assignee_match": "Toàn",
-      "labels": ["documentation"],
+      "labels": [
+        "documentation"
+      ],
       "description": [
         "Cần bổ sung các quy ước đã rút ra được trong đợt gộp code vừa rồi:",
         "",
@@ -202,7 +216,10 @@
     {
       "summary": "[DOC-6] Sửa automation Jira để nhận nhiều mã JAV trong một PR",
       "assignee_match": "Tài",
-      "labels": ["documentation", "ci"],
+      "labels": [
+        "documentation",
+        "ci"
+      ],
       "description": [
         "Hai workflow .github/workflows/jira-pr-opened.yml và jira-pr-merged.yml đều dùng: grep -oEi 'JAV-[0-9]+' | head -1",
         "",
@@ -215,6 +232,69 @@
         "",
         "Việc thủ công cần làm ngay: vào Jira chuyển tay JAV-12 và JAV-15 sang Done vì code của hai mảng này đã nằm trên main từ commit ccb10d6."
       ]
+    },
+    {
+      "summary": "[FE-1] Tab Đội thi trên giao diện Coordinator",
+      "assignee_match": "Vy",
+      "labels": [
+        "frontend"
+      ],
+      "description": [
+        "Tách riêng khỏi JAV-20 (backend đội thi) vì hai phần nằm ở hai codebase khác nhau và cần hai PR. Automation Jira chuyển issue sang Done ngay khi PR ĐẦU TIÊN gắn mã đó được merge, nên nếu gộp chung thì merge PR backend xong là issue đóng, phần giao diện bị bỏ quên.",
+        "",
+        "JAV-14 (Đội thi và mentor) đã ở trạng thái Done nên không dùng lại được, dù trên main frontend/src/pages/tabs/TeamsTab.tsx vẫn chỉ là stub 29 dòng.",
+        "",
+        "Việc cần làm: viết giao diện cho tab Đội thi tại frontend/src/pages/tabs/TeamsTab.tsx. Route /coordinator/events/:eventId/doi-thi đã chạy sẵn, tab đã khai báo trong tabConfig.ts.",
+        "",
+        "Phần dữ liệu ĐÃ DỰNG SẴN, không phải làm lại:",
+        "- Kiểu: Team, TeamInput, TeamMember, TeamStatus, TEAM_STATUS_LABEL, TEAM_MIN_MEMBERS, TEAM_MAX_MEMBERS  (@/types)",
+        "- Gọi API: eventsApi.listTeams / getTeam / createTeam / updateTeam / deleteTeam / changeTeamStatus  (@/api/events)",
+        "- Dữ liệu mẫu: 3 đội của evt-1 trong @/api/mockData, chạy được ngay với VITE_USE_MOCK (mặc định bật) nên không cần backend",
+        "- 4 test sẵn có trong frontend/src/api/teams.test.ts",
+        "",
+        "Tham khảo frontend/src/pages/tabs/TracksTab.tsx — cùng dạng bảng + form, dùng chung các component Modal / ConfirmDialog / StatusBadge / Feedback.",
+        "",
+        "Yêu cầu nghiệp vụ: mỗi đội 3-5 thành viên, đúng một trưởng nhóm, đăng ký theo hạng mục, trạng thái forming / registered / disqualified.",
+        "",
+        "Xem thử không cần backend: npm run dev rồi mở /coordinator/events/evt-1/doi-thi?mock=coordinator",
+        "",
+        "LƯU Ý VỀ NHÁNH: nhánh JAV-14-doi-thi cũ chứa một scaffold Vite riêng sẽ đụng độ nặng với frontend/ trên main. Tạo nhánh mới từ main, đừng merge nhánh cũ:",
+        "  git fetch origin main && git checkout -b JAV-<mã-issue-này>-teams-tab origin/main",
+        "",
+        "Trước khi mở PR chạy đủ ba lệnh trong frontend/: npm run lint, npm run build, npm test. CI cũng chạy đúng ba lệnh này."
+      ]
+    },
+    {
+      "summary": "[FE-2] Màn hình quản trị người dùng và duyệt tài khoản",
+      "assignee_match": "Long",
+      "labels": [
+        "frontend"
+      ],
+      "description": [
+        "Thay cho task [BE-0] đã bỏ: main được cố tình dọn trống để cả nhóm dựng lại rồi gộp vào, nên không cần một task khôi phục gộp — mỗi người tự mang phần của mình vào.",
+        "",
+        "Đây là phần việc CÒN THIẾU THẬT trong mảng nền tảng/quản trị. Bằng chứng: frontend/src/api/types.ts đã định nghĩa sẵn",
+        "    export type AccountStatus = \"PENDING\" | \"APPROVED\" | \"REJECTED\";",
+        "    export interface UserSummary { ... accountStatus: AccountStatus; userCategory: UserCategory; ... }",
+        "nhưng grep toàn bộ frontend/src không có màn hình nào dùng tới. Kiểu dữ liệu có sẵn, giao diện chưa ai làm.",
+        "",
+        "Việc cần làm:",
+        "- Trang danh sách người dùng: lọc theo accountStatus (PENDING / APPROVED / REJECTED) và userCategory (FPT_STUDENT / EXTERNAL_STUDENT / STAFF).",
+        "- Hành động duyệt và từ chối tài khoản, có bước xác nhận tại chỗ (không dùng window.confirm — xem cách CriteriaTab đang làm).",
+        "- Thêm route bảo vệ bằng ProtectedRoute requireRole=\"COORDINATOR\", và thêm mục điều hướng vào components/Layout.tsx bên cạnh mục \"Quản lý cuộc thi\" đã có.",
+        "- Dựng lớp gọi API kèm chế độ mock, theo đúng khuôn đã dùng cho Đội thi: thêm hàm vào api/, dữ liệu mẫu vào api/mockData.ts, và test cho lớp đó.",
+        "",
+        "Tham khảo: frontend/src/pages/EventsPage.tsx (danh sách + lọc theo trạng thái + hành động đổi trạng thái) là mẫu gần nhất với màn này.",
+        "",
+        "Liên quan tới task backend [BE-1] của cùng người: AdminUserController và AuthService bên backend là phía phục vụ cho màn này. Làm hai task này gần nhau sẽ khớp hợp đồng API dễ hơn.",
+        "",
+        "Xem thử không cần backend: npm run dev, đăng nhập giả bằng /coordinator/events?mock=coordinator rồi điều hướng sang màn mới.",
+        "",
+        "Trước khi mở PR chạy đủ ba lệnh trong frontend/: npm run lint, npm run build, npm test."
+      ]
     }
+  ],
+  "cancel_issues": [
+    "JAV-16"
   ]
 }
