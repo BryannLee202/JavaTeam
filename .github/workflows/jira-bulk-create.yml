@@ -1,12 +1,14 @@
 # =============================================================================
-# Jira: liệt kê thành viên và tạo task hàng loạt
+# Jira: liệt kê thành viên, liệt kê issue, và tạo task hàng loạt
 # =============================================================================
 # Chạy tay từ tab Actions (workflow_dispatch). Dùng lại đúng ba secret mà các
 # workflow Jira sẵn có đang dùng: JIRA_BASE_URL, JIRA_USER_EMAIL, JIRA_API_TOKEN.
 #
-# Hai chế độ:
+# Ba chế độ:
 #   list-members  Liệt kê thành viên gán được việc của project JAV, kèm accountId.
 #                 Chạy cái này TRƯỚC để biết đã đủ người chưa.
+#   list-issues   Liệt kê toàn bộ issue của project kèm trạng thái và người thực
+#                 hiện. Dùng để kiểm tra trước khi tạo task mới, tránh trùng.
 #   create-tasks  Tạo task theo .github/jira/tasks.json và gán người theo
 #                 assignee_match. Ai không dò được tên thì task vẫn tạo nhưng
 #                 ĐỂ TRỐNG người thực hiện.
@@ -15,7 +17,7 @@
 # cuối cùng mới chạy thật.
 # =============================================================================
 
-name: "Jira: liệt kê thành viên / tạo task"
+name: "Jira: liệt kê thành viên / issue / tạo task"
 
 on:
   workflow_dispatch:
@@ -27,6 +29,7 @@ on:
         type: choice
         options:
           - list-members
+          - list-issues
           - create-tasks
       dry_run:
         description: "Chỉ xem trước, không tạo thật (dùng với create-tasks)"
@@ -89,6 +92,36 @@ jobs:
             echo "$RESP" | jq -r 'to_entries[] | "| \(.key + 1) | \(.value.displayName) | `\(.value.accountId)` | \(.value.active) |"'
             echo ""
             echo "Nhóm có 6 thành viên. Nếu bảng trên ít hơn 6, người còn thiếu chưa được thêm vào project — task của họ sẽ được tạo nhưng để trống người thực hiện."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---------------------------------------------------------------------
+      - name: Liệt kê issue của project JAV
+        if: inputs.mode == 'list-issues'
+        env:
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          RESP=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
+            --get --data-urlencode "jql=project = JAV ORDER BY key ASC" \
+            --data-urlencode "fields=summary,status,assignee" \
+            --data-urlencode "maxResults=100" \
+            "$BASE_URL/rest/api/3/search/jql")
+
+          TOTAL=$(echo "$RESP" | jq '.issues | length')
+          echo "================================================"
+          echo "  Issue trong project JAV: $TOTAL"
+          echo "================================================"
+          echo "$RESP" | jq -r '.issues[] | "  \(.key)  [\(.fields.status.name)]  \(.fields.assignee.displayName // "chưa gán")\n      \(.fields.summary)"'
+          echo "================================================"
+
+          {
+            echo "## Issue project JAV: **$TOTAL**"
+            echo ""
+            echo "| Mã | Trạng thái | Người thực hiện | Tiêu đề |"
+            echo "|---|---|---|---|"
+            echo "$RESP" | jq -r '.issues[] | "| \(.key) | \(.fields.status.name) | \(.fields.assignee.displayName // "_chưa gán_") | \(.fields.summary) |"'
           } >> "$GITHUB_STEP_SUMMARY"
 
       # ---------------------------------------------------------------------
