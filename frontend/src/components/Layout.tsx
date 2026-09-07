@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconGavel, IconHome, IconLogOut } from "./icons";
+import { IconGavel, IconHome, IconLogOut, IconTrophy } from "./icons";
 
 interface NavItem {
   to: string;
@@ -16,6 +16,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const navItems: NavItem[] = [{ to: "/app", label: "Trang chủ", icon: <IconHome /> }];
   if (hasRole("JUDGE")) {
     navItems.push({ to: "/judge", label: "Chấm điểm", icon: <IconGavel /> });
+  }
+  if (hasRole("COORDINATOR")) {
+    navItems.push({ to: "/coordinator/events", label: "Quản lý cuộc thi", icon: <IconTrophy /> });
   }
 
   async function handleLogout() {
