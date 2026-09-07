@@ -99,7 +99,6 @@
         "",
         "Việc cần làm: viết lại, giữ ràng buộc mỗi đội 3-5 thành viên, đúng một trưởng nhóm, đăng ký theo hạng mục; kiểm tra hạn nộp bài và trạng thái on_time/late/missing.",
         "",
-        "",
         "Phần giao diện của tab Đội thi đã tách thành task [FE-1] riêng, không làm trong task này."
       ]
     },
