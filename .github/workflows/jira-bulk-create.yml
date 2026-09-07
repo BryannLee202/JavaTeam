@@ -12,6 +12,8 @@
 #   create-tasks  Tạo task theo .github/jira/tasks.json và gán người theo
 #                 assignee_match. Ai không dò được tên thì task vẫn tạo nhưng
 #                 ĐỂ TRỐNG người thực hiện.
+#   update-tasks  Cập nhật mô tả của issue ĐÃ TỒN TẠI (dò theo tiêu đề trùng
+#                 khớp với tasks.json), và đóng các issue trong cancel_issues.
 #
 # Luôn chạy list-members trước, rồi create-tasks với dry_run=true để xem trước,
 # cuối cùng mới chạy thật.
@@ -31,11 +33,17 @@ on:
           - list-members
           - list-issues
           - create-tasks
+          - update-tasks
       dry_run:
         description: "Chỉ xem trước, không tạo thật (dùng với create-tasks)"
         required: false
         default: true
         type: boolean
+      filter:
+        description: "Chỉ tạo task có tiêu đề chứa chuỗi này (để trống = tạo tất cả)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -132,6 +140,7 @@ jobs:
           EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
           TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           DRY_RUN: ${{ inputs.dry_run }}
+          FILTER: ${{ inputs.filter }}
         run: |
           set -euo pipefail
 
@@ -149,6 +158,12 @@ jobs:
           for i in $(seq 0 $((TOTAL - 1))); do
             SUMMARY=$(jq -r ".tasks[$i].summary" .github/jira/tasks.json)
             MATCH=$(jq -r ".tasks[$i].assignee_match" .github/jira/tasks.json)
+
+            # Bo qua task khong khop filter. tasks.json giu lai toan bo lich su
+            # cac task da tao, nen chay lai khong filter se tao trung.
+            if [ -n "$FILTER" ] && [[ "$SUMMARY" != *"$FILTER"* ]]; then
+              continue
+            fi
 
             # Dò người theo tên hiển thị, không phân biệt hoa thường, khớp một phần.
             ACCOUNT_ID=$(echo "$USERS" | jq -r --arg m "$MATCH" \
@@ -204,3 +219,81 @@ jobs:
             echo ""
             echo "Đây mới là bản xem trước. Chạy lại với dry_run = false để tạo thật."
           fi
+
+      # ---------------------------------------------------------------------
+      - name: Cập nhật issue đã tồn tại và đóng issue không còn cần
+        if: inputs.mode == 'update-tasks'
+        env:
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          FILTER: ${{ inputs.filter }}
+        run: |
+          set -euo pipefail
+
+          ISSUES=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
+            --get --data-urlencode "jql=project = JAV ORDER BY key ASC" \
+            --data-urlencode "fields=summary" --data-urlencode "maxResults=100" \
+            "$BASE_URL/rest/api/3/search/jql")
+          echo "Đọc được $(echo "$ISSUES" | jq '.issues | length') issue."
+
+          echo "| Issue | Việc | Kết quả |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          TOTAL=$(jq '.tasks | length' .github/jira/tasks.json)
+          for i in $(seq 0 $((TOTAL - 1))); do
+            SUMMARY=$(jq -r ".tasks[$i].summary" .github/jira/tasks.json)
+            if [ -n "$FILTER" ] && [[ "$SUMMARY" != *"$FILTER"* ]]; then continue; fi
+
+            KEY=$(echo "$ISSUES" | jq -r --arg s "$SUMMARY" \
+              '[.issues[] | select(.fields.summary == $s)][0].key // empty')
+            if [ -z "$KEY" ]; then
+              echo "⏭️  Chưa có trên Jira, bỏ qua: $SUMMARY"
+              continue
+            fi
+
+            ADF=$(jq -c ".tasks[$i].description
+              | map({type:\"paragraph\", content: (if . == \"\" then [] else [{type:\"text\", text:.}] end)})
+              | {version:1, type:\"doc\", content:.}" .github/jira/tasks.json)
+            BODY=$(jq -n --argjson d "$ADF" '{fields:{description:$d}}')
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔎 [xem trước] cập nhật $KEY  $SUMMARY"
+              echo "| $KEY | cập nhật mô tả | xem trước |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X PUT \
+              -u "$EMAIL:$TOKEN" -H "Content-Type: application/json" \
+              -d "$BODY" "$BASE_URL/rest/api/3/issue/$KEY")
+            if [ "$CODE" = "204" ]; then
+              echo "✅ $KEY đã cập nhật mô tả"
+              echo "| $KEY | cập nhật mô tả | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::Cập nhật $KEY thất bại (HTTP $CODE)"
+              echo "| $KEY | cập nhật mô tả | ❌ $CODE |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          # Đóng các issue không còn cần nữa.
+          for KEY in $(jq -r '.cancel_issues // [] | .[]' .github/jira/tasks.json); do
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔎 [xem trước] đóng $KEY"
+              echo "| $KEY | đóng issue | xem trước |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            TR=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
+              "$BASE_URL/rest/api/3/issue/$KEY/transitions")
+            TID=$(echo "$TR" | jq -r '[.transitions[] | select(.name | ascii_downcase | test("done|xong|hoàn thành"))][0].id // empty')
+            if [ -z "$TID" ]; then
+              echo "::warning::Không tìm thấy transition Done cho $KEY"
+              echo "| $KEY | đóng issue | ⚠️ không có transition |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X POST \
+              -u "$EMAIL:$TOKEN" -H "Content-Type: application/json" \
+              -d "{\"transition\":{\"id\":\"$TID\"}}" "$BASE_URL/rest/api/3/issue/$KEY/transitions")
+            [ "$CODE" = "204" ] && echo "✅ $KEY đã đóng" || echo "::error::Đóng $KEY thất bại (HTTP $CODE)"
+            echo "| $KEY | đóng issue | $([ "$CODE" = "204" ] && echo ✅ || echo "❌ $CODE") |" >> "$GITHUB_STEP_SUMMARY"
+          done
