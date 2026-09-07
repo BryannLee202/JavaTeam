@@ -102,6 +102,49 @@ export interface RoundInput {
   promotionRule: PromotionRule;
 }
 
+/* ── Đội thi (P4 — JAV-14) ────────────────────────────────────────────
+ * Theo đặc tả: mỗi đội 3–5 thành viên, đăng ký dự thi theo một hạng mục.
+ * Phần giao diện (TeamsTab) do P4 viết; kiểu và lớp API để sẵn ở đây cho
+ * khớp với cách Track/Round đang làm.
+ */
+
+export type TeamStatus = "forming" | "registered" | "disqualified";
+
+export const TEAM_STATUS_LABEL: Record<TeamStatus, string> = {
+  forming: "Đang lập đội",
+  registered: "Đã đăng ký",
+  disqualified: "Bị loại",
+};
+
+/** Số thành viên hợp lệ của một đội, dùng chung cho cả form và kiểm tra. */
+export const TEAM_MIN_MEMBERS = 3;
+export const TEAM_MAX_MEMBERS = 5;
+
+export interface TeamMember {
+  id: string;
+  fullName: string;
+  email: string;
+  /** Đúng một thành viên trong đội là trưởng nhóm. */
+  isLeader: boolean;
+}
+
+export interface Team {
+  id: string;
+  eventId: string;
+  trackId: string;
+  trackName: string;
+  name: string;
+  status: TeamStatus;
+  members: TeamMember[];
+  createdAt: string;
+}
+
+export interface TeamInput {
+  name: string;
+  trackId: string;
+  members: Omit<TeamMember, "id">[];
+}
+
 export interface Submission {
   id: string;
   eventId: string;

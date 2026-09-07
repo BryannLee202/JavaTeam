@@ -18,6 +18,8 @@ import type {
   Round,
   RoundInput,
   Submission,
+  Team,
+  TeamInput,
   Track,
   TrackInput,
 } from "@/types";
@@ -65,6 +67,30 @@ export const eventsApi = {
       : http.del(`/coordinator/events/${eventId}/tracks/${trackId}/mentor`),
 
   // ---- Rounds ------------------------------------------------------------
+  // ---- Teams (P4 — JAV-14) -------------------------------------------
+  // Giao dien TeamsTab do P4 viet; lop goi API de san o day cho dong bo
+  // voi Tracks/Rounds va de bat duoc ca hai che do mock / BFF that.
+  listTeams: (eventId: string): Promise<Team[]> =>
+    USE_MOCK ? mockApi.listTeams(eventId) : http.get(`/coordinator/events/${eventId}/teams`),
+
+  getTeam: (eventId: string, teamId: string): Promise<Team> =>
+    USE_MOCK ? mockApi.getTeam(teamId) : http.get(`/coordinator/events/${eventId}/teams/${teamId}`),
+
+  createTeam: (eventId: string, input: TeamInput): Promise<Team> =>
+    USE_MOCK ? mockApi.createTeam(eventId, input) : http.post(`/coordinator/events/${eventId}/teams`, input),
+
+  updateTeam: (eventId: string, teamId: string, input: TeamInput): Promise<Team> =>
+    USE_MOCK ? mockApi.updateTeam(teamId, input) : http.patch(`/coordinator/events/${eventId}/teams/${teamId}`, input),
+
+  deleteTeam: (eventId: string, teamId: string): Promise<void> =>
+    USE_MOCK ? mockApi.deleteTeam(teamId) : http.del(`/coordinator/events/${eventId}/teams/${teamId}`),
+
+  changeTeamStatus: (eventId: string, teamId: string, status: Team["status"]): Promise<Team> =>
+    USE_MOCK
+      ? mockApi.changeTeamStatus(teamId, status)
+      : http.patch(`/coordinator/events/${eventId}/teams/${teamId}/status`, { status }),
+
+  // ---- Rounds ----------------------------------------------------------
   listRounds: (eventId: string): Promise<Round[]> =>
     USE_MOCK ? mockApi.listRounds(eventId) : http.get(`/coordinator/events/${eventId}/rounds`),
 
