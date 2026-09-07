@@ -45,6 +45,9 @@
 
 .c6-form {
   display: flex;
+  /* Khai bao tuong minh: index.css cua JAV-13 dat `form { flex-direction: column }`
+     o cap the, se de len gia tri row mac dinh neu khong ghi ro o day. */
+  flex-direction: row;
   flex-wrap: wrap;
   gap: 0.75rem 1rem;
   align-items: flex-end;
