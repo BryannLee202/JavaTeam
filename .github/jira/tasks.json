@@ -1,0 +1,220 @@
+{
+  "_doc": [
+    "Danh sách task sẽ được tạo trên Jira bởi workflow .github/workflows/jira-bulk-create.yml",
+    "",
+    "assignee_match: chuỗi dùng để dò tên thành viên trong Jira (không phân biệt hoa thường,",
+    "khớp một phần là đủ). Nếu không tìm thấy ai khớp, task vẫn được tạo nhưng ĐỂ TRỐNG",
+    "người thực hiện — đúng yêu cầu với thành viên chưa được thêm vào project.",
+    "",
+    "Khối lượng ghi trong description là số liệu đo thật từ nhánh main-backup, không ước lượng."
+  ],
+
+  "project_key": "JAV",
+  "issue_type": "Task",
+
+  "tasks": [
+    {
+      "summary": "[BE-0] Khôi phục backend/ và bff/ từ main-backup vào main",
+      "assignee_match": "Long",
+      "labels": ["backend", "bff", "blocker"],
+      "description": [
+        "VIỆC NÀY PHẢI XONG TRƯỚC MỌI TASK BACKEND KHÁC.",
+        "",
+        "Hiện trạng: commit c06fd80 đã dọn main về trạng thái trống để xây lại frontend. Toàn bộ backend (Spring Boot) và bff (NestJS) vẫn còn nguyên trên nhánh main-backup nhưng KHÔNG còn trên main.",
+        "",
+        "Cần làm:",
+        "- Đưa thư mục backend/ (273 file, gồm 21 controller, 22 service, 20 repository, 10 lớp test) và bff/ từ main-backup về main.",
+        "- Kèm docker-compose.yml và .env.example ở gốc.",
+        "- KHÔNG lấy lại frontend/ từ main-backup — frontend trên main đã là bản mới, lấy về sẽ đè mất.",
+        "- Xác nhận backend build được: cd backend && ./mvnw -q test",
+        "- Xác nhận bff build được: cd bff && npm ci && npm test",
+        "",
+        "Lý do gộp một lần thay vì mỗi người tự khôi phục phần của mình: 6 người cùng thêm file vào cùng cây thư mục sẽ xung đột rất nặng."
+      ]
+    },
+    {
+      "summary": "[BE-1] Xác thực, phân quyền và quản trị người dùng (backend + bff)",
+      "assignee_match": "Long",
+      "labels": ["backend", "bff"],
+      "description": [
+        "Khối lượng đo thật: 17 file, 772 dòng (backend) + khoảng 410 dòng (bff auth/common).",
+        "",
+        "Phạm vi backend (backend/src/main/java/com/seal/hackathon/):",
+        "- controller: AuthController, AdminUserController, AuditLogController",
+        "- service: AuthService, AuditService, AuditLogQueryService",
+        "- security/ (5 file), config/SecurityConfig",
+        "",
+        "Phạm vi bff (bff/src/):",
+        "- auth/ (auth.controller.ts, auth.service.ts, auth.controller.spec.ts)",
+        "- common/ (cookies.ts, csrf.guard.ts và 2 file spec)",
+        "",
+        "Việc cần làm: rà soát luồng đăng nhập, cấp/refresh JWT, đặt cookie httpOnly, chống CSRF double-submit, và phân quyền theo role. Bổ sung test cho phần chưa có.",
+        "",
+        "Liên quan: frontend đã có sẵn AuthContext, ProtectedRoute và api/client.ts gọi các endpoint /api/auth/me, /login, /logout, /refresh — cần đảm bảo backend khớp đúng hợp đồng này.",
+        "",
+        "Ghi chú: types UserSummary và AccountStatus (PENDING/APPROVED/REJECTED) đã có sẵn trong frontend/src/api/types.ts nhưng chưa màn hình nào dùng — màn duyệt tài khoản là phần còn thiếu của JAV-9."
+      ]
+    },
+    {
+      "summary": "[BE-2] Trang công khai, bình chọn khán giả, mentor và xuất báo cáo",
+      "assignee_match": "Giang",
+      "labels": ["backend", "bff"],
+      "description": [
+        "Khối lượng đo thật: 13 file, 694 dòng (backend) + 54 dòng (bff voting).",
+        "",
+        "Phạm vi backend:",
+        "- PublicVotingController + PublicVotingService (bình chọn khán giả, chống bỏ phiếu trùng)",
+        "- MentorController + MentorService, TeamFeedbackController + TeamFeedbackService",
+        "- RblController + RblExportService, ReportExportController + ReportExportService",
+        "",
+        "Phạm vi bff:",
+        "- voting/voting.controller.ts",
+        "",
+        "Việc cần làm: rà soát ràng buộc chống bỏ phiếu trùng (đây là chỗ từng có lỗi vote-lockout theo lịch sử commit 2d367e5), kiểm tra phân trang và định dạng file xuất. Bổ sung test."
+      ]
+    },
+    {
+      "summary": "[BE-3] Cấu trúc cuộc thi: sự kiện, hạng mục, vòng thi",
+      "assignee_match": "Nguyên",
+      "labels": ["backend"],
+      "description": [
+        "Khối lượng đo thật: 21 file, 909 dòng.",
+        "",
+        "Phạm vi: EventController/Service, TrackController/Service, RoundController/Service, RoundCriterionController/Service cùng các DTO và repository tương ứng.",
+        "",
+        "Giao cho người này vì đã làm đúng mảng này ở frontend (JAV-12: EventsPage, EventDetailPage, khung 6 tab).",
+        "",
+        "Việc cần làm: đảm bảo API backend khớp với lớp gọi API frontend đang dùng ở frontend/src/api/events.ts — hiện lớp này chạy ở chế độ mock (VITE_USE_MOCK). Khi backend sẵn sàng thì tắt mock và kiểm tra từng endpoint: /coordinator/events, /tracks, /rounds.",
+        "",
+        "Chú ý: frontend đang dùng trường 'order' cho vòng thi, còn mảng tiêu chí (JAV-15) dùng 'orderIndex'. Thống nhất tên trường ở phía backend để bỏ được lớp chuyển đổi P6TabAdapter."
+      ]
+    },
+    {
+      "summary": "[BE-4] Đội thi và bài nộp",
+      "assignee_match": "Vy",
+      "labels": ["backend"],
+      "description": [
+        "Khối lượng đo thật: 25 file, 1041 dòng.",
+        "",
+        "Phạm vi: TeamController/Service, SubmissionController/Service cùng DTO và repository tương ứng.",
+        "",
+        "Việc cần làm: kiểm tra ràng buộc mỗi đội 3-5 thành viên, đúng một trưởng nhóm, đăng ký theo hạng mục; kiểm tra hạn nộp bài và trạng thái on_time/late/missing.",
+        "",
+        "Phần frontend đi kèm (làm trước hoặc song song): tab Đội thi tại frontend/src/pages/tabs/TeamsTab.tsx hiện vẫn là stub. Lớp dữ liệu đã dựng sẵn trong commit 773dda4 — kiểu Team/TeamInput/TeamMember, sáu hàm eventsApi (listTeams, getTeam, createTeam, updateTeam, deleteTeam, changeTeamStatus), 3 đội mẫu và 4 test. Chỉ còn viết giao diện, tham khảo TracksTab.tsx cùng dạng bảng + form.",
+        "",
+        "Lưu ý về nhánh: nhánh JAV-14-doi-thi hiện tại chứa một scaffold Vite riêng sẽ đụng độ nặng với frontend/ trên main. Hãy tạo nhánh mới từ main thay vì merge nhánh cũ:",
+        "  git fetch origin main && git checkout -b JAV-14-teams-tab origin/main"
+      ]
+    },
+    {
+      "summary": "[BE-5] Chấm điểm, hiệu chuẩn, phân công giám khảo và xếp hạng",
+      "assignee_match": "Toàn",
+      "labels": ["backend"],
+      "description": [
+        "Khối lượng đo thật: 27 file, 1179 dòng — mảng nặng nhất.",
+        "",
+        "Phạm vi: ScoreController/Service, CalibrationController/Service, JudgeAssignmentController/Service, RankingController/Service, VarianceDashboardService cùng DTO và repository tương ứng.",
+        "",
+        "Giao cho người này vì đã làm đúng mảng này ở frontend (JAV-13: JudgePage, ScoreSlider, calibration).",
+        "",
+        "Việc cần làm: rà soát công thức điểm có trọng số, luồng chốt điểm (finalize), quy tắc thăng vòng topNPerTrack, và phần phân tích độ lệch giữa các giám khảo.",
+        "",
+        "Chú ý bảo mật: lịch sử commit 54fd4ba ghi nhận đã vá lỗ hổng phân quyền IDOR ở RankingController. Khi sửa mảng này cần giữ nguyên các ràng buộc đó và bổ sung test hồi quy."
+      ]
+    },
+    {
+      "summary": "[BE-6] Tiêu chí chấm, giải thưởng và xử lý vi phạm",
+      "assignee_match": "Tài",
+      "labels": ["backend"],
+      "description": [
+        "Khối lượng đo thật: 19 file, 703 dòng.",
+        "",
+        "Phạm vi: CriteriaTemplateController/Service, PrizeController/Service, DisqualificationController/Service cùng DTO và repository tương ứng.",
+        "",
+        "Giao cho người này vì đã làm đúng mảng này ở frontend (JAV-15: CriteriaTab, PrizesTab, DisqualificationsTab).",
+        "",
+        "Việc cần làm: kiểm tra ràng buộc tổng trọng số tiêu chí bằng 100, quy tắc chặn sửa tiêu chí sau khi vòng đã có điểm (backend trả 409), thu hồi giải thưởng, và ghi vết quyết định loại đội.",
+        "",
+        "Việc còn nợ ở frontend: ba tab này hiện gọi API thật, không có lớp mock riêng như mảng cấu trúc cuộc thi. Sau khi backend chạy được thì bỏ phần fixture tạm trong frontend/src/devMock.ts (chế độ ?mock=coordinator)."
+      ]
+    },
+
+    {
+      "summary": "[DOC-1] Viết lại README.md gốc cho kiến trúc hiện tại",
+      "assignee_match": "Long",
+      "labels": ["documentation"],
+      "description": [
+        "README.md trên main hiện chỉ còn 38 dòng, trong khi bản trên main-backup dài 532 dòng nhưng mô tả kiến trúc cũ đã bị thay.",
+        "",
+        "Cần làm: viết lại phần tổng quan dự án — kiến trúc 3 lớp (frontend / bff / backend), sơ đồ luồng xác thực qua cookie httpOnly + CSRF, cách chạy toàn bộ bằng docker-compose, và bảng phân chia 6 mảng cùng người phụ trách.",
+        "",
+        "Có thể lấy lại phần còn dùng được từ README.md trên nhánh main-backup."
+      ]
+    },
+    {
+      "summary": "[DOC-2] Cập nhật backend/README.md",
+      "assignee_match": "Nguyên",
+      "labels": ["documentation"],
+      "description": [
+        "Bản trên main-backup dài 88 dòng. Cần rà lại sau khi khôi phục backend về main.",
+        "",
+        "Nội dung cần có: yêu cầu môi trường (JDK, Maven), cách chạy ./mvnw spring-boot:run, biến môi trường bắt buộc (đặc biệt JWT_SECRET — commit 1d9f2b6 đã đặt nó thành bắt buộc), cách chạy test, và danh sách endpoint chính theo từng mảng."
+      ]
+    },
+    {
+      "summary": "[DOC-3] Cập nhật bff/README.md",
+      "assignee_match": "Giang",
+      "labels": ["documentation"],
+      "description": [
+        "Bản trên main-backup dài 80 dòng. Cần rà lại sau khi khôi phục bff về main.",
+        "",
+        "Nội dung cần có: vai trò của lớp BFF (che backend, giữ token trong cookie httpOnly, chống CSRF), cách chạy npm run start:dev, biến môi trường, và giải thích vì sao frontend gọi BFF chứ không gọi thẳng backend."
+      ]
+    },
+    {
+      "summary": "[DOC-4] Viết lại frontend/README.md cho scaffold mới",
+      "assignee_match": "Vy",
+      "labels": ["documentation"],
+      "description": [
+        "Frontend đã được xây lại hoàn toàn (Vite + React 19 + TypeScript + React Router 7), nên bản README cũ 59 dòng trên main-backup không còn đúng.",
+        "",
+        "Nội dung cần có: cách chạy npm run dev, ba lệnh kiểm tra (lint / build / test), cấu trúc thư mục src, và đặc biệt là hai chế độ xem thử không cần backend:",
+        "  /coordinator/events?mock=coordinator  — khu quản lý cuộc thi, 9 tab",
+        "  /judge?mock=judge                     — trang chấm điểm",
+        "",
+        "Nêu rõ ai phụ trách mảng nào trong src/pages để người sau biết đường tìm."
+      ]
+    },
+    {
+      "summary": "[DOC-5] Cập nhật CONTRIBUTING.md theo quy trình nhánh hiện tại",
+      "assignee_match": "Toàn",
+      "labels": ["documentation"],
+      "description": [
+        "Cần bổ sung các quy ước đã rút ra được trong đợt gộp code vừa rồi:",
+        "",
+        "- Mỗi PR chỉ gắn MỘT mã JAV. Automation Jira dùng head -1 nên PR nhiều mã sẽ bị sót (PR #2 gộp JAV-13 + JAV-15 + JAV-12 nhưng chỉ JAV-13 được chuyển Done).",
+        "- Đặt tên nhánh dạng JAV-<số>-<mô-tả> để automation bắt được key từ tên nhánh.",
+        "- Khi merge PR gộp nhiều người: chọn 'Create a merge commit', KHÔNG dùng 'Squash and merge' vì squash xoá mất tên tác giả.",
+        "- Không commit file .zip vào repo — code của JAV-12 từng bị kẹt trong zip nên không ai review hay build được.",
+        "- Luôn tách nhánh từ main mới nhất, không dựng scaffold riêng trùng thư mục đã có."
+      ]
+    },
+    {
+      "summary": "[DOC-6] Sửa automation Jira để nhận nhiều mã JAV trong một PR",
+      "assignee_match": "Tài",
+      "labels": ["documentation", "ci"],
+      "description": [
+        "Hai workflow .github/workflows/jira-pr-opened.yml và jira-pr-merged.yml đều dùng: grep -oEi 'JAV-[0-9]+' | head -1",
+        "",
+        "Vì head -1 nên PR chứa nhiều mã chỉ cập nhật được mã đầu tiên. PR #2 là ví dụ: tiêu đề có JAV-13 + JAV-15 + JAV-12 nhưng chỉ JAV-13 được chuyển sang Done, hai mã còn lại vẫn kẹt trạng thái cũ dù code đã vào main.",
+        "",
+        "Cần làm:",
+        "- Bỏ head -1, lặp qua toàn bộ key tìm được (nhớ khử trùng lặp bằng sort -u).",
+        "- Chuyển trạng thái và comment cho từng issue.",
+        "- Cập nhật .github/JIRA_AUTOMATION_SETUP.md mô tả hành vi mới.",
+        "",
+        "Việc thủ công cần làm ngay: vào Jira chuyển tay JAV-12 và JAV-15 sang Done vì code của hai mảng này đã nằm trên main từ commit ccb10d6."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,173 @@
+# =============================================================================
+# Jira: liệt kê thành viên và tạo task hàng loạt
+# =============================================================================
+# Chạy tay từ tab Actions (workflow_dispatch). Dùng lại đúng ba secret mà các
+# workflow Jira sẵn có đang dùng: JIRA_BASE_URL, JIRA_USER_EMAIL, JIRA_API_TOKEN.
+#
+# Hai chế độ:
+#   list-members  Liệt kê thành viên gán được việc của project JAV, kèm accountId.
+#                 Chạy cái này TRƯỚC để biết đã đủ người chưa.
+#   create-tasks  Tạo task theo .github/jira/tasks.json và gán người theo
+#                 assignee_match. Ai không dò được tên thì task vẫn tạo nhưng
+#                 ĐỂ TRỐNG người thực hiện.
+#
+# Luôn chạy list-members trước, rồi create-tasks với dry_run=true để xem trước,
+# cuối cùng mới chạy thật.
+# =============================================================================
+
+name: "Jira: liệt kê thành viên / tạo task"
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Chế độ chạy"
+        required: true
+        default: list-members
+        type: choice
+        options:
+          - list-members
+          - create-tasks
+      dry_run:
+        description: "Chỉ xem trước, không tạo thật (dùng với create-tasks)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  jira:
+    name: Jira ${{ inputs.mode }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Kiểm tra secret đã cấu hình chưa
+        env:
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          missing=""
+          [ -z "$BASE_URL" ] && missing="$missing JIRA_BASE_URL"
+          [ -z "$EMAIL" ]    && missing="$missing JIRA_USER_EMAIL"
+          [ -z "$TOKEN" ]    && missing="$missing JIRA_API_TOKEN"
+          if [ -n "$missing" ]; then
+            echo "::error::Thiếu secret:$missing"
+            exit 1
+          fi
+          echo "✅ Đủ ba secret."
+
+      # ---------------------------------------------------------------------
+      - name: Liệt kê thành viên project JAV
+        if: inputs.mode == 'list-members'
+        env:
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          RESP=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
+            "$BASE_URL/rest/api/3/user/assignable/search?project=JAV&maxResults=100")
+
+          COUNT=$(echo "$RESP" | jq 'length')
+          echo "================================================"
+          echo "  Thành viên gán được việc trong project JAV: $COUNT"
+          echo "================================================"
+          echo "$RESP" | jq -r '.[] | "  \(.displayName)\n      accountId: \(.accountId)\n      active:    \(.active)"'
+          echo "================================================"
+
+          {
+            echo "## Thành viên project JAV: **$COUNT** người"
+            echo ""
+            echo "| # | Tên hiển thị | accountId | Đang hoạt động |"
+            echo "|---|---|---|---|"
+            echo "$RESP" | jq -r 'to_entries[] | "| \(.key + 1) | \(.value.displayName) | `\(.value.accountId)` | \(.value.active) |"'
+            echo ""
+            echo "Nhóm có 6 thành viên. Nếu bảng trên ít hơn 6, người còn thiếu chưa được thêm vào project — task của họ sẽ được tạo nhưng để trống người thực hiện."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ---------------------------------------------------------------------
+      - name: Tạo task từ .github/jira/tasks.json
+        if: inputs.mode == 'create-tasks'
+        env:
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          USERS=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
+            "$BASE_URL/rest/api/3/user/assignable/search?project=JAV&maxResults=100")
+          echo "Tìm thấy $(echo "$USERS" | jq 'length') thành viên gán được việc."
+
+          PROJECT=$(jq -r '.project_key' .github/jira/tasks.json)
+          ISSUETYPE=$(jq -r '.issue_type' .github/jira/tasks.json)
+          TOTAL=$(jq '.tasks | length' .github/jira/tasks.json)
+
+          echo "| Task | Người thực hiện | Kết quả |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          for i in $(seq 0 $((TOTAL - 1))); do
+            SUMMARY=$(jq -r ".tasks[$i].summary" .github/jira/tasks.json)
+            MATCH=$(jq -r ".tasks[$i].assignee_match" .github/jira/tasks.json)
+
+            # Dò người theo tên hiển thị, không phân biệt hoa thường, khớp một phần.
+            ACCOUNT_ID=$(echo "$USERS" | jq -r --arg m "$MATCH" \
+              '[.[] | select(.displayName | ascii_downcase | contains($m | ascii_downcase))][0].accountId // empty')
+            WHO=$(echo "$USERS" | jq -r --arg m "$MATCH" \
+              '[.[] | select(.displayName | ascii_downcase | contains($m | ascii_downcase))][0].displayName // empty')
+
+            if [ -z "$ACCOUNT_ID" ]; then
+              WHO="(để trống — chưa tìm thấy \"$MATCH\" trong project)"
+            fi
+
+            # Ghép mảng dòng mô tả thành khối ADF mà Jira Cloud API v3 yêu cầu.
+            ADF=$(jq -c ".tasks[$i].description
+              | map({type:\"paragraph\", content: (if . == \"\" then [] else [{type:\"text\", text:.}] end)})
+              | {version:1, type:\"doc\", content:.}" .github/jira/tasks.json)
+
+            LABELS=$(jq -c ".tasks[$i].labels" .github/jira/tasks.json)
+
+            if [ -n "$ACCOUNT_ID" ]; then
+              FIELDS=$(jq -n --arg p "$PROJECT" --arg s "$SUMMARY" --arg t "$ISSUETYPE" \
+                --arg a "$ACCOUNT_ID" --argjson d "$ADF" --argjson l "$LABELS" \
+                '{fields:{project:{key:$p}, summary:$s, issuetype:{name:$t}, description:$d, labels:$l, assignee:{id:$a}}}')
+            else
+              FIELDS=$(jq -n --arg p "$PROJECT" --arg s "$SUMMARY" --arg t "$ISSUETYPE" \
+                --argjson d "$ADF" --argjson l "$LABELS" \
+                '{fields:{project:{key:$p}, summary:$s, issuetype:{name:$t}, description:$d, labels:$l}}')
+            fi
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔎 [xem trước] $SUMMARY  →  $WHO"
+              echo "| $SUMMARY | $WHO | xem trước |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            RESP=$(curl -sS -w "\n%{http_code}" -X POST \
+              -u "$EMAIL:$TOKEN" -H "Content-Type: application/json" \
+              -d "$FIELDS" "$BASE_URL/rest/api/3/issue")
+            CODE=$(echo "$RESP" | tail -1)
+            BODY=$(echo "$RESP" | sed '$d')
+
+            if [ "$CODE" = "201" ]; then
+              KEY=$(echo "$BODY" | jq -r '.key')
+              echo "✅ $KEY  $SUMMARY  →  $WHO"
+              echo "| [$KEY] $SUMMARY | $WHO | ✅ đã tạo |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::Tạo task thất bại (HTTP $CODE): $SUMMARY"
+              echo "$BODY"
+              echo "| $SUMMARY | $WHO | ❌ lỗi $CODE |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo ""
+            echo "Đây mới là bản xem trước. Chạy lại với dry_run = false để tạo thật."
+          fi
