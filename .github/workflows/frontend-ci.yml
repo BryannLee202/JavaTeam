@@ -1,0 +1,64 @@
+# =============================================================================
+# Frontend CI — kiểm tra code trước khi merge
+# =============================================================================
+# Trigger: mọi PR vào main, và mỗi lần push thẳng lên main
+# Actions:
+#   1. Cài dependency đúng theo package-lock.json (npm ci)
+#   2. Lint  (oxlint)
+#   3. Typecheck + build  (tsc -b && vite build)
+#   4. Chạy test  (vitest)
+#
+# Mục đích: chặn tình trạng push code vỡ build mà không ai biết — trước đây
+# repo không có check nào build/test frontend, nên một import trỏ sai module
+# vẫn merge được bình thường.
+# =============================================================================
+
+name: "Frontend CI"
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+# Push liên tiếp lên cùng một PR thì huỷ lượt chạy cũ, đỡ tốn runner.
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  build-and-test:
+    name: Build, lint và test frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cài dependency
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck và build
+        run: npm run build
+
+      - name: Test
+        run: npm test
