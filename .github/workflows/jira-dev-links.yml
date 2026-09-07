@@ -1,0 +1,134 @@
+# =============================================================================
+# Jira ↔ GitHub: gan link GitHub vao task Jira
+# =============================================================================
+# Dat file nay tai: .github/workflows/jira-dev-links.yml
+#
+# Muc dich: task Jira hien muc "Links" tro thang toi nhanh / Pull Request tren
+# GitHub — thay cho panel Development (panel do can app GitHub for Atlassian).
+#
+# Chay khi: tao nhanh moi, mo PR, cap nhat PR, dong/merge PR.
+# Dung globalId nen link duoc ghi de, khong bi trung lap.
+#
+# Dung chung 3 secret voi cac workflow khac:
+#   JIRA_BASE_URL / JIRA_USER_EMAIL / JIRA_API_TOKEN
+# =============================================================================
+
+name: "Jira: Gan link GitHub vao task"
+
+on:
+  create:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  link:
+    name: Gan remote link len Jira
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Xac dinh ma Jira va link
+        id: ctx
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.event.ref_type }}
+          CREATED_REF: ${{ github.event.ref }}
+          PR_HEAD: ${{ github.event.pull_request.head.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          PR_STATE: ${{ github.event.pull_request.state }}
+          SERVER: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "create" ]; then
+            if [ "$REF_TYPE" != "branch" ]; then
+              echo "Khong phai branch — bo qua"
+              echo "ok=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            SOURCE="$CREATED_REF"
+            URL="$SERVER/$REPO/tree/$CREATED_REF"
+            TITLE="Nhanh: $CREATED_REF"
+            GID="github-branch-$CREATED_REF"
+            REL="branch"
+          else
+            SOURCE="$PR_HEAD $PR_TITLE"
+            URL="$PR_URL"
+            GID="github-pr-$PR_NUMBER"
+            REL="pull request"
+            if [ "$PR_MERGED" = "true" ]; then
+              TITLE="Da merge PR #$PR_NUMBER: $PR_TITLE"
+            elif [ "$PR_STATE" = "closed" ]; then
+              TITLE="Da dong PR #$PR_NUMBER: $PR_TITLE"
+            else
+              TITLE="PR #$PR_NUMBER: $PR_TITLE"
+            fi
+          fi
+
+          JIRA_KEY=$(echo "$SOURCE" | grep -oEi 'JAV-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
+
+          if [ -z "$JIRA_KEY" ]; then
+            echo "Khong tim thay ma JAV-xxx trong '$SOURCE' — bo qua"
+            echo "ok=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Ma Jira: $JIRA_KEY"
+          {
+            echo "ok=true"
+            echo "key=$JIRA_KEY"
+            echo "url=$URL"
+            echo "title=$TITLE"
+            echo "gid=$GID"
+            echo "rel=$REL"
+          } >> $GITHUB_OUTPUT
+
+      - name: Gui remote link len Jira
+        if: steps.ctx.outputs.ok == 'true'
+        env:
+          JIRA_KEY: ${{ steps.ctx.outputs.key }}
+          LINK_URL: ${{ steps.ctx.outputs.url }}
+          LINK_TITLE: ${{ steps.ctx.outputs.title }}
+          LINK_GID: ${{ steps.ctx.outputs.gid }}
+          LINK_REL: ${{ steps.ctx.outputs.rel }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          PAYLOAD=$(python3 - <<'PY'
+          import json, os
+          print(json.dumps({
+            "globalId": os.environ["LINK_GID"],
+            "relationship": os.environ["LINK_REL"],
+            "application": {"type": "com.github", "name": "GitHub"},
+            "object": {
+              "url": os.environ["LINK_URL"],
+              "title": os.environ["LINK_TITLE"],
+              "icon": {
+                "url16x16": "https://github.githubassets.com/favicons/favicon.png",
+                "title": "GitHub"
+              }
+            }
+          }))
+          PY
+          )
+
+          HTTP_CODE=$(curl -s -o /tmp/out.json -w "%{http_code}" \
+            -X POST \
+            -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$JIRA_BASE_URL/rest/api/3/issue/$JIRA_KEY/remotelink")
+
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+            echo "OK: da gan link vao $JIRA_KEY -> $LINK_TITLE"
+          else
+            echo "That bai (HTTP $HTTP_CODE):"
+            cat /tmp/out.json
+            exit 1
+          fi
