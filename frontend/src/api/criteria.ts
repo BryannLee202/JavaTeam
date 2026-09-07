@@ -3,7 +3,7 @@
  * Mọi URL của mảng này nằm hết ở đây — page không tự gọi `api.get("/api/...")`.
  */
 import { api } from "./client";
-import type { Page } from "./types/common";
+import type { Page } from "./types";
 import type {
   CriteriaTemplateItem,
   CriteriaTemplatePayload,
