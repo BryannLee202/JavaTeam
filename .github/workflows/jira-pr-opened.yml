@@ -1,10 +1,12 @@
 # =============================================================================
-# Jira ↔ GitHub Automation: PR Opened / Edited
+# Jira ↔ GitHub Automation: PR → "In Review"
 # =============================================================================
-# Trigger: Khi tạo PR mới hoặc edit PR (title chứa JAV-xxx)
-# Actions:
-#   1. Chuyển Jira issue → "In Review"
-#   2. Comment link PR lên Jira issue
+# Tim TAT CA ma JAV-xxx trong ten nhanh, tieu de PR va commit message, roi
+# chuyen tung issue sang "In Review" kem comment.
+#
+# Truoc day dung 'head -1' nen PR chua nhieu ma chi cap nhat duoc ma dau tien
+# — vi du PR co "JAV-13 + JAV-15 + JAV-12" thi chi JAV-13 duoc chuyen, hai ma
+# con lai ket trang thai cu du code da vao main.
 # =============================================================================
 
 name: "Jira: PR → In Review"
@@ -25,152 +27,89 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -----------------------------------------------------------------------
-      # Step 1: Extract Jira key from branch name or PR title
-      # -----------------------------------------------------------------------
-      - name: Extract Jira issue key
+      - name: Tim tat ca ma Jira
         id: jira
+        env:
+          BRANCH: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          BRANCH="${{ github.head_ref }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
+          set -uo pipefail
+          COMMITS=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$REPO/pulls/$PR_NUMBER/commits?per_page=100" \
+            | jq -r '.[].commit.message' 2>/dev/null || echo "")
 
-          # Try branch name first, then PR title
-          JIRA_KEY=$(echo "$BRANCH" | grep -oEi 'JAV-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
-          if [ -z "$JIRA_KEY" ]; then
-            JIRA_KEY=$(echo "$PR_TITLE" | grep -oEi 'JAV-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]')
-          fi
+          KEYS=$(printf '%s\n%s\n%s' "$BRANCH" "$PR_TITLE" "$COMMITS" \
+            | grep -oEi 'JAV-[0-9]+' | tr '[:lower:]' '[:upper:]' | sort -u | tr '\n' ' ' | sed 's/ $//')
 
-          if [ -z "$JIRA_KEY" ]; then
-            echo "⚠️ No Jira key (JAV-xxx) found in branch '$BRANCH' or PR title '$PR_TITLE'"
-            echo "found=false" >> $GITHUB_OUTPUT
+          if [ -z "$KEYS" ]; then
+            echo "::warning title=Khong tim thay ma Jira::Khong co JAV-xxx trong ten nhanh, tieu de PR hay commit message. Khong task nao duoc chuyen sang In Review."
+            {
+              echo "### ⚠️ Khong chuyen duoc task nao sang In Review"
+              echo ""
+              echo "Khong tim thay ma \`JAV-xxx\`. Dat ten nhanh dang \`JAV-20-mo-ta\` hoac tieu de PR dang \`[JAV-20] Mo ta\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "found=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "✅ Found Jira key: $JIRA_KEY"
-          echo "key=$JIRA_KEY" >> $GITHUB_OUTPUT
-          echo "found=true" >> $GITHUB_OUTPUT
+          echo "Tim thay: $KEYS"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "keys=$KEYS" >> "$GITHUB_OUTPUT"
 
-      # -----------------------------------------------------------------------
-      # Step 2: Get available transitions and find "In Review"
-      # -----------------------------------------------------------------------
-      - name: Get Jira transitions
+      - name: Chuyen trang thai va comment
         if: steps.jira.outputs.found == 'true'
-        id: transitions
+        env:
+          KEYS: ${{ steps.jira.outputs.keys }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          TARGET: "In Review"
         run: |
-          JIRA_KEY="${{ steps.jira.outputs.key }}"
+          set -uo pipefail
+          echo "| Task | Chuyen trang thai | Comment |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${JIRA_KEY}/transitions")
+          for KEY in $KEYS; do
+            TR=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
+              "$BASE_URL/rest/api/3/issue/$KEY/transitions")
+            TID=$(echo "$TR" | jq -r --arg t "$TARGET" \
+              '[.transitions[] | select(.name | ascii_downcase == ($t | ascii_downcase))][0].id // empty')
 
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
+            if [ -z "$TID" ]; then
+              echo "::warning::$KEY khong co transition '$TARGET'. Dang co: $(echo "$TR" | jq -r '[.transitions[].name] | join(", ")')"
+              MOVED="⚠️ khong co transition"
+            else
+              C=$(curl -sS -o /dev/null -w "%{http_code}" -X POST -u "$EMAIL:$TOKEN" \
+                -H "Content-Type: application/json" -d "{\"transition\":{\"id\":\"$TID\"}}" \
+                "$BASE_URL/rest/api/3/issue/$KEY/transitions")
+              [ "$C" = "204" ] && MOVED="✅ → $TARGET" || MOVED="❌ HTTP $C"
+              echo "$KEY: $MOVED"
+            fi
 
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "❌ Failed to get transitions (HTTP $HTTP_CODE): $BODY"
-            exit 1
-          fi
-
-          # Find transition ID for "In Review" (case insensitive)
-          TRANSITION_ID=$(echo "$BODY" | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          for t in data.get('transitions', []):
-              if t['name'].lower().strip() == 'in review':
-                  print(t['id'])
-                  break
-          " 2>/dev/null)
-
-          if [ -z "$TRANSITION_ID" ]; then
-            echo "⚠️ 'In Review' transition not found. Available transitions:"
-            echo "$BODY" | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          for t in data.get('transitions', []):
-              print(f\"  - {t['name']} (id: {t['id']})\")
-          " 2>/dev/null
-            echo "transition_found=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          echo "✅ Found 'In Review' transition ID: $TRANSITION_ID"
-          echo "transition_id=$TRANSITION_ID" >> $GITHUB_OUTPUT
-          echo "transition_found=true" >> $GITHUB_OUTPUT
-
-      # -----------------------------------------------------------------------
-      # Step 3: Transition issue to "In Review"
-      # -----------------------------------------------------------------------
-      - name: Transition to In Review
-        if: steps.jira.outputs.found == 'true' && steps.transitions.outputs.transition_found == 'true'
-        run: |
-          JIRA_KEY="${{ steps.jira.outputs.key }}"
-          TRANSITION_ID="${{ steps.transitions.outputs.transition_id }}"
-
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST \
-            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"transition\": {\"id\": \"${TRANSITION_ID}\"}}" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${JIRA_KEY}/transitions")
-
-          if [ "$HTTP_CODE" = "204" ]; then
-            echo "✅ $JIRA_KEY → In Review"
-          else
-            echo "❌ Failed to transition (HTTP $HTTP_CODE)"
-            exit 1
-          fi
-
-      # -----------------------------------------------------------------------
-      # Step 4: Add comment with PR link on Jira issue
-      # -----------------------------------------------------------------------
-      - name: Comment PR link on Jira
-        if: steps.jira.outputs.found == 'true'
-        run: |
-          JIRA_KEY="${{ steps.jira.outputs.key }}"
-          PR_URL="${{ github.event.pull_request.html_url }}"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_NUMBER="${{ github.event.pull_request.number }}"
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
-
-          # Atlassian Document Format (ADF) for Jira Cloud
-          COMMENT_BODY=$(cat <<EOF
-          {
-            "body": {
-              "version": 1,
-              "type": "doc",
-              "content": [
-                {
-                  "type": "paragraph",
-                  "content": [
-                    {"type": "text", "text": "🔀 "},
-                    {"type": "text", "text": "Pull Request #${PR_NUMBER}", "marks": [{"type": "strong"}]},
-                    {"type": "text", "text": " opened by "},
-                    {"type": "text", "text": "${PR_AUTHOR}", "marks": [{"type": "strong"}]}
-                  ]
-                },
-                {
-                  "type": "paragraph",
-                  "content": [
-                    {"type": "text", "text": "📎 "},
-                    {"type": "text", "text": "${PR_TITLE}", "marks": [{"type": "link", "attrs": {"href": "${PR_URL}"}}]}
-                  ]
-                }
-              ]
-            }
-          }
-          EOF
+            BODY=$(python3 - <<'PY'
+          import json, os
+          print(json.dumps({"body": {"version": 1, "type": "doc", "content": [
+            {"type": "paragraph", "content": [
+              {"type": "text", "text": os.environ["TARGET"] + " — "},
+              {"type": "text", "text": "PR #" + os.environ["PR_NUMBER"], "marks": [{"type": "strong"}]},
+              {"type": "text", "text": " boi " + os.environ["PR_AUTHOR"]}]},
+            {"type": "paragraph", "content": [
+              {"type": "text", "text": os.environ["PR_TITLE"],
+               "marks": [{"type": "link", "attrs": {"href": os.environ["PR_URL"]}}]}]}]}}))
+          PY
           )
+            CC=$(curl -sS -o /dev/null -w "%{http_code}" -X POST -u "$EMAIL:$TOKEN" \
+              -H "Content-Type: application/json" -d "$BODY" \
+              "$BASE_URL/rest/api/3/issue/$KEY/comment")
+            [ "$CC" = "201" ] && CMT="✅" || CMT="❌ $CC"
 
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST \
-            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "$COMMENT_BODY" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${JIRA_KEY}/comment")
-
-          if [ "$HTTP_CODE" = "201" ]; then
-            echo "✅ Commented PR link on $JIRA_KEY"
-          else
-            echo "⚠️ Failed to add comment (HTTP $HTTP_CODE)"
-          fi
+            echo "| $KEY | $MOVED | $CMT |" >> "$GITHUB_STEP_SUMMARY"
+          done
