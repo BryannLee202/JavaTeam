@@ -200,6 +200,237 @@
         "",
         "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Automation sẽ tự chuyển task sang In Progress khi tạo nhánh, và sang Done khi PR merge. Mỗi PR chỉ gắn MỘT mã JAV."
       ]
+    },
+    {
+      "summary": "[FE-1] Landing page công khai và bảng xếp hạng",
+      "assignee_match": "Giang",
+      "labels": [
+        "frontend",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: CAO NHẤT.",
+        "",
+        "VÌ SAO CẦN:",
+        "Mở ứng dụng ở đường dẫn / hiện nhảy thẳng vào form đăng nhập — người xem chưa đăng nhập không thấy gì cả.",
+        "Đây là màn đầu tiên thầy nhìn thấy khi chấm, nên thiếu nó là thiệt nhất.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Trang chủ công khai: giới thiệu cuộc thi, các hạng mục, mốc thời gian, nút dẫn tới đăng nhập và đăng ký.",
+        "Bảng xếp hạng công khai: kết quả theo vòng và theo hạng mục, ai cũng xem được không cần đăng nhập.",
+        "Sửa RootRedirect trong frontend/src/App.tsx: khách chưa đăng nhập thì vào landing thay vì bị đẩy sang /login.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "Backend cũ có RankingController và nhóm endpoint công khai GET /api/public/** không cần đăng nhập.",
+        "Cùng mảng với task backend [BE-6] của bạn nên hợp đồng API tự bạn quyết.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
+    },
+    {
+      "summary": "[FE-2] Tab Đội thi trong khu điều phối",
+      "assignee_match": "Vy",
+      "labels": [
+        "frontend",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: CAO.",
+        "",
+        "VÌ SAO CẦN:",
+        "frontend/src/pages/tabs/TeamsTab.tsx hiện chỉ là stub 29 dòng, bấm vào tab hiện ra ô trống ghi 'do P4 phát triển'.",
+        "Tab này nằm giữa 9 tab đã làm xong, nên lỗ hổng lộ ra rất rõ khi demo.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Danh sách đội của sự kiện: tên đội, hạng mục, số thành viên, trạng thái.",
+        "Thêm, sửa, xoá đội và đổi trạng thái.",
+        "Xem thành viên từng đội, đánh dấu trưởng nhóm.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "Lớp dữ liệu ĐÃ DỰNG SẴN, không phải làm lại: kiểu Team, TeamInput, TeamMember, TeamStatus, TEAM_STATUS_LABEL, TEAM_MIN_MEMBERS, TEAM_MAX_MEMBERS trong frontend/src/types/index.ts.",
+        "Sáu hàm eventsApi trong frontend/src/api/events.ts: listTeams, getTeam, createTeam, updateTeam, deleteTeam, changeTeamStatus.",
+        "Ba đội mẫu trong frontend/src/api/mockData.ts và 4 test trong frontend/src/api/teams.test.ts đã pass.",
+        "Chép cấu trúc từ frontend/src/pages/tabs/TracksTab.tsx — cùng dạng bảng kèm form, dùng chung Modal / ConfirmDialog / StatusBadge / Feedback.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
+    },
+    {
+      "summary": "[FE-3] Màn hình của thí sinh: lập đội, mời thành viên, nộp bài",
+      "assignee_match": "Vy",
+      "labels": [
+        "frontend",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: CAO.",
+        "",
+        "VÌ SAO CẦN:",
+        "Hệ thống có 5 vai trò nhưng chỉ COORDINATOR và JUDGE có giao diện. TEAM_LEADER và TEAM_MEMBER KHÔNG CÓ MÀN NÀO.",
+        "Nghĩa là demo hiện chưa thể hiện được góc nhìn của chính thí sinh — đối tượng chính của cuộc thi.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Trang của đội: xem thông tin đội, danh sách thành viên, hạng mục đã đăng ký.",
+        "Trưởng nhóm: tạo đội, mời thành viên, xoá thành viên.",
+        "Thành viên: xem lời mời và chấp nhận hoặc từ chối.",
+        "Nộp bài theo vòng: link repo, demo, slide; hiện trạng thái đúng hạn hay trễ.",
+        "Thêm route bảo vệ bằng ProtectedRoute requireRole và thêm mục điều hướng vào frontend/src/components/Layout.tsx.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "Cùng mảng với task backend [BE-4] của bạn (Team, TeamMember, TeamInvite, Submission).",
+        "Layout.tsx đã có sẵn cơ chế hiện mục điều hướng theo role — xem cách mục 'Quản lý cuộc thi' chỉ hiện với COORDINATOR.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
+    },
+    {
+      "summary": "[FE-4] Đăng ký tài khoản và màn duyệt tài khoản",
+      "assignee_match": "Long",
+      "labels": [
+        "frontend",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: CAO.",
+        "",
+        "VÌ SAO CẦN:",
+        "Chỉ có màn đăng nhập, KHÔNG CÓ màn đăng ký — người mới không vào hệ thống được bằng giao diện.",
+        "Kiểu AccountStatus (PENDING / APPROVED / REJECTED) và UserSummary đã định nghĩa trong frontend/src/api/types.ts nhưng grep toàn bộ frontend/src không màn hình nào dùng tới. Luồng duyệt tài khoản có kiểu dữ liệu mà chưa có giao diện.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Màn đăng ký: họ tên, email, mật khẩu, phân loại người dùng (FPT_STUDENT / EXTERNAL_STUDENT / STAFF). Sau khi gửi thì tài khoản ở trạng thái PENDING chờ duyệt.",
+        "Thêm liên kết sang đăng ký ở frontend/src/pages/LoginPage.tsx.",
+        "Màn duyệt tài khoản cho COORDINATOR: lọc theo accountStatus và userCategory, duyệt hoặc từ chối, có bước xác nhận tại chỗ.",
+        "Dựng lớp gọi API kèm chế độ mock theo đúng khuôn đã dùng cho Đội thi, và viết test cho lớp đó.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "Cùng mảng với task backend [BE-1] của bạn — AdminUserController là phía phục vụ màn này.",
+        "Không dùng window.confirm: xem cách frontend/src/pages/coordinator/CriteriaTab.tsx làm bước xác nhận ngay tại chỗ.",
+        "Mẫu gần nhất về danh sách kèm lọc và đổi trạng thái: frontend/src/pages/EventsPage.tsx.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
+    },
+    {
+      "summary": "[FE-5] Bình chọn khán giả",
+      "assignee_match": "Tài",
+      "labels": [
+        "frontend",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: TRUNG BÌNH.",
+        "",
+        "VÌ SAO CẦN:",
+        "Backend cũ có PublicVotingController cho phép bỏ phiếu ẩn danh, nhưng frontend không có màn nào gọi tới.",
+        "Đây là phần dễ gây ấn tượng khi demo vì thầy có thể tự bấm bình chọn mà không cần tài khoản.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Trang bình chọn công khai: danh sách đội theo hạng mục, nút bình chọn, hiển thị số phiếu.",
+        "Chặn bình chọn trùng ở phía giao diện (khoá nút sau khi đã bầu) và xử lý lỗi khi backend trả về đã bầu rồi.",
+        "Không cần đăng nhập — đặt route ngoài ProtectedRoute.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "SecurityConfig của bản cũ cho qua POST /api/public/voting/tracks/*/votes mà không cần đăng nhập.",
+        "Phối hợp với người làm [BE-6] về hợp đồng API và cách nhận diện người bình chọn ẩn danh.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
+    },
+    {
+      "summary": "[FE-6] Trang chủ sau đăng nhập theo vai trò",
+      "assignee_match": "Nguyên",
+      "labels": [
+        "frontend",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: TRUNG BÌNH.",
+        "",
+        "VÌ SAO CẦN:",
+        "frontend/src/pages/DashboardPage.tsx hiện chỉ có lời chào và một liên kết sang /judge — 88 dòng nhưng gần như trống.",
+        "Đây là màn ai cũng thấy ngay sau khi đăng nhập, nên nó sơ sài thì cả hệ thống trông sơ sài.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Hiển thị lối vào theo đúng vai trò của người đăng nhập: COORDINATOR thấy khu điều hành, JUDGE thấy việc chấm, TEAM_LEADER và TEAM_MEMBER thấy đội của mình, MENTOR thấy đội phụ trách.",
+        "Vài số liệu nhanh: sự kiện đang diễn ra, việc cần làm của tôi.",
+        "Dùng hasRole từ frontend/src/context/AuthContext.tsx để lọc.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "Bạn đã dựng khung điều hướng ở [BE-2] và khung tab coordinator nên nắm rõ cấu trúc điều hướng nhất.",
+        "Layout.tsx đã có mẫu lọc theo role cho mục sidebar.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
+    },
+    {
+      "summary": "[FE-7] Màn hình của mentor",
+      "assignee_match": "Toàn",
+      "labels": [
+        "frontend",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: TRUNG BÌNH.",
+        "",
+        "VÌ SAO CẦN:",
+        "MENTOR là vai trò thứ ba không có màn hình nào, dù backend cũ có MentorController và TeamFeedbackService.",
+        "Tab 'Giám khảo & Mentor' hiện có chỉ là góc nhìn của điều phối viên khi phân công, không phải màn làm việc của mentor.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Danh sách đội mà mentor được phân công.",
+        "Xem bài nộp của đội và gửi phản hồi; hiển thị lịch sử trao đổi hai chiều.",
+        "Thêm route bảo vệ requireRole='MENTOR' và mục điều hướng tương ứng.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "Backend cũ: MentorController, TeamFeedbackController, entity MentorFeedbackMessage có trường FeedbackAuthorRole để phân biệt ai nhắn.",
+        "Phần backend thuộc [BE-6] của Giang — thống nhất hợp đồng API với bạn ấy trước khi làm.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
+    },
+    {
+      "summary": "[DOC-1] Viết README hướng dẫn chạy và demo",
+      "assignee_match": "Nguyên",
+      "labels": [
+        "documentation",
+        "demo"
+      ],
+      "description": [
+        "ĐỘ ƯU TIÊN CHO DEMO: CAO.",
+        "",
+        "VÌ SAO CẦN:",
+        "README.md ở gốc hiện chỉ còn 38 dòng và không mô tả kiến trúc hiện tại.",
+        "Người chấm mở repo ra đọc README đầu tiên; không có hướng dẫn chạy thì không tự xem được sản phẩm.",
+        "",
+        "VIỆC CẦN LÀM:",
+        "Kiến trúc ba lớp: frontend React, bff NestJS, backend Spring Boot; luồng xác thực qua cookie httpOnly kèm CSRF.",
+        "Hướng dẫn chạy frontend: npm ci, npm run dev, và hai đường dẫn xem thử không cần backend.",
+        "Bảng phân chia sáu mảng kèm người phụ trách, để người chấm biết ai làm gì.",
+        "Ghi rõ ba lệnh kiểm tra mà CI đang chạy: lint, build, test.",
+        "",
+        "THAM CHIẾU SẴN CÓ:",
+        "Có thể lấy lại phần còn dùng được từ README.md trên nhánh main-backup (532 dòng, mô tả kiến trúc cũ).",
+        "Workflow CI: .github/workflows/frontend-ci.yml.",
+        "",
+        "Xem thử không cần backend: npm run dev, rồi mở /coordinator/events?mock=coordinator (khu điều phối) hoặc /judge?mock=judge (chấm điểm). Chế độ mock nằm ở frontend/src/devMock.ts.",
+        "",
+        "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
+      ]
     }
   ]
 }
