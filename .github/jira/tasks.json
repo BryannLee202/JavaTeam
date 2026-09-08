@@ -11,7 +11,9 @@
     "  Đợt 3: BE-5 Score/Ranking, BE-6 Vote/Mentor/Báo cáo",
     "",
     "assignee_match: chuỗi dò tên thành viên trong Jira, khớp một phần, không phân biệt hoa thường.",
-    "Không dò được ai thì task vẫn tạo nhưng để trống người thực hiện."
+    "Không dò được ai thì task vẫn tạo nhưng để trống người thực hiện.",
+    "",
+    "remove_links: cac remote link gan nham can go, chay bang che do remove-links."
   ],
   "project_key": "JAV",
   "issue_type": "Task",
@@ -436,6 +438,24 @@
         "",
         "Quy ước nhánh: tách từ main mới nhất, đặt tên JAV-<mã issue này>-<mô tả ngắn>. Trước khi mở PR chạy đủ trong frontend/: npm run lint, npm run build, npm test. Mỗi PR chỉ gắn MỘT mã JAV."
       ]
+    }
+  ],
+  "remove_links": [
+    {
+      "key": "JAV-12",
+      "globalId": "github-pr-9-JAV-12"
+    },
+    {
+      "key": "JAV-13",
+      "globalId": "github-pr-9-JAV-13"
+    },
+    {
+      "key": "JAV-15",
+      "globalId": "github-pr-9-JAV-15"
+    },
+    {
+      "key": "JAV-20",
+      "globalId": "github-pr-9-JAV-20"
     }
   ]
 }
