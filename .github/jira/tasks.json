@@ -13,7 +13,8 @@
     "assignee_match: chuỗi dò tên thành viên trong Jira, khớp một phần, không phân biệt hoa thường.",
     "Không dò được ai thì task vẫn tạo nhưng để trống người thực hiện.",
     "",
-    "remove_links: cac remote link gan nham can go, chay bang che do remove-links."
+    "remove_links: cac remote link gan nham can go, chay bang che do remove-links.",
+    "set_status: tra issue ve dung trang thai, chay bang che do set-status."
   ],
   "project_key": "JAV",
   "issue_type": "Task",
@@ -440,22 +441,19 @@
       ]
     }
   ],
-  "remove_links": [
-    {
-      "key": "JAV-12",
-      "globalId": "github-pr-9-JAV-12"
-    },
-    {
-      "key": "JAV-13",
-      "globalId": "github-pr-9-JAV-13"
-    },
-    {
-      "key": "JAV-15",
-      "globalId": "github-pr-9-JAV-15"
-    },
+  "remove_links": [],
+  "set_status": [
     {
       "key": "JAV-20",
-      "globalId": "github-pr-9-JAV-20"
+      "status": "To Do"
+    },
+    {
+      "key": "JAV-21",
+      "status": "To Do"
+    },
+    {
+      "key": "JAV-26",
+      "status": "To Do"
     }
   ]
 }
