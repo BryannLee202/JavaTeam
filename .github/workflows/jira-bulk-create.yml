@@ -14,6 +14,7 @@
 #                 ĐỂ TRỐNG người thực hiện.
 #   update-tasks  Cập nhật mô tả của issue ĐÃ TỒN TẠI (dò theo tiêu đề trùng
 #                 khớp với tasks.json), và đóng các issue trong cancel_issues.
+#   remove-links  Gỡ các remote link gắn nhầm, liệt kê trong remove_links.
 #
 # Luôn chạy list-members trước, rồi create-tasks với dry_run=true để xem trước,
 # cuối cùng mới chạy thật.
@@ -34,6 +35,7 @@ on:
           - list-issues
           - create-tasks
           - update-tasks
+          - remove-links
       dry_run:
         description: "Chỉ xem trước, không tạo thật (dùng với create-tasks)"
         required: false
@@ -296,4 +298,48 @@ jobs:
               -d "{\"transition\":{\"id\":\"$TID\"}}" "$BASE_URL/rest/api/3/issue/$KEY/transitions")
             [ "$CODE" = "204" ] && echo "✅ $KEY đã đóng" || echo "::error::Đóng $KEY thất bại (HTTP $CODE)"
             echo "| $KEY | đóng issue | $([ "$CODE" = "204" ] && echo ✅ || echo "❌ $CODE") |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      # ---------------------------------------------------------------------
+      - name: Go cac remote link gan nham
+        if: inputs.mode == 'remove-links'
+        env:
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -uo pipefail
+          N=$(jq '.remove_links // [] | length' .github/jira/tasks.json)
+          if [ "$N" = "0" ]; then
+            echo "Khong co link nao trong remove_links."
+            exit 0
+          fi
+
+          echo "| Issue | globalId | Ket qua |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          for i in $(seq 0 $((N - 1))); do
+            KEY=$(jq -r ".remove_links[$i].key" .github/jira/tasks.json)
+            GID=$(jq -r ".remove_links[$i].globalId" .github/jira/tasks.json)
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔎 [xem truoc] go $GID khoi $KEY"
+              echo "| $KEY | \`$GID\` | xem truoc |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X DELETE \
+              -u "$EMAIL:$TOKEN" \
+              --get --data-urlencode "globalId=$GID" \
+              "$BASE_URL/rest/api/3/issue/$KEY/remotelink")
+
+            case "$CODE" in
+              204) echo "✅ $KEY: da go $GID"
+                   echo "| $KEY | \`$GID\` | ✅ da go |" >> "$GITHUB_STEP_SUMMARY" ;;
+              404) echo "⚠️  $KEY: khong tim thay link $GID (co the da go roi)"
+                   echo "| $KEY | \`$GID\` | ⚠️ khong co |" >> "$GITHUB_STEP_SUMMARY" ;;
+              *)   echo "::error::$KEY tra ve HTTP $CODE khi go $GID"
+                   echo "| $KEY | \`$GID\` | ❌ HTTP $CODE |" >> "$GITHUB_STEP_SUMMARY" ;;
+            esac
           done

@@ -8,7 +8,9 @@
 # Chay khi: tao nhanh moi, mo PR, cap nhat PR, dong/merge PR.
 # Dung globalId nen link duoc ghi de, khong bi trung lap.
 #
-# Tim ma JAV-xxx trong: ten nhanh, tieu de PR, VA ca commit message cua PR.
+# Tim ma JAV-xxx trong: ten nhanh, tieu de PR, va DONG DAU cua moi commit.
+# Chi lay dong dau vi than commit thuong nhac ten ma khac de giai thich —
+# quet ca than se gan link nham vao task khong lien quan.
 # Nhan NHIEU ma trong cung mot PR, khong chi lay ma dau tien.
 # Khong tim thay ma nao thi bao warning ro rang chu khong im lang bo qua.
 #
@@ -68,7 +70,7 @@ jobs:
             COMMITS=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               "$GITHUB_API_URL/repos/$REPO/pulls/$PR_NUMBER/commits?per_page=100" \
-              | jq -r '.[].commit.message' 2>/dev/null || echo "")
+              | jq -r '.[].commit.message | split("\n")[0]' 2>/dev/null || echo "")
             SOURCE="$PR_HEAD
           $PR_TITLE
           $COMMITS"
@@ -165,6 +167,11 @@ jobs:
             if [ "$CODE" = "200" ] || [ "$CODE" = "201" ]; then
               echo "✅ $KEY da gan link"
               echo "| $KEY | ✅ da gan link |" >> "$GITHUB_STEP_SUMMARY"
+            elif [ "$CODE" = "404" ]; then
+              # Ma duoc nhac toi nhung issue khong ton tai (vd go nham so).
+              # Canh bao thoi, khong lam do ca job.
+              echo "::warning title=Issue khong ton tai::$KEY khong co tren Jira — bo qua"
+              echo "| $KEY | ⚠️ khong ton tai |" >> "$GITHUB_STEP_SUMMARY"
             else
               echo "::error title=Gan link that bai::$KEY tra ve HTTP $CODE"
               echo "| $KEY | ❌ HTTP $CODE |" >> "$GITHUB_STEP_SUMMARY"
