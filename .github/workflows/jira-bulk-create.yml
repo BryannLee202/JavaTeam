@@ -329,10 +329,17 @@ jobs:
               continue
             fi
 
-            CODE=$(curl -sS -o /dev/null -w "%{http_code}" -X DELETE \
+            # Lan truoc tra 415. Gui kem ca Accept lan Content-Type, va IN RA
+            # THAN PHAN HOI khi that bai de doc duoc thong bao that cua Jira
+            # thay vi doan mo.
+            GID_ENC=$(jq -rn --arg s "$GID" '$s|@uri')
+            RESP=$(curl -sS -w "\n%{http_code}" -X DELETE \
               -u "$EMAIL:$TOKEN" \
-              --get --data-urlencode "globalId=$GID" \
-              "$BASE_URL/rest/api/3/issue/$KEY/remotelink")
+              -H "Accept: application/json" \
+              -H "Content-Type: application/json" \
+              "$BASE_URL/rest/api/3/issue/$KEY/remotelink?globalId=$GID_ENC")
+            CODE=$(echo "$RESP" | tail -1)
+            BODY=$(echo "$RESP" | sed '$d')
 
             case "$CODE" in
               204) echo "✅ $KEY: da go $GID"
@@ -340,6 +347,7 @@ jobs:
               404) echo "⚠️  $KEY: khong tim thay link $GID (co the da go roi)"
                    echo "| $KEY | \`$GID\` | ⚠️ khong co |" >> "$GITHUB_STEP_SUMMARY" ;;
               *)   echo "::error::$KEY tra ve HTTP $CODE khi go $GID"
-                   echo "| $KEY | \`$GID\` | ❌ HTTP $CODE |" >> "$GITHUB_STEP_SUMMARY" ;;
+                   echo "   Jira tra loi: $BODY"
+                   echo "| $KEY | \`$GID\` | ❌ HTTP $CODE — $(echo "$BODY" | head -c 120) |" >> "$GITHUB_STEP_SUMMARY" ;;
             esac
           done
