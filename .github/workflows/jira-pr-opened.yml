@@ -81,10 +81,10 @@ jobs:
             TR=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
               "$BASE_URL/rest/api/3/issue/$KEY/transitions")
             TID=$(echo "$TR" | jq -r --arg t "$TARGET" \
-              '[.transitions[] | select(.name | ascii_downcase == ($t | ascii_downcase))][0].id // empty')
+              '[(.transitions // [])[] | select(.name | ascii_downcase == ($t | ascii_downcase))][0].id // empty')
 
             if [ -z "$TID" ]; then
-              echo "::warning::$KEY khong co transition '$TARGET'. Dang co: $(echo "$TR" | jq -r '[.transitions[].name] | join(", ")')"
+              echo "::warning::$KEY khong co transition '$TARGET'. Dang co: $(echo "$TR" | jq -r '[(.transitions // [])[].name] | join(", ")')"
               MOVED="⚠️ khong co transition"
             else
               C=$(curl -sS -o /dev/null -w "%{http_code}" -X POST -u "$EMAIL:$TOKEN" \

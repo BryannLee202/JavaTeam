@@ -15,6 +15,7 @@
 #   update-tasks  Cập nhật mô tả của issue ĐÃ TỒN TẠI (dò theo tiêu đề trùng
 #                 khớp với tasks.json), và đóng các issue trong cancel_issues.
 #   remove-links  Gỡ các remote link gắn nhầm, liệt kê trong remove_links.
+#   set-status    Trả issue về đúng trạng thái, liệt kê trong set_status.
 #
 # Luôn chạy list-members trước, rồi create-tasks với dry_run=true để xem trước,
 # cuối cùng mới chạy thật.
@@ -36,6 +37,7 @@ on:
           - create-tasks
           - update-tasks
           - remove-links
+          - set-status
       dry_run:
         description: "Chỉ xem trước, không tạo thật (dùng với create-tasks)"
         required: false
@@ -350,4 +352,55 @@ jobs:
                    echo "   Jira tra loi: $BODY"
                    echo "| $KEY | \`$GID\` | ❌ HTTP $CODE — $(echo "$BODY" | head -c 120) |" >> "$GITHUB_STEP_SUMMARY" ;;
             esac
+          done
+
+      # ---------------------------------------------------------------------
+      - name: Tra issue ve dung trang thai
+        if: inputs.mode == 'set-status'
+        env:
+          BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -uo pipefail
+          N=$(jq '.set_status // [] | length' .github/jira/tasks.json)
+          [ "$N" = "0" ] && { echo "Khong co gi trong set_status."; exit 0; }
+
+          echo "| Issue | Chuyen ve | Ket qua |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          for i in $(seq 0 $((N - 1))); do
+            KEY=$(jq -r ".set_status[$i].key" .github/jira/tasks.json)
+            WANT=$(jq -r ".set_status[$i].status" .github/jira/tasks.json)
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "🔎 [xem truoc] $KEY -> $WANT"
+              echo "| $KEY | $WANT | xem truoc |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            TR=$(curl -sS -u "$EMAIL:$TOKEN" -H "Accept: application/json" \
+              "$BASE_URL/rest/api/3/issue/$KEY/transitions")
+            # .transitions // [] de khong vo khi issue khong ton tai
+            TID=$(echo "$TR" | jq -r --arg t "$WANT" \
+              '[(.transitions // [])[] | select(.name | ascii_downcase == ($t | ascii_downcase))][0].id // empty')
+
+            if [ -z "$TID" ]; then
+              AVAIL=$(echo "$TR" | jq -r '[(.transitions // [])[].name] | join(", ")')
+              echo "::warning::$KEY khong chuyen duoc sang '$WANT'. Dang co: ${AVAIL:-<khong doc duoc>}"
+              echo "| $KEY | $WANT | ⚠️ khong co transition |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+
+            C=$(curl -sS -o /dev/null -w "%{http_code}" -X POST -u "$EMAIL:$TOKEN" \
+              -H "Content-Type: application/json" -d "{\"transition\":{\"id\":\"$TID\"}}" \
+              "$BASE_URL/rest/api/3/issue/$KEY/transitions")
+            if [ "$C" = "204" ]; then
+              echo "✅ $KEY -> $WANT"
+              echo "| $KEY | $WANT | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::$KEY tra ve HTTP $C"
+              echo "| $KEY | $WANT | ❌ HTTP $C |" >> "$GITHUB_STEP_SUMMARY"
+            fi
           done
