@@ -15,7 +15,12 @@
   ],
   "project_key": "JAV",
   "issue_type": "Task",
-  "cancel_issues": [],
+  "cancel_issues": [
+    "JAV-9",
+    "JAV-12",
+    "JAV-13",
+    "JAV-15"
+  ],
   "tasks": [
     {
       "summary": "[BE-1] Nền tảng: User, phân quyền, JWT và lớp bảo mật BFF",
