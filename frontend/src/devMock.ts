@@ -6,7 +6,7 @@
  */
 import { api } from "./api/client";
 import type { CurrentUser, RoundItem, CriterionItem, SubmissionItem, ScoreItem, CalibrationRoundItem } from "./api/types";
-
+import type { UserSummary } from "./api/types";
 const roundId = "round-1";
 const eventId = "event-1";
 const submissionId1 = "sub-1";
@@ -176,10 +176,20 @@ export function installCoordinatorMock() {
     else if (/^\/api\/events\/[^/]+\/disqualifications$/.test(url)) respond(p6Disqualifications);
     else if (/^\/api\/events\/[^/]+\/teams$/.test(url)) respond(p6Teams);
     else if (/^\/api\/rounds\/[^/]+\/submissions$/.test(url)) respond(p6Submissions);
-
+	else if (url.startsWith("/api/admin/users/pending")) {
+	      respond({ content: mockPendingUsers, totalElements: mockPendingUsers.length, totalPages: 1, number: 0, size: 200 });
+	    }
+	    else if (url.startsWith("/api/admin/users/approved")) {
+	      respond({ content: mockApprovedUsers, totalElements: mockApprovedUsers.length, totalPages: 1, number: 0, size: 200 });
+	    }
+	    else if (url.includes("/approval")) {
+	      const payload = JSON.parse(config.data as string);
+	      respond({ accountStatus: payload.approve ? "APPROVED" : "REJECTED" });
+	    }
     return config;
   });
 }
+
 
 /* Dữ liệu mẫu cho 3 tab của P6 (JAV-15) — chỉ để xem giao diện khi chưa có backend. */
 const p6Criteria = [
@@ -199,3 +209,25 @@ const p6Disqualifications = [
 ];
 const p6Teams = { content: [{ id: "tm-1", name: "Đội Alpha" }, { id: "tm-2", name: "Đội Beta" }, { id: "tm-9", name: "Đội Zeta" }], totalElements: 3, totalPages: 1, number: 0, size: 100 };
 const p6Submissions = { content: [], totalElements: 0, totalPages: 1, number: 0, size: 100 };
+
+const mockPendingUsers: UserSummary[] = [
+  { id: "u-1", fullName: "Nguyễn Văn Chờ", email: "cho@fpt.edu.vn", userCategory: "FPT_STUDENT", studentCode: "SE123456", schoolName: null, accountStatus: "PENDING", guestJudge: false, createdAt: "2026-08-10T10:00:00Z" },
+  { id: "u-2", fullName: "Trần Khách", email: "khach@external.edu.vn", userCategory: "EXTERNAL_STUDENT", studentCode: null, schoolName: "Đại học Bách Khoa", accountStatus: "PENDING", guestJudge: false, createdAt: "2026-08-11T09:00:00Z" },
+];
+const mockApprovedUsers: UserSummary[] = [
+  { id: "u-3", fullName: "Lê Đã Duyệt", email: "duyet@fpt.edu.vn", userCategory: "FPT_STUDENT", studentCode: "SE654321", schoolName: null, accountStatus: "APPROVED", guestJudge: false, createdAt: "2026-08-01T08:00:00Z" },
+];
+
+export function installAuthMock() {
+  console.info("[devMock] Auth screens mock data active (?mock=auth)");
+  api.interceptors.request.use((config) => {
+    const url = config.url ?? "";
+    const respond = (data: unknown) => {
+      config.adapter = async () => ({ data, status: 200, statusText: "OK", headers: {}, config });
+    };
+    if (url === "/api/auth/register") {
+      respond({ id: "u-new", accountStatus: "PENDING", ...JSON.parse(config.data as string) });
+    }
+    return config;
+  });
+}
