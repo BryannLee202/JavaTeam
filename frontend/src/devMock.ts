@@ -128,6 +128,9 @@ export function installJudgeMock() {
     };
 
     if (url === "/api/auth/me") respond(user);
+    else if (url === "/api/auth/login") respond({ ok: true });
+    else if (url === "/api/auth/refresh") respond({ ok: true });
+    else if (url === "/api/auth/logout") respond({ ok: true });
     else if (url === `/api/rounds/${roundId}`) respond(round);
     else if (url === `/api/rounds/${roundId}/criteria`) respond(criteria);
     else if (url === `/api/rounds/${roundId}/submissions`) {
