@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:demo;MODE=PostgreSQL;DB_CLOSE_DELAY=-1}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER_CLASS_NAME:org.h2.Driver}
+  h2:
+    console:
+      enabled: true
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data-demo.sql
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    defer-datasource-initialization: true
+  flyway:
+    enabled: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dGhpcy1pcy1hLWRldi1vbmx5LXNlY3JldC1rZXktZm9yLXNlYWwtaGFja2F0aG9uLXN5c3RlbS0yMDI2}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4000}
+
+logging:
+  level:
+    com.seal.hackathon: INFO
+    org.springframework.security: WARN
