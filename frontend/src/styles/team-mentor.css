@@ -53,7 +53,7 @@ select {
 
 /* SIDEBAR */
 
-.sidebar-brand {
+.tm-sidebar-brand {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -76,12 +76,12 @@ select {
     font-size: 24px;
 }
 
-.sidebar-brand h2 {
+.tm-sidebar-brand h2 {
     margin: 0;
     font-size: 20px;
 }
 
-.sidebar-brand span {
+.tm-sidebar-brand span {
     font-size: 14px;
     opacity: 0.8;
 }
@@ -278,7 +278,7 @@ select {
 }
 
 .team-overview-card,
-.round-card {
+.tm-round-card {
     display: flex;
     align-items: center;
     gap: 20px;

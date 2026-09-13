@@ -33,9 +33,8 @@ const [teams] = useState<Team[]>([]);
 
     return (
         <div className="team-dashboard">
-            {/* Sidebar */}
             <aside className="team-sidebar">
-                <div className="sidebar-brand">
+                <div className="tm-sidebar-brand">
                     <div className="brand-icon">🏆</div>
 
                     <div>
@@ -62,7 +61,6 @@ const [teams] = useState<Team[]>([]);
                 </button>
             </aside>
 
-            {/* Main */}
             <main className="team-main">
                 {/* Topbar */}
                 <header className="team-topbar">
@@ -77,7 +75,6 @@ const [teams] = useState<Team[]>([]);
                 </header>
 
                 <div className="team-content">
-                    {/* Heading */}
                     <div className="section-header main-heading">
                         <div>
                             <h1>Mentor</h1>
@@ -89,7 +86,7 @@ const [teams] = useState<Team[]>([]);
                         </div>
                     </div>
 
-                    {/* Overview */}
+
                     <div className="overview-grid">
                         <section className="dashboard-card team-overview-card">
                             <div className="overview-icon blue">
@@ -113,7 +110,7 @@ const [teams] = useState<Team[]>([]);
                             </div>
                         </section>
 
-                        <section className="dashboard-card round-card">
+                        <section className="dashboard-card tm-round-card">
                             <div className="overview-icon green">
                                 👥
                             </div>
@@ -185,8 +182,6 @@ const [teams] = useState<Team[]>([]);
 )}
 </div>
                     </section>
-
-                    {/* Team detail */}
                     {selectedTeam && (
                         <section className="dashboard-card mentor-detail-card">
                             <div className="card-heading-row">

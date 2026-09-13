@@ -376,7 +376,7 @@ return (
     <div className="team-dashboard">
         {/* Sidebar */}
         <aside className="team-sidebar">
-            <div className="sidebar-brand">
+            <div className="tm-sidebar-brand">
                 <div className="brand-icon">🏆</div>
                 <div>
                     <h2>Hackathon</h2>
@@ -809,7 +809,7 @@ return (
                             </section>
 
                             {registeredTrack && currentRound ? (
-                                <section className="dashboard-card round-card">
+                                <section className="dashboard-card tm-round-card">
                                     <div className="overview-icon green">
                                         📅
                                     </div>
@@ -837,7 +837,7 @@ return (
                                 </section>
      
 ) : (
-    <section className="dashboard-card round-card">
+    <section className="dashboard-card tm-round-card">
         <div className="overview-icon green">
             🔒
         </div>
