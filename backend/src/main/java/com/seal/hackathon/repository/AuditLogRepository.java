@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
 
     Page<AuditLog> findByEntityTypeAndEntityId(String entityType, UUID entityId, Pageable pageable);
+
+    java.util.List<AuditLog> findByEntityTypeAndEntityId(String entityType, UUID entityId);
 }

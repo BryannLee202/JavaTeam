@@ -31,6 +31,12 @@ public class AuthController {
     public ResponseEntity<UserSummaryResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<java.util.Map<String, Boolean>> checkEmail(@org.springframework.web.bind.annotation.RequestParam String email) {
+        boolean available = authService.isEmailAvailable(email);
+        return ResponseEntity.ok(java.util.Map.of("available", available));
+    }
  
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {

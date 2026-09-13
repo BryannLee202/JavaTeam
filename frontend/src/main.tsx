@@ -10,6 +10,12 @@ if (devMockMode === 'judge') {
 } else if (devMockMode === 'coordinator') {
   const { installCoordinatorMock } = await import('./devMock')
   installCoordinatorMock()
+} else if (devMockMode === 'auth') {
+  const { installAuthMock } = await import('./devMock')
+  installAuthMock()
+} else if (devMockMode === 'public' || devMockMode === 'voting' || devMockMode === 'ranking') {
+  const { installPublicMock } = await import('./devMock')
+  installPublicMock()
 }
 
 createRoot(document.getElementById('root')!).render(
