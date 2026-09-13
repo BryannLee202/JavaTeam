@@ -1,0 +1,9 @@
+package com.seal.hackathon.dto.vote;
+
+import java.util.UUID;
+
+public record PublicTeamResponse(
+        UUID id,
+        String name
+) {
+}
