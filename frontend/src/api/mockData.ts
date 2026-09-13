@@ -9,6 +9,8 @@ import type {
   Round,
   RoundInput,
   Submission,
+  Team,
+  TeamInput,
   Track,
   TrackInput,
 } from "@/types";
@@ -48,6 +50,36 @@ let tracks: Track[] = [
   { id: "trk-1", eventId: "evt-1", name: "Web & Mobile", description: "Ứng dụng web / di động end-to-end.", mentorId: "men-1", mentorName: "TS. Nguyễn Văn A", teamCount: 7 },
   { id: "trk-2", eventId: "evt-1", name: "AI/ML", description: "Sản phẩm ứng dụng trí tuệ nhân tạo.", mentorId: "men-2", mentorName: "TS. Trần Thị B", teamCount: 6 },
   { id: "trk-3", eventId: "evt-1", name: "IoT & Hệ thống nhúng", description: "Giải pháp phần cứng kết hợp phần mềm.", mentorId: null, mentorName: null, teamCount: 5 },
+];
+
+let teams: Team[] = [
+  {
+    id: "tm-1", eventId: "evt-1", trackId: "trk-1", trackName: "Web & Mobile",
+    name: "Đội Alpha", status: "registered", createdAt: "2026-08-02T09:00:00Z",
+    members: [
+      { id: "mem-1", fullName: "Nguyễn Minh Anh", email: "anh.nm@example.com", isLeader: true },
+      { id: "mem-2", fullName: "Lê Quốc Bảo", email: "bao.lq@example.com", isLeader: false },
+      { id: "mem-3", fullName: "Phạm Thu Cúc", email: "cuc.pt@example.com", isLeader: false },
+    ],
+  },
+  {
+    id: "tm-2", eventId: "evt-1", trackId: "trk-2", trackName: "AI/ML",
+    name: "Đội Beta", status: "registered", createdAt: "2026-08-03T14:20:00Z",
+    members: [
+      { id: "mem-4", fullName: "Trần Gia Huy", email: "huy.tg@example.com", isLeader: true },
+      { id: "mem-5", fullName: "Đỗ Khánh Linh", email: "linh.dk@example.com", isLeader: false },
+      { id: "mem-6", fullName: "Vũ Nhật Minh", email: "minh.vn@example.com", isLeader: false },
+      { id: "mem-7", fullName: "Hoàng Yến Nhi", email: "nhi.hy@example.com", isLeader: false },
+    ],
+  },
+  {
+    id: "tm-3", eventId: "evt-1", trackId: "trk-1", trackName: "Web & Mobile",
+    name: "Đội Gamma", status: "forming", createdAt: "2026-08-05T08:45:00Z",
+    members: [
+      { id: "mem-8", fullName: "Bùi Tuấn Kiệt", email: "kiet.bt@example.com", isLeader: true },
+      { id: "mem-9", fullName: "Ngô Phương Thảo", email: "thao.np@example.com", isLeader: false },
+    ],
+  },
 ];
 
 let rounds: Round[] = [
@@ -202,6 +234,56 @@ export const mockApi = {
     return delay(tracks.find((t) => t.id === trackId)!);
   },
 
+  // Teams (P4 — JAV-14) --------------------------------------------------
+  listTeams: (eventId: string) => delay(teams.filter((t) => t.eventId === eventId)),
+
+  getTeam: (teamId: string) => delay(teams.find((t) => t.id === teamId)!),
+
+  createTeam: (eventId: string, input: TeamInput) => {
+    const track = tracks.find((tr) => tr.id === input.trackId);
+    const created: Team = {
+      id: uid("tm"),
+      eventId,
+      trackId: input.trackId,
+      trackName: track?.name ?? "—",
+      name: input.name,
+      status: "forming",
+      members: input.members.map((m) => ({ ...m, id: uid("mem") })),
+      createdAt: nowIso(),
+    };
+    teams = [...teams, created];
+    bumpEventCounts(eventId);
+    return delay(created);
+  },
+
+  updateTeam: (teamId: string, input: TeamInput) => {
+    const track = tracks.find((tr) => tr.id === input.trackId);
+    teams = teams.map((t) =>
+      t.id === teamId
+        ? {
+            ...t,
+            name: input.name,
+            trackId: input.trackId,
+            trackName: track?.name ?? t.trackName,
+            members: input.members.map((m) => ({ ...m, id: uid("mem") })),
+          }
+        : t
+    );
+    return delay(teams.find((t) => t.id === teamId)!);
+  },
+
+  deleteTeam: (teamId: string) => {
+    const t = teams.find((tm) => tm.id === teamId);
+    teams = teams.filter((tm) => tm.id !== teamId);
+    if (t) bumpEventCounts(t.eventId);
+    return delay(undefined);
+  },
+
+  changeTeamStatus: (teamId: string, status: Team["status"]) => {
+    teams = teams.map((t) => (t.id === teamId ? { ...t, status } : t));
+    return delay(teams.find((t) => t.id === teamId)!);
+  },
+
   // Rounds ---------------------------------------------------------------
   listRounds: (eventId: string) => delay(rounds.filter((r) => r.eventId === eventId).sort((a, b) => a.order - b.order)),
 
@@ -271,6 +353,7 @@ function bumpEventCounts(eventId: string) {
           ...e,
           trackCount: tracks.filter((t) => t.eventId === eventId).length,
           roundCount: rounds.filter((r) => r.eventId === eventId).length,
+          teamCount: teams.filter((t) => t.eventId === eventId).length,
           updatedAt: nowIso(),
         }
       : e
