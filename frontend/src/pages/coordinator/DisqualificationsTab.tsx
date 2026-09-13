@@ -102,6 +102,7 @@ export default function DisqualificationsTab({ eventId, rounds }: EventTabProps)
         teamId: targetType === "TEAM" ? targetId : null,
         submissionId: targetType === "SUBMISSION" ? targetId : null,
         reason: reason.trim(),
+        eventId,
       });
       setTargetId("");
       setReason("");
