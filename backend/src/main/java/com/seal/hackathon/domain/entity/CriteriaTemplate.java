@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Bo tieu chi mau, dung lai duoc giua nhieu su kien. */
 @Getter
 @Setter
 @Entity
@@ -23,6 +24,7 @@ public class CriteriaTemplate extends BaseEntity {
 
     private String description;
 
+    /** Bo mac dinh duoc goi y san khi tao vong thi moi. */
     @Column(nullable = false)
     private boolean isDefault;
 }

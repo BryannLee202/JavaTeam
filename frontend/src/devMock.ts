@@ -169,13 +169,8 @@ export function installCoordinatorMock() {
 
     if (url === "/api/auth/me") respond(coordinatorUser);
     else if (url === "/api/auth/logout" || url === "/api/auth/refresh") respond({});
-    // Các endpoint của P6 (JAV-15) — lớp API của mảng này chưa có chế độ mock riêng.
-    else if (url === "/api/criteria-templates") respond(p6Templates);
-    else if (/^\/api\/rounds\/[^/]+\/criteria$/.test(url)) respond(p6Criteria);
-    else if (/^\/api\/events\/[^/]+\/prizes$/.test(url)) respond(p6Prizes);
-    else if (/^\/api\/events\/[^/]+\/disqualifications$/.test(url)) respond(p6Disqualifications);
-    else if (/^\/api\/events\/[^/]+\/teams$/.test(url)) respond(p6Teams);
-    else if (/^\/api\/rounds\/[^/]+\/submissions$/.test(url)) respond(p6Submissions);
+    // Cac endpoint cua P6 (tieu chi, giai thuong, xu ly vi pham) da co backend that
+    // tu task BE-3 nen khong mock nua — de chung di thang toi API.
 	else if (url.startsWith("/api/admin/users/pending")) {
 	      respond({ content: mockPendingUsers, totalElements: mockPendingUsers.length, totalPages: 1, number: 0, size: 200 });
 	    }
@@ -191,24 +186,6 @@ export function installCoordinatorMock() {
 }
 
 
-/* Dữ liệu mẫu cho 3 tab của P6 (JAV-15) — chỉ để xem giao diện khi chưa có backend. */
-const p6Criteria = [
-  { id: "c1", roundId: "rnd-1", name: "Tính khả thi", description: "Sản phẩm có thể triển khai thực tế.", weight: 40, orderIndex: 1 },
-  { id: "c2", roundId: "rnd-1", name: "Sáng tạo", description: "Ý tưởng mới mẻ, khác biệt.", weight: 35, orderIndex: 2 },
-  { id: "c3", roundId: "rnd-1", name: "Trình bày", description: "Khả năng thuyết trình, demo.", weight: 25, orderIndex: 3 },
-];
-const p6Templates = [
-  { id: "tpl-1", name: "Bộ tiêu chí chuẩn SEAL", description: "Dùng lại cho các mùa giải sau.", criteria: p6Criteria },
-];
-const p6Prizes = [
-  { id: "p1", eventId: "evt-1", name: "Giải Nhất", trackId: null, trackName: "Toàn cuộc thi", rank: 1, teamId: "tm-1", teamName: "Đội Alpha", revoked: false },
-  { id: "p2", eventId: "evt-1", name: "Giải Nhì", trackId: "trk-2", trackName: "AI/ML", rank: 2, teamId: "tm-2", teamName: "Đội Beta", revoked: false },
-];
-const p6Disqualifications = [
-  { id: "d1", eventId: "evt-1", teamId: "tm-9", teamName: "Đội Zeta", roundId: "rnd-1", roundName: "Vòng loại", reason: "Nộp bài sao chép từ nguồn khác.", decidedAt: "2026-08-15T09:30:00Z", decidedBy: "Trần Điều Phối Viên" },
-];
-const p6Teams = { content: [{ id: "tm-1", name: "Đội Alpha" }, { id: "tm-2", name: "Đội Beta" }, { id: "tm-9", name: "Đội Zeta" }], totalElements: 3, totalPages: 1, number: 0, size: 100 };
-const p6Submissions = { content: [], totalElements: 0, totalPages: 1, number: 0, size: 100 };
 
 const mockPendingUsers: UserSummary[] = [
   { id: "u-1", fullName: "Nguyễn Văn Chờ", email: "cho@fpt.edu.vn", userCategory: "FPT_STUDENT", studentCode: "SE123456", schoolName: null, accountStatus: "PENDING", guestJudge: false, createdAt: "2026-08-10T10:00:00Z" },
