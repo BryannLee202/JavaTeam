@@ -231,3 +231,116 @@ export function installAuthMock() {
     return config;
   });
 }
+
+/* Dữ liệu mẫu cho Landing, Voting, và Rankings (JAV-11) */
+const mockPublicEvents = [
+  {
+    id: "evt-1",
+    name: "SEAL Hackathon 2026",
+    description: "Cuộc thi sáng tạo phần mềm thường niên cho sinh viên Kỹ thuật Phần mềm",
+    startDate: "2026-08-01",
+    endDate: "2026-08-30",
+    status: "ONGOING",
+    baseCriteriaTemplateId: null,
+    rblEnabled: true,
+  },
+];
+
+const mockPublicTracks = [
+  { id: "trk-1", eventId: "evt-1", name: "AI & Trí tuệ nhân tạo", description: "Ứng dụng LLM, Computer Vision, Agentic AI", maxTeams: 20 },
+  { id: "trk-2", eventId: "evt-1", name: "Fintech & Doanh nghiệp", description: "Hệ thống thanh toán, ngân hàng mở, bảo mật", maxTeams: 20 },
+  { id: "trk-3", eventId: "evt-1", name: "Web3 & Cloud Native", description: "Phát triển ứng dụng phi tập trung, Microservices", maxTeams: 20 },
+];
+
+const mockPublicTeams: Record<string, { id: string; name: string }[]> = {
+  "trk-1": [
+    { id: "tm-1", name: "Alpha Neural" },
+    { id: "tm-2", name: "Visionary SE" },
+    { id: "tm-3", name: "AgentX Team" },
+  ],
+  "trk-2": [
+    { id: "tm-4", name: "PaySmart" },
+    { id: "tm-5", name: "LedgerSafe" },
+  ],
+  "trk-3": [
+    { id: "tm-6", name: "CloudVoyager" },
+    { id: "tm-7", name: "Web3Pioneers" },
+  ],
+};
+
+const mockTalliesState: Record<string, { teamId: string; teamName: string; voteCount: number }[]> = {
+  "trk-1": [
+    { teamId: "tm-1", teamName: "Alpha Neural", voteCount: 142 },
+    { teamId: "tm-2", teamName: "Visionary SE", voteCount: 98 },
+    { teamId: "tm-3", teamName: "AgentX Team", voteCount: 65 },
+  ],
+  "trk-2": [
+    { teamId: "tm-4", teamName: "PaySmart", voteCount: 110 },
+    { teamId: "tm-5", teamName: "LedgerSafe", voteCount: 84 },
+  ],
+  "trk-3": [
+    { teamId: "tm-6", teamName: "CloudVoyager", voteCount: 77 },
+    { teamId: "tm-7", teamName: "Web3Pioneers", voteCount: 53 },
+  ],
+};
+
+const mockRoundsList = [
+  { id: "rnd-1", eventId: "evt-1", name: "Vòng Sơ loại", orderIndex: 1, submissionDeadline: "2026-08-10T23:59:59Z", promotionTopN: 10, resultsPublished: true },
+  { id: "rnd-2", eventId: "evt-1", name: "Vòng Bán kết", orderIndex: 2, submissionDeadline: "2026-08-20T23:59:59Z", promotionTopN: 5, resultsPublished: true },
+  { id: "rnd-3", eventId: "evt-1", name: "Vòng Chung kết", orderIndex: 3, submissionDeadline: "2026-08-28T23:59:59Z", promotionTopN: 3, resultsPublished: true },
+];
+
+const mockRankingsList = [
+  { teamId: "tm-1", teamName: "Alpha Neural", trackId: "trk-1", trackName: "AI & Trí tuệ nhân tạo", roundId: "rnd-3", totalWeightedScore: 94.5, rankInTrack: 1, rankOverall: 1, promoted: true },
+  { teamId: "tm-4", teamName: "PaySmart", trackId: "trk-2", trackName: "Fintech & Doanh nghiệp", roundId: "rnd-3", totalWeightedScore: 91.2, rankInTrack: 1, rankOverall: 2, promoted: true },
+  { teamId: "tm-6", teamName: "CloudVoyager", trackId: "trk-3", trackName: "Web3 & Cloud Native", roundId: "rnd-3", totalWeightedScore: 88.0, rankInTrack: 1, rankOverall: 3, promoted: true },
+  { teamId: "tm-2", teamName: "Visionary SE", trackId: "trk-1", trackName: "AI & Trí tuệ nhân tạo", roundId: "rnd-3", totalWeightedScore: 86.4, rankInTrack: 2, rankOverall: 4, promoted: false },
+  { teamId: "tm-5", teamName: "LedgerSafe", trackId: "trk-2", trackName: "Fintech & Doanh nghiệp", roundId: "rnd-3", totalWeightedScore: 83.7, rankInTrack: 2, rankOverall: 5, promoted: false },
+];
+
+export function installPublicMock() {
+  console.info("[devMock] Public & Voting mock data active (?mock=public|voting|ranking)");
+  api.interceptors.request.use((config) => {
+    const url = config.url ?? "";
+    const method = (config.method ?? "get").toLowerCase();
+
+    const respond = (data: unknown) => {
+      config.adapter = async () => ({ data, status: 200, statusText: "OK", headers: {}, config });
+    };
+
+    if (url === "/api/public/voting/events" || url === "/api/events") {
+      respond(mockPublicEvents);
+    } else if (url.includes("/voting/events/") && url.endsWith("/tracks")) {
+      respond(mockPublicTracks);
+    } else if (url.includes("/voting/tracks/") && url.endsWith("/teams")) {
+      const parts = url.split("/");
+      const trkId = parts[parts.length - 2];
+      respond(mockPublicTeams[trkId] ?? []);
+    } else if (url.includes("/voting/tracks/") && url.endsWith("/tallies")) {
+      const parts = url.split("/");
+      const trkId = parts[parts.length - 2];
+      respond(mockTalliesState[trkId] ?? []);
+    } else if (method === "post" && url.includes("/voting/tracks/") && url.endsWith("/votes")) {
+      const parts = url.split("/");
+      const trkId = parts[parts.length - 2];
+      const payload = typeof config.data === "string" ? JSON.parse(config.data) : config.data;
+      const teamId = payload?.teamId;
+      const list = mockTalliesState[trkId] ?? [];
+      const item = list.find((t) => t.teamId === teamId);
+      const newCount = item ? ++item.voteCount : 1;
+      respond({ teamId, teamVoteCount: newCount });
+    } else if (url.includes("/rankings/export.xlsx")) {
+      const dummyExcel = new Blob(["SEAL-HACKATHON-EXCEL-DATA"], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      respond(dummyExcel);
+    } else if (url.includes("/rounds/") && url.endsWith("/rankings")) {
+      respond(mockRankingsList);
+    } else if (url.includes("/events/") && url.endsWith("/rounds")) {
+      respond(mockRoundsList);
+    }
+
+    return config;
+  });
+}
+
