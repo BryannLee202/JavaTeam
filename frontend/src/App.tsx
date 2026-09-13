@@ -10,6 +10,8 @@ import EventDetailPage from "@/pages/EventDetailPage";
 import { DEFAULT_TAB } from "@/pages/tabConfig";
 import { ToastContainer } from "./components/Toast";
 import "@/styles/global.css";
+import { RegisterPage } from "./pages/RegisterPage";
+import UsersApprovalPage from "./pages/coordinator/UsersApprovalPage";
 
 // /coordinator/events/:eventId (khong co doan tab) -> nhay ve tab mac dinh.
 // Tach thanh component rieng de khong lam roi doan :eventId khi resolve duong dan.
@@ -76,6 +78,8 @@ function AppRoutes() {
       />
 
       <Route path="*" element={<NotFoundPage />} />
+	  <Route path="/register" element={<RegisterPage />} />
+	  <Route path="/coordinator/users" element={<UsersApprovalPage />} />
     </Routes>
   );
 }
