@@ -1,3 +1,6 @@
+import MyTeam from "./pages/team/MyTeam";
+import Mentor from "./pages/mentor/Mentor";
+
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -10,6 +13,7 @@ import EventDetailPage from "@/pages/EventDetailPage";
 import { DEFAULT_TAB } from "@/pages/tabConfig";
 import { ToastContainer } from "./components/Toast";
 import "@/styles/global.css";
+import "@/styles/team-mentor.css";
 import { RegisterPage } from "./pages/RegisterPage";
 import UsersApprovalPage from "./pages/coordinator/UsersApprovalPage";
 
@@ -76,10 +80,13 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/team" element={<MyTeam />} />
+      <Route path="/mentor" element={<Mentor />} />
+
+	    <Route path="/register" element={<RegisterPage />} />
+	    <Route path="/coordinator/users" element={<UsersApprovalPage />} />
 
       <Route path="*" element={<NotFoundPage />} />
-	  <Route path="/register" element={<RegisterPage />} />
-	  <Route path="/coordinator/users" element={<UsersApprovalPage />} />
     </Routes>
   );
 }
