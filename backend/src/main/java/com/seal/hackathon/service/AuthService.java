@@ -53,18 +53,62 @@ public class AuthService {
         this.auditService = auditService;
     }
  
+    @Transactional(readOnly = true)
+    public boolean isEmailAvailable(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        return !userRepository.existsByEmailIgnoreCase(email.trim());
+    }
+
     @Transactional
     public UserSummaryResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmailIgnoreCase(request.email())) {
+        String fullName = request.fullName() != null ? request.fullName().trim() : "";
+        if (fullName.isEmpty()) {
+            throw ApiException.badRequest("Họ và tên không được để trống");
+        }
+
+        String email = request.email() != null ? request.email().trim().toLowerCase() : "";
+        if (email.isEmpty()) {
+            throw ApiException.badRequest("Email không được để trống");
+        }
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw ApiException.conflict("Email đã được sử dụng để đăng ký");
         }
+
+        String studentCode = request.studentCode() != null ? request.studentCode().trim() : null;
+        if (studentCode != null && studentCode.isEmpty()) {
+            studentCode = null;
+        }
+
+        String schoolName = request.schoolName() != null ? request.schoolName().trim() : null;
+        if (schoolName != null && schoolName.isEmpty()) {
+            schoolName = null;
+        }
+
+        if (request.userCategory() == UserCategory.FPT_STUDENT) {
+            if (studentCode == null) {
+                throw ApiException.badRequest("Sinh viên FPT bắt buộc phải cung cấp mã số sinh viên");
+            }
+            if (userRepository.existsByStudentCodeIgnoreCaseAndUserCategory(studentCode, UserCategory.FPT_STUDENT)) {
+                throw ApiException.conflict("Mã số sinh viên FPT này đã được đăng ký");
+            }
+        } else if (request.userCategory() == UserCategory.EXTERNAL_STUDENT) {
+            if (studentCode == null) {
+                throw ApiException.badRequest("Sinh viên ngoài trường bắt buộc phải cung cấp mã số sinh viên");
+            }
+            if (schoolName == null) {
+                throw ApiException.badRequest("Sinh viên ngoài trường bắt buộc phải cung cấp tên trường");
+            }
+        }
+
         User user = User.builder()
-                .fullName(request.fullName())
-                .email(request.email().toLowerCase())
+                .fullName(fullName)
+                .email(email)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .userCategory(request.userCategory())
-                .studentCode(request.studentCode())
-                .schoolName(request.schoolName())
+                .studentCode(studentCode)
+                .schoolName(schoolName)
                 .accountStatus(AccountStatus.PENDING)
                 .guestJudge(false)
                 .build();
