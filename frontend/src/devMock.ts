@@ -1,11 +1,25 @@
 /**
  * TEMPORARY dev-only visual QA helper — NOT part of the feature.
- * Activates only when running `vite dev` AND the URL has `?mock=judge`.
- * Intercepts axios calls with fixture data so /judge can be inspected
+ * Activates only when running `vite dev` AND the URL has `?mock=judge`
+ * or `?mock=coordinator`.
+ *
+ * Intercepts axios calls with fixture data so the frontend can be inspected
  * without a running backend/bff. Safe to delete at any time.
  */
+
 import { api } from "./api/client";
-import type { CurrentUser, RoundItem, CriterionItem, SubmissionItem, ScoreItem, CalibrationRoundItem } from "./api/types";
+import type {
+  CurrentUser,
+  RoundItem,
+  CriterionItem,
+  SubmissionItem,
+  ScoreItem,
+  CalibrationRoundItem,
+} from "./api/types";
+
+// ============================================================
+// Judge mock data
+// ============================================================
 
 const roundId = "round-1";
 const eventId = "event-1";
@@ -19,7 +33,14 @@ const user: CurrentUser = {
   userId: "judge-1",
   email: "judge@example.com",
   fullName: "Nguyễn Văn Giám Khảo",
-  roles: [{ roleName: "JUDGE", scopeType: "ROUND", scopeId: roundId, judgeType: "INTERNAL" }],
+  roles: [
+    {
+      roleName: "JUDGE",
+      scopeType: "ROUND",
+      scopeId: roundId,
+      judgeType: "INTERNAL",
+    },
+  ],
 };
 
 const round: RoundItem = {
@@ -33,9 +54,33 @@ const round: RoundItem = {
 };
 
 const criteria: CriterionItem[] = [
-  { id: critTech, templateId: null, roundId, name: "Kỹ thuật & Triển khai", description: null, weight: 50, maxScore: 10 },
-  { id: critUx, templateId: null, roundId, name: "Trải nghiệm người dùng", description: null, weight: 25, maxScore: 10 },
-  { id: critImpact, templateId: null, roundId, name: "Tác động & Ý tưởng", description: null, weight: 25, maxScore: 10 },
+  {
+    id: critTech,
+    templateId: null,
+    roundId,
+    name: "Kỹ thuật & Triển khai",
+    description: null,
+    weight: 50,
+    maxScore: 10,
+  },
+  {
+    id: critUx,
+    templateId: null,
+    roundId,
+    name: "Trải nghiệm người dùng",
+    description: null,
+    weight: 25,
+    maxScore: 10,
+  },
+  {
+    id: critImpact,
+    templateId: null,
+    roundId,
+    name: "Tác động & Ý tưởng",
+    description: null,
+    weight: 25,
+    maxScore: 10,
+  },
 ];
 
 const submissions: SubmissionItem[] = [
@@ -106,7 +151,13 @@ const scoresBySubmission: Record<string, ScoreItem[]> = {
 };
 
 const calibrationRounds: CalibrationRoundItem[] = [
-  { id: "calib-1", eventId, sampleSubmissionId: submissionId1, name: "Hiệu chuẩn vòng chung kết", active: true },
+  {
+    id: "calib-1",
+    eventId,
+    sampleSubmissionId: submissionId1,
+    name: "Hiệu chuẩn vòng chung kết",
+    active: true,
+  },
 ];
 
 export function installJudgeMock() {
@@ -127,21 +178,221 @@ export function installJudgeMock() {
       });
     };
 
-    if (url === "/api/auth/me") respond(user);
-    else if (url === "/api/auth/login") respond({ ok: true });
-    else if (url === "/api/auth/refresh") respond({ ok: true });
-    else if (url === "/api/auth/logout") respond({ ok: true });
-    else if (url === `/api/rounds/${roundId}`) respond(round);
-    else if (url === `/api/rounds/${roundId}/criteria`) respond(criteria);
-    else if (url === `/api/rounds/${roundId}/submissions`) {
-      respond({ content: submissions, totalElements: submissions.length, totalPages: 1, number: 0, size: 20 });
-    } else if (url === `/api/events/${eventId}/calibration-rounds`) respond(calibrationRounds);
-    else if (url === `/api/submissions/${submissionId1}`) respond(submissions[0]);
-    else if (url === `/api/submissions/${submissionId2}`) respond(submissions[1]);
-    else if (url === `/api/submissions/${submissionId1}/scores`) respond(scoresBySubmission[submissionId1]);
-    else if (url === `/api/submissions/${submissionId2}/scores`) respond(scoresBySubmission[submissionId2]);
-    else if (method === "put" && url.includes("/scores")) respond([]);
-    else if (url === "/api/auth/logout" || url === "/api/auth/refresh") respond({});
+    if (url === "/api/auth/me") {
+      respond(user);
+    } else if (url === "/api/auth/login") {
+      respond({ ok: true });
+    } else if (url === "/api/auth/refresh") {
+      respond({ ok: true });
+    } else if (url === "/api/auth/logout") {
+      respond({ ok: true });
+    } else if (url === `/api/rounds/${roundId}`) {
+      respond(round);
+    } else if (url === `/api/rounds/${roundId}/criteria`) {
+      respond(criteria);
+    } else if (url === `/api/rounds/${roundId}/submissions`) {
+      respond({
+        content: submissions,
+        totalElements: submissions.length,
+        totalPages: 1,
+        number: 0,
+        size: 20,
+      });
+    } else if (url === `/api/events/${eventId}/calibration-rounds`) {
+      respond(calibrationRounds);
+    } else if (url === `/api/submissions/${submissionId1}`) {
+      respond(submissions[0]);
+    } else if (url === `/api/submissions/${submissionId2}`) {
+      respond(submissions[1]);
+    } else if (url === `/api/submissions/${submissionId1}/scores`) {
+      respond(scoresBySubmission[submissionId1]);
+    } else if (url === `/api/submissions/${submissionId2}/scores`) {
+      respond(scoresBySubmission[submissionId2]);
+    } else if (method === "put" && url.includes("/scores")) {
+      respond([]);
+    }
+
+    return config;
+  });
+}
+
+// ============================================================
+// Coordinator mock data
+// ============================================================
+
+/**
+ * Mock cho khu Coordinator (?mock=coordinator).
+ * Dùng để kiểm tra giao diện Coordinator khi chưa có backend thật.
+ */
+
+const coordinatorUser: CurrentUser = {
+  userId: "coord-1",
+  email: "coordinator@example.com",
+  fullName: "Trần Điều Phối Viên",
+  roles: [
+    {
+      roleName: "COORDINATOR",
+      scopeType: "GLOBAL",
+      scopeId: null,
+      judgeType: null,
+    },
+  ],
+};
+
+/**
+ * Dữ liệu mẫu cho các tab P6:
+ * - Tiêu chí chấm điểm
+ * - Template tiêu chí
+ * - Giải thưởng
+ * - Loại
+ * - Đội thi
+ * - Bài nộp
+ */
+
+const p6Criteria = [
+  {
+    id: "c1",
+    roundId: "rnd-1",
+    name: "Tính khả thi",
+    description: "Sản phẩm có thể triển khai thực tế.",
+    weight: 40,
+    orderIndex: 1,
+  },
+  {
+    id: "c2",
+    roundId: "rnd-1",
+    name: "Sáng tạo",
+    description: "Ý tưởng mới mẻ, khác biệt.",
+    weight: 35,
+    orderIndex: 2,
+  },
+  {
+    id: "c3",
+    roundId: "rnd-1",
+    name: "Trình bày",
+    description: "Khả năng thuyết trình và demo.",
+    weight: 25,
+    orderIndex: 3,
+  },
+];
+
+const p6Templates = [
+  {
+    id: "tpl-1",
+    name: "Bộ tiêu chí chuẩn SEAL",
+    description: "Dùng lại cho các mùa giải sau.",
+    criteria: p6Criteria,
+  },
+];
+
+const p6Prizes = [
+  {
+    id: "p1",
+    eventId: "evt-1",
+    name: "Giải Nhất",
+    trackId: null,
+    trackName: "Toàn cuộc thi",
+    rank: 1,
+    teamId: "tm-1",
+    teamName: "Đội Alpha",
+    revoked: false,
+  },
+  {
+    id: "p2",
+    eventId: "evt-1",
+    name: "Giải Nhì",
+    trackId: "trk-2",
+    trackName: "AI/ML",
+    rank: 2,
+    teamId: "tm-2",
+    teamName: "Đội Beta",
+    revoked: false,
+  },
+];
+
+const p6Disqualifications = [
+  {
+    id: "d1",
+    eventId: "evt-1",
+    teamId: "tm-9",
+    teamName: "Đội Zeta",
+    roundId: "rnd-1",
+    roundName: "Vòng loại",
+    reason: "Nộp bài sao chép từ nguồn khác.",
+    decidedAt: "2026-08-15T09:30:00Z",
+    decidedBy: "Trần Điều Phối Viên",
+  },
+];
+
+const p6Teams = {
+  content: [
+    {
+      id: "tm-1",
+      name: "Đội Alpha",
+    },
+    {
+      id: "tm-2",
+      name: "Đội Beta",
+    },
+    {
+      id: "tm-9",
+      name: "Đội Zeta",
+    },
+  ],
+  totalElements: 3,
+  totalPages: 1,
+  number: 0,
+  size: 100,
+};
+
+const p6Submissions = {
+  content: [],
+  totalElements: 0,
+  totalPages: 1,
+  number: 0,
+  size: 100,
+};
+
+export function installCoordinatorMock() {
+  // eslint-disable-next-line no-console
+  console.info(
+    "[devMock] Coordinator screens mock data active (?mock=coordinator)",
+  );
+
+  api.interceptors.request.use((config) => {
+    const url = config.url ?? "";
+
+    const respond = (data: unknown) => {
+      config.adapter = async () => ({
+        data,
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config,
+      });
+    };
+
+    if (url === "/api/auth/me") {
+      respond(coordinatorUser);
+    } else if (url === "/api/auth/login") {
+      respond({ ok: true });
+    } else if (url === "/api/auth/refresh") {
+      respond({ ok: true });
+    } else if (url === "/api/auth/logout") {
+      respond({ ok: true });
+    } else if (url === "/api/criteria-templates") {
+      respond(p6Templates);
+    } else if (/^\/api\/rounds\/[^/]+\/criteria$/.test(url)) {
+      respond(p6Criteria);
+    } else if (/^\/api\/events\/[^/]+\/prizes$/.test(url)) {
+      respond(p6Prizes);
+    } else if (/^\/api\/events\/[^/]+\/disqualifications$/.test(url)) {
+      respond(p6Disqualifications);
+    } else if (/^\/api\/events\/[^/]+\/teams$/.test(url)) {
+      respond(p6Teams);
+    } else if (/^\/api\/rounds\/[^/]+\/submissions$/.test(url)) {
+      respond(p6Submissions);
+    }
 
     return config;
   });
