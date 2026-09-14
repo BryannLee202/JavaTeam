@@ -143,11 +143,37 @@ public class TeamService {
         if (currentSize >= MAX_TEAM_SIZE) {
             throw ApiException.conflict("Đội đã đủ số lượng thành viên tối đa (5)");
         }
+
+        String invitedEmail = request.email().trim().toLowerCase();
+
+        // Kiểm tra người được mời đã là thành viên của đội hay chưa
+        boolean alreadyMember = teamMemberRepository.findByTeamId(teamId).stream()
+                .anyMatch(member ->
+                        member.getUser().getEmail().equalsIgnoreCase(invitedEmail)
+                );
+
+        if (alreadyMember) {
+            throw ApiException.conflict("Người dùng này đã là thành viên của đội");
+        }
+
+        // Không cho tạo nhiều lời mời PENDING cho cùng một email trong cùng đội
+        boolean pendingInviteExists =
+                teamInviteRepository.existsByTeamIdAndInvitedEmailIgnoreCaseAndStatus(
+                        teamId,
+                        invitedEmail,
+                        TeamInviteStatus.PENDING
+                );
+
+        if (pendingInviteExists) {
+            throw ApiException.conflict("Người dùng này đã có lời mời đang chờ xử lý");
+        }
+
         TeamInvite invite = TeamInvite.builder()
                 .team(team)
-                .invitedEmail(request.email().toLowerCase())
+                .invitedEmail(invitedEmail)
                 .status(TeamInviteStatus.PENDING)
                 .build();
+
         return TeamInviteResponse.from(teamInviteRepository.save(invite));
     }
 
@@ -180,6 +206,16 @@ public class TeamService {
             throw ApiException.conflict("Bạn đã là thành viên của đội này");
         }
 
+        boolean alreadyInATeam = teamMemberRepository.findByUserId(userId).stream()
+                .anyMatch(tm ->
+                        tm.getTeam().getEvent().getId()
+                                .equals(team.getEvent().getId())
+                );
+
+        if (alreadyInATeam) {
+            throw ApiException.conflict("Bạn đã thuộc một đội trong sự kiện này");
+        }
+
         invite.setStatus(TeamInviteStatus.ACCEPTED);
         teamInviteRepository.save(invite);
 
@@ -192,6 +228,27 @@ public class TeamService {
 
         return toResponse(team);
     }
+
+    @Transactional
+    public void declineInvite(UUID inviteId, UUID userId) {
+        TeamInvite invite = teamInviteRepository.findById(inviteId)
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy lời mời"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy người dùng"));
+
+        if (!invite.getInvitedEmail().equalsIgnoreCase(user.getEmail())) {
+            throw ApiException.forbidden("Lời mời này không dành cho bạn");
+        }
+
+        if (invite.getStatus() != TeamInviteStatus.PENDING) {
+            throw ApiException.conflict("Lời mời đã được xử lý trước đó");
+        }
+
+        invite.setStatus(TeamInviteStatus.DECLINED);
+        teamInviteRepository.save(invite);
+    }
+
 
     @Transactional
     public TeamResponse registerTrack(UUID teamId, RegisterTrackRequest request, UUID requesterUserId) {
