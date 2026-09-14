@@ -46,9 +46,10 @@ public class SubmissionController {
     @GetMapping("/api/teams/{teamId}/rounds/{roundId}/submission/status")
     public SubmissionStatusResponse getStatus(
             @PathVariable UUID teamId,
-            @PathVariable UUID roundId
+            @PathVariable UUID roundId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal
     ) {
-        return submissionService.getStatus(teamId, roundId);
+        return submissionService.getStatus(teamId, roundId, principal);
     }
 
     @GetMapping("/api/rounds/{roundId}/submissions")

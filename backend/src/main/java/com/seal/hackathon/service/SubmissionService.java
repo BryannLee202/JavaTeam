@@ -80,7 +80,7 @@ public class SubmissionService {
 
 
     @Transactional(readOnly = true)
-    public SubmissionStatusResponse getStatus(UUID teamId, UUID roundId) {
+    public SubmissionStatusResponse getStatus(UUID teamId, UUID roundId, AuthenticatedPrincipal principal) {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy đội thi"));
 
@@ -88,6 +88,21 @@ public class SubmissionService {
 
         if (!round.getEvent().getId().equals(team.getEvent().getId())) {
             throw ApiException.badRequest("Vòng thi không thuộc sự kiện của đội");
+        }
+
+        if (!principal.isCoordinator()
+                && !teamMemberRepository.existsByTeamIdAndUserId(teamId, principal.userId())
+                && !judgeAssignmentService.isJudgeAssignedToRound(principal.userId(), roundId)
+                && (team.getTrack() == null
+                || !principal.hasRoleInScope(
+                RoleName.MENTOR,
+                ScopeType.TRACK,
+                team.getTrack().getId()
+        ))) {
+
+            throw ApiException.forbidden(
+                    "Bạn không có quyền xem trạng thái bài nộp này"
+            );
         }
 
         var submissionOptional =
