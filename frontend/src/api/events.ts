@@ -28,10 +28,15 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
 
 export const eventsApi = {
   // ---- Events --------------------------------------------------------
-  list: (): Promise<HackathonEvent[]> => (USE_MOCK ? mockApi.listEvents() : http.get("/coordinator/events")),
+  list: (): Promise<HackathonEvent[]> =>
+  USE_MOCK
+    ? mockApi.listEvents()
+    : http.get("/events"),
 
-  get: (eventId: string): Promise<HackathonEvent> =>
-    USE_MOCK ? mockApi.getEvent(eventId) : http.get(`/coordinator/events/${eventId}`),
+get: (eventId: string): Promise<HackathonEvent> =>
+  USE_MOCK
+    ? mockApi.getEvent(eventId)
+    : http.get(`/events/${eventId}`),
 
   create: (input: EventInput): Promise<HackathonEvent> =>
     USE_MOCK ? mockApi.createEvent(input) : http.post("/coordinator/events", input),
@@ -47,7 +52,9 @@ export const eventsApi = {
 
   // ---- Tracks ----------------------------------------------------------
   listTracks: (eventId: string): Promise<Track[]> =>
-    USE_MOCK ? mockApi.listTracks(eventId) : http.get(`/coordinator/events/${eventId}/tracks`),
+  USE_MOCK
+    ? mockApi.listTracks(eventId)
+    : http.get(`/events/${eventId}/tracks`),
 
   listMentorDirectory: (): Promise<MentorRef[]> =>
     USE_MOCK ? mockApi.listMentorDirectory() : http.get("/coordinator/directory/mentors"),
@@ -92,7 +99,9 @@ export const eventsApi = {
 
   // ---- Rounds ----------------------------------------------------------
   listRounds: (eventId: string): Promise<Round[]> =>
-    USE_MOCK ? mockApi.listRounds(eventId) : http.get(`/coordinator/events/${eventId}/rounds`),
+  USE_MOCK
+    ? mockApi.listRounds(eventId)
+    : http.get(`/events/${eventId}/rounds`),
 
   listJudgeDirectory: (): Promise<JudgeRef[]> =>
     USE_MOCK ? mockApi.listJudgeDirectory() : http.get("/coordinator/directory/judges"),

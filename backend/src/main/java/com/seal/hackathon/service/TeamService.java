@@ -276,6 +276,32 @@ public class TeamService {
         return toResponse(teamRepository.save(team));
     }
 
+    @Transactional
+    public void removeMember(
+            UUID teamId,
+            UUID memberUserId,
+            UUID requesterUserId
+    ) {
+        Team team = findOrThrow(teamId);
+
+        assertIsLeader(team, requesterUserId);
+
+        TeamMember member = teamMemberRepository
+                .findByTeamIdAndUserId(teamId, memberUserId)
+                .orElseThrow(() ->
+                        ApiException.notFound("Không tìm thấy thành viên trong đội")
+                );
+
+        if (member.getRoleInTeam() == TeamMemberRole.LEADER) {
+            throw ApiException.badRequest(
+                    "Không thể xoá đội trưởng khỏi đội"
+            );
+        }
+
+        teamMemberRepository.delete(member);
+    }
+
+
     private void assertIsLeader(Team team, UUID userId) {
         TeamMember member = teamMemberRepository.findByTeamIdAndUserId(team.getId(), userId)
                 .orElseThrow(() -> ApiException.forbidden("Bạn không phải thành viên của đội này"));
