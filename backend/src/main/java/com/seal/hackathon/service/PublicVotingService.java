@@ -66,11 +66,17 @@ public class PublicVotingService {
 
     @Transactional(readOnly = true)
     public List<TrackResponse> listTracks(UUID eventId) {
+        if (eventId == null) {
+            throw ApiException.badRequest("Mã sự kiện không được để trống");
+        }
         return trackService.listByEvent(eventId);
     }
 
     @Transactional(readOnly = true)
     public List<PublicTeamResponse> listTeams(UUID trackId) {
+        if (trackId == null) {
+            throw ApiException.badRequest("Mã Hạng mục không được để trống");
+        }
         return teamRepository.findByTrackId(trackId).stream()
                 .map(PublicTeamResponse::from)
                 .collect(Collectors.toList());
@@ -78,8 +84,16 @@ public class PublicVotingService {
 
     @Transactional(readOnly = true)
     public List<TeamVoteTallyResponse> tallyByTrack(UUID trackId) {
+        if (trackId == null) {
+            throw ApiException.badRequest("Mã Hạng mục không được để trống");
+        }
         Map<UUID, Long> counts = voteRepository.countGroupedByTeamForTrack(trackId).stream()
-                .collect(Collectors.toMap(VoteRepository.TeamVoteCount::getTeamId, VoteRepository.TeamVoteCount::getVoteCount));
+                .filter(c -> c.getTeamId() != null)
+                .collect(Collectors.toMap(
+                        VoteRepository.TeamVoteCount::getTeamId,
+                        c -> c.getVoteCount() == null ? 0L : c.getVoteCount(),
+                        (existing, replacement) -> existing
+                ));
         return teamRepository.findByTrackId(trackId).stream()
                 .map(t -> new TeamVoteTallyResponse(t.getId(), t.getName(), counts.getOrDefault(t.getId(), 0L)))
                 .sorted(Comparator.comparingLong(TeamVoteTallyResponse::voteCount).reversed())
@@ -88,6 +102,12 @@ public class PublicVotingService {
 
     @Transactional
     public VoteCastResponse castVote(UUID trackId, CastVoteRequest request, String incomingVoterToken, String clientIp) {
+        if (trackId == null) {
+            throw ApiException.badRequest("Mã Hạng mục không được để trống");
+        }
+        if (request == null || request.teamId() == null) {
+            throw ApiException.badRequest("Mã đội thi không được để trống");
+        }
         Track track = trackService.findOrThrow(trackId);
         if (track.getEvent().getStatus() != EventStatus.OPEN && track.getEvent().getStatus() != EventStatus.ONGOING) {
             throw ApiException.conflict("Sự kiện hiện không mở bình chọn");
