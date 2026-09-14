@@ -8,6 +8,7 @@ import com.seal.hackathon.domain.entity.TeamMember;
 import com.seal.hackathon.domain.entity.Track;
 import com.seal.hackathon.domain.enums.RoleName;
 import com.seal.hackathon.domain.enums.ScopeType;
+import com.seal.hackathon.domain.enums.SubmissionStatus;
 import com.seal.hackathon.domain.enums.TeamMemberRole;
 import com.seal.hackathon.dto.submission.SubmissionRequest;
 import com.seal.hackathon.exception.ApiException;
@@ -229,5 +230,21 @@ class SubmissionServiceTest {
         var response = submissionService.get(submission.getId(), judgePrincipal);
 
         assertThat(response.repoUrl()).isEqualTo("https://x");
+    }
+
+    @Test
+    void getStatus_shouldReturnPending_whenNoSubmissionAndDeadlineNotPassed() {
+        when(teamMemberRepository.existsByTeamIdAndUserId(teamId, userId))
+                .thenReturn(true);
+
+        when(submissionRepository.findByTeamIdAndRoundId(teamId, roundId))
+                .thenReturn(Optional.empty());
+
+        AuthenticatedPrincipal member =
+                principalWithRole(userId, RoleName.TEAM_MEMBER);
+
+        var response = submissionService.getStatus(teamId, roundId, member);
+
+        assertThat(response.status()).isEqualTo(SubmissionStatus.PENDING);
     }
 }

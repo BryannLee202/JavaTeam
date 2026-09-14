@@ -118,12 +118,10 @@ public class SubmissionService {
                     : SubmissionStatus.ON_TIME;
         } else {
             if (!Instant.now().isAfter(round.getSubmissionDeadline())) {
-                throw ApiException.conflict(
-                        "Đội chưa nộp bài và vòng thi vẫn còn thời gian nộp"
-                );
+                status = SubmissionStatus.PENDING;
+            } else {
+                status = SubmissionStatus.MISSING;
             }
-
-            status = SubmissionStatus.MISSING;
         }
 
         return new SubmissionStatusResponse(
