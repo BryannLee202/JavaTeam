@@ -1,0 +1,74 @@
+# =============================================================================
+# Backend CI — kiểm tra code Java trước khi merge
+# =============================================================================
+# Trigger: mọi PR vào main, và mỗi lần push thẳng lên main
+# Actions:
+#   1. Cài JDK 21 (đúng java.version trong pom.xml)
+#   2. Biên dịch và chạy toàn bộ test  (mvnw test)
+#   3. Đăng báo cáo test lên tab Summary của lượt chạy
+#
+# Mục đích: trước đây repo chỉ có CI cho frontend, nên PR thuần backend không
+# có check nào chạy. PR #24 sửa 8 file Java, 212 dòng, mà không một dòng nào
+# được máy kiểm — phải chạy tay mới biết nó xanh. Từ giờ mọi PR đụng vào
+# backend/ đều được biên dịch và chạy test tự động.
+#
+# Test dùng H2 in-memory (xem backend/src/test/resources/application.yml) nên
+# không cần dựng Postgres trong CI.
+# =============================================================================
+
+name: "Backend CI"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+permissions:
+  contents: read
+
+# Push liên tiếp lên cùng một PR thì huỷ lượt chạy cũ, đỡ tốn runner.
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  build-and-test:
+    name: Build và test backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cài JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Biên dịch và chạy test
+        run: ./mvnw --batch-mode --no-transfer-progress test
+
+      - name: Báo cáo kết quả test
+        # Vẫn chạy khi test fail, để xem được test nào hỏng thay vì chỉ thấy log đỏ.
+        if: always()
+        uses: mikepenz/action-junit-report@v5
+        with:
+          report_paths: backend/target/surefire-reports/TEST-*.xml
+          check_name: "Kết quả test backend"
+          fail_on_failure: true
+          require_tests: true
