@@ -1,7 +1,10 @@
 package com.seal.hackathon.service;
 
+import com.seal.hackathon.domain.entity.Team;
+import com.seal.hackathon.domain.entity.Track;
 import com.seal.hackathon.domain.entity.Vote;
 import com.seal.hackathon.domain.enums.AuditAction;
+import com.seal.hackathon.domain.enums.EventStatus;
 import com.seal.hackathon.dto.event.EventResponse;
 import com.seal.hackathon.dto.event.TrackResponse;
 import com.seal.hackathon.dto.vote.CastVoteRequest;
@@ -9,6 +12,7 @@ import com.seal.hackathon.dto.vote.PublicTeamResponse;
 import com.seal.hackathon.dto.vote.TeamVoteTallyResponse;
 import com.seal.hackathon.dto.vote.VoteCastResponse;
 import com.seal.hackathon.exception.ApiException;
+import com.seal.hackathon.repository.TeamRepository;
 import com.seal.hackathon.repository.VoteRepository;
 import com.seal.hackathon.security.JwtService;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -28,60 +32,70 @@ import java.util.stream.Collectors;
 @Service
 public class PublicVotingService {
 
-    private static final long IP_VOTE_CAP_PER_TRACK = 20;
+    private static final long IP_VOTE_CAP_PER_TRACK = 20; // rộng rãi: chấp nhận wifi chung tại sự kiện, chỉ chặn script lạm dụng
 
+    private final EventService eventService;
+    private final TrackService trackService;
+    private final TeamRepository teamRepository;
     private final VoteRepository voteRepository;
     private final JwtService jwtService;
     private final AuditService auditService;
-    private final PublicVotingDataProvider dataProvider;
 
     public PublicVotingService(
+            EventService eventService,
+            TrackService trackService,
+            TeamRepository teamRepository,
             VoteRepository voteRepository,
             JwtService jwtService,
-            AuditService auditService,
-            PublicVotingDataProvider dataProvider
+            AuditService auditService
     ) {
+        this.eventService = eventService;
+        this.trackService = trackService;
+        this.teamRepository = teamRepository;
         this.voteRepository = voteRepository;
         this.jwtService = jwtService;
         this.auditService = auditService;
-        this.dataProvider = dataProvider;
     }
 
     @Transactional(readOnly = true)
     public List<EventResponse> listVotableEvents() {
-        return dataProvider.listVotableEvents();
+        return eventService.list().stream()
+                .filter(e -> e.status() != EventStatus.DRAFT && e.status() != EventStatus.CANCELLED)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<TrackResponse> listTracks(UUID eventId) {
-        return dataProvider.listTracks(eventId);
+        if (eventId == null) {
+            throw ApiException.badRequest("Mã sự kiện không được để trống");
+        }
+        return trackService.listByEvent(eventId);
     }
 
     @Transactional(readOnly = true)
     public List<PublicTeamResponse> listTeams(UUID trackId) {
-        return dataProvider.listTeams(trackId);
+        if (trackId == null) {
+            throw ApiException.badRequest("Mã Hạng mục không được để trống");
+        }
+        return teamRepository.findByTrackId(trackId).stream()
+                .map(PublicTeamResponse::from)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<TeamVoteTallyResponse> tallyByTrack(UUID trackId) {
-        List<VoteRepository.TeamVoteCount> tallies = voteRepository.countGroupedByTeamForTrack(trackId);
-        List<PublicTeamResponse> teams = dataProvider.listTeams(trackId);
-
-        if (!teams.isEmpty()) {
-            Map<UUID, Long> counts = tallies.stream()
-                    .collect(Collectors.toMap(VoteRepository.TeamVoteCount::getTeamId, VoteRepository.TeamVoteCount::getVoteCount));
-            return teams.stream()
-                    .map(t -> new TeamVoteTallyResponse(t.id(), t.name(), counts.getOrDefault(t.id(), 0L)))
-                    .sorted(Comparator.comparingLong(TeamVoteTallyResponse::voteCount).reversed())
-                    .collect(Collectors.toList());
+        if (trackId == null) {
+            throw ApiException.badRequest("Mã Hạng mục không được để trống");
         }
-
-        return tallies.stream()
-                .map(item -> new TeamVoteTallyResponse(
-                        item.getTeamId(),
-                        dataProvider.getTeamName(item.getTeamId()),
-                        item.getVoteCount() != null ? item.getVoteCount() : 0L
-                ))
+        Map<UUID, Long> counts = voteRepository.countGroupedByTeamForTrack(trackId).stream()
+                .filter(c -> c.getTeamId() != null)
+                .collect(Collectors.toMap(
+                        VoteRepository.TeamVoteCount::getTeamId,
+                        c -> c.getVoteCount() == null ? 0L : c.getVoteCount(),
+                        (existing, replacement) -> existing
+                ));
+        return teamRepository.findByTrackId(trackId).stream()
+                .map(t -> new TeamVoteTallyResponse(t.getId(), t.getName(), counts.getOrDefault(t.getId(), 0L)))
                 .sorted(Comparator.comparingLong(TeamVoteTallyResponse::voteCount).reversed())
                 .collect(Collectors.toList());
     }
@@ -93,6 +107,15 @@ public class PublicVotingService {
         }
         if (request == null || request.teamId() == null) {
             throw ApiException.badRequest("Mã đội thi không được để trống");
+        }
+        Track track = trackService.findOrThrow(trackId);
+        if (track.getEvent().getStatus() != EventStatus.OPEN && track.getEvent().getStatus() != EventStatus.ONGOING) {
+            throw ApiException.conflict("Sự kiện hiện không mở bình chọn");
+        }
+        Team team = teamRepository.findById(request.teamId())
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đội thi"));
+        if (team.getTrack() == null || !team.getTrack().getId().equals(trackId)) {
+            throw ApiException.badRequest("Đội thi không thuộc Hạng mục này");
         }
 
         UUID voterId = jwtService.resolveOrCreateVoterId(incomingVoterToken);
@@ -108,19 +131,13 @@ public class PublicVotingService {
         }
 
         try {
-            voteRepository.save(Vote.builder()
-                    .teamId(request.teamId())
-                    .trackId(trackId)
-                    .voterIdHash(voterIdHash)
-                    .ipHash(ipHash)
-                    .build());
+            voteRepository.save(Vote.builder().team(team).track(track).voterIdHash(voterIdHash).ipHash(ipHash).build());
         } catch (DataIntegrityViolationException raceLoser) {
             throw ApiException.conflict("Bạn đã bình chọn cho Hạng mục này rồi");
         }
 
-        auditService.record(null, AuditAction.VOTE_CAST, "Team", request.teamId(), null, trackId);
-        long teamVoteCount = voteRepository.countByTeamId(request.teamId());
-        return new VoteCastResponse(request.teamId(), teamVoteCount, voterToken);
+        auditService.record(null, AuditAction.VOTE_CAST, "Team", team.getId(), null, trackId);
+        return new VoteCastResponse(team.getId(), voteRepository.countByTeamId(team.getId()), voterToken);
     }
 
     private String sha256Hex(String value) {

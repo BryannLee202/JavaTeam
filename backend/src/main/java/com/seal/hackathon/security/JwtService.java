@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
+
     private final SecretKey signingKey;
     private final long accessTokenExpirationMs;
     private final long refreshTokenExpirationMs;
@@ -28,7 +29,8 @@ public class JwtService {
     public JwtService(
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.access-token-expiration-ms}") long accessTokenExpirationMs,
-            @Value("${app.jwt.refresh-token-expiration-ms}") long refreshTokenExpirationMs) {
+            @Value("${app.jwt.refresh-token-expiration-ms}") long refreshTokenExpirationMs
+    ) {
         this.signingKey = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
         this.accessTokenExpirationMs = accessTokenExpirationMs;
         this.refreshTokenExpirationMs = refreshTokenExpirationMs;
@@ -45,6 +47,7 @@ public class JwtService {
                     return m;
                 })
                 .collect(Collectors.toList());
+
         Date now = new Date();
         return Jwts.builder()
                 .subject(principal.userId().toString())
@@ -112,8 +115,8 @@ public class JwtService {
         String email = claims.get("email", String.class);
         String fullName = claims.get("fullName", String.class);
         List<Map<String, Object>> roleClaims = claims.get("roles", List.class);
+
         List<AuthenticatedPrincipal.RoleGrant> roles = new ArrayList<>();
-        
         if (roleClaims != null) {
             for (Map<String, Object> rc : roleClaims) {
                 RoleName roleName = RoleName.valueOf((String) rc.get("role"));

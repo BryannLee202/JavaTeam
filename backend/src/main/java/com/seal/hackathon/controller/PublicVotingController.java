@@ -21,7 +21,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Controller cho toan bo endpoint binh chon cong khai khong can dang nhap.
+ * Toàn bộ endpoint bình chọn công khai (không cần đăng nhập) được gom vào một controller
+ * duy nhất để dễ rà soát bề mặt tấn công ẩn danh mới, thay vì rải rác vào các controller khác.
  */
 @RestController
 @RequestMapping("/api/public/voting")

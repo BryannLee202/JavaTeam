@@ -16,14 +16,11 @@ import java.util.stream.Collectors;
 public class MentorService {
 
     private final UserRoleAssignmentRepository roleAssignmentRepository;
-    private final TeamAccessProvider teamAccessProvider;
+    private final TeamService teamService;
 
-    public MentorService(
-            UserRoleAssignmentRepository roleAssignmentRepository,
-            TeamAccessProvider teamAccessProvider
-    ) {
+    public MentorService(UserRoleAssignmentRepository roleAssignmentRepository, TeamService teamService) {
         this.roleAssignmentRepository = roleAssignmentRepository;
-        this.teamAccessProvider = teamAccessProvider;
+        this.teamService = teamService;
     }
 
     @Transactional(readOnly = true)
@@ -32,6 +29,6 @@ public class MentorService {
                 .filter(a -> a.getRoleName() == RoleName.MENTOR && a.getScopeType() == ScopeType.TRACK)
                 .map(UserRoleAssignment::getScopeId)
                 .collect(Collectors.toList());
-        return teamAccessProvider.listTeamsByTracks(trackIds);
+        return teamService.listByTracks(trackIds);
     }
 }

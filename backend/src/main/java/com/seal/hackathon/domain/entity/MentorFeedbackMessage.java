@@ -15,13 +15,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
-
-/**
- * Tin nhan trao doi/phan hoi giua mentor va doi thi.
- * teamId luu dang UUID de dong bo voi database ma khong bi phu thuoc bien dich
- * vao entity Team (BE-4 chua co tren main).
- */
 @Getter
 @Setter
 @Entity
@@ -31,8 +24,9 @@ import java.util.UUID;
 @Builder
 public class MentorFeedbackMessage extends BaseEntity {
 
-    @Column(name = "team_id", nullable = false)
-    private UUID teamId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team team;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_user_id", nullable = false)

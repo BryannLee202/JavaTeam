@@ -8,21 +8,13 @@ import com.seal.hackathon.service.CriteriaTemplateService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/criteria-templates")
-@PreAuthorize("hasRole('COORDINATOR')")
 public class CriteriaTemplateController {
 
     private final CriteriaTemplateService templateService;
@@ -31,34 +23,32 @@ public class CriteriaTemplateController {
         this.templateService = templateService;
     }
 
+    @PostMapping
+    @PreAuthorize("hasRole('COORDINATOR')")
+    public CriteriaTemplateResponse create(@Valid @RequestBody CriteriaTemplateRequest request) {
+        return templateService.create(request);
+    }
+
     @GetMapping
     public List<CriteriaTemplateResponse> list() {
         return templateService.list();
     }
 
-    @GetMapping("/{templateId}")
-    public CriteriaTemplateResponse get(@PathVariable UUID templateId) {
-        return templateService.get(templateId);
+    @GetMapping("/{id}")
+    public CriteriaTemplateResponse get(@PathVariable UUID id) {
+        return templateService.get(id);
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CriteriaTemplateResponse create(@Valid @RequestBody CriteriaTemplateRequest request) {
-        return templateService.create(request);
+    @PostMapping("/{id}/criteria")
+    @PreAuthorize("hasRole('COORDINATOR')")
+    public CriterionResponse addCriterion(@PathVariable UUID id, @Valid @RequestBody CriterionRequest request) {
+        return templateService.addCriterion(id, request);
     }
 
-    @PostMapping("/{templateId}/criteria")
-    @ResponseStatus(HttpStatus.CREATED)
-    public CriterionResponse addCriterion(
-            @PathVariable UUID templateId,
-            @Valid @RequestBody CriterionRequest request
-    ) {
-        return templateService.addCriterion(templateId, request);
-    }
-
-    @DeleteMapping("/{templateId}/criteria/{criterionId}")
+    @DeleteMapping("/{id}/criteria/{criterionId}")
+    @PreAuthorize("hasRole('COORDINATOR')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeCriterion(@PathVariable UUID templateId, @PathVariable UUID criterionId) {
-        templateService.removeCriterion(templateId, criterionId);
+    public void removeCriterion(@PathVariable UUID id, @PathVariable UUID criterionId) {
+        templateService.removeCriterion(id, criterionId);
     }
 }

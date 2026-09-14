@@ -14,7 +14,8 @@ public record AuthenticatedPrincipal(
         String fullName,
         List<RoleGrant> roles
 ) {
-    public record RoleGrant(RoleName roleName, ScopeType scopeType, UUID scopeId, JudgeType judgeType) {}
+    public record RoleGrant(RoleName roleName, ScopeType scopeType, UUID scopeId, JudgeType judgeType) {
+    }
 
     public boolean hasRole(RoleName roleName) {
         return roles.stream().anyMatch(r -> r.roleName() == roleName);

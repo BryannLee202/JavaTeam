@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.UUID;
 
 public interface DisqualificationRepository extends JpaRepository<Disqualification, UUID> {
+    List<Disqualification> findByTeamIdAndRevokedFalse(UUID teamId);
+    List<Disqualification> findBySubmissionIdAndRevokedFalse(UUID submissionId);
+    List<Disqualification> findByTeam_Event_Id(UUID eventId);
+    List<Disqualification> findBySubmission_Round_Event_Id(UUID eventId);
 
-    List<Disqualification> findByEventIdOrderByDecidedAtDesc(UUID eventId);
-
-    boolean existsByTeamIdAndRevokedFalse(UUID teamId);
-
-    boolean existsBySubmissionIdAndRevokedFalse(UUID submissionId);
+    /** Batch variants of the single-id lookups above, used to avoid N+1 queries when checking a whole round at once. */
+    List<Disqualification> findByTeamIdInAndRevokedFalse(List<UUID> teamIds);
+    List<Disqualification> findBySubmissionIdInAndRevokedFalse(List<UUID> submissionIds);
 }

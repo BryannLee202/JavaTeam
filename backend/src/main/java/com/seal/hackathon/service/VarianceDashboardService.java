@@ -1,54 +1,57 @@
 package com.seal.hackathon.service;
 
+import com.seal.hackathon.domain.entity.Criterion;
+import com.seal.hackathon.domain.entity.Score;
+import com.seal.hackathon.domain.entity.Submission;
 import com.seal.hackathon.dto.rbl.VarianceStatResponse;
+import com.seal.hackathon.repository.CriterionRepository;
+import com.seal.hackathon.repository.ScoreRepository;
+import com.seal.hackathon.repository.SubmissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class VarianceDashboardService {
 
-    private final RblDataProvider rblDataProvider;
+    private final SubmissionRepository submissionRepository;
+    private final ScoreRepository scoreRepository;
+    private final CriterionRepository criterionRepository;
 
-    public VarianceDashboardService(RblDataProvider rblDataProvider) {
-        this.rblDataProvider = rblDataProvider;
+    public VarianceDashboardService(SubmissionRepository submissionRepository, ScoreRepository scoreRepository, CriterionRepository criterionRepository) {
+        this.submissionRepository = submissionRepository;
+        this.scoreRepository = scoreRepository;
+        this.criterionRepository = criterionRepository;
     }
 
     @Transactional(readOnly = true)
     public List<VarianceStatResponse> computeForRound(UUID roundId) {
-        List<VarianceStatResponse> precomputed = rblDataProvider.computeVariance(roundId);
-        if (precomputed != null && !precomputed.isEmpty()) {
-            return precomputed;
-        }
+        List<Submission> submissions = submissionRepository.findByRoundId(roundId);
+        List<Criterion> criteria = criterionRepository.findByRoundId(roundId);
+        List<UUID> submissionIds = submissions.stream().map(Submission::getId).toList();
+        // Batch-fetch scores for every submission in one query instead of one query per submission.
+        List<Score> allScores = scoreRepository.findBySubmissionIdIn(submissionIds).stream()
+                .filter(Score::isFinalized)
+                .toList();
 
-        List<RblDataProvider.RblScoreRecord> records = rblDataProvider.getRblScores(roundId);
-        if (records == null || records.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        Map<String, List<BigDecimal>> scoresByCriterion = records.stream()
-                .filter(r -> r.criterionName() != null && r.scoreValue() != null)
-                .collect(Collectors.groupingBy(
-                        RblDataProvider.RblScoreRecord::criterionName,
-                        Collectors.mapping(RblDataProvider.RblScoreRecord::scoreValue, Collectors.toList())
-                ));
-
-        return scoresByCriterion.entrySet().stream()
-                .map(entry -> buildStat(null, entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
+        return criteria.stream().map(criterion -> {
+            List<BigDecimal> values = allScores.stream()
+                    .filter(s -> s.getCriterion().getId().equals(criterion.getId()))
+                    .map(Score::getScoreValue)
+                    .toList();
+            return buildStat(criterion, values);
+        }).collect(Collectors.toList());
     }
 
-    public static VarianceStatResponse buildStat(UUID criterionId, String criterionName, List<BigDecimal> values) {
-        if (values == null || values.isEmpty()) {
-            return new VarianceStatResponse(criterionId, criterionName, 0, null, null, null, null);
+    private VarianceStatResponse buildStat(Criterion criterion, List<BigDecimal> values) {
+        if (values.isEmpty()) {
+            return new VarianceStatResponse(criterion.getId(), criterion.getName(), 0, null, null, null, null);
         }
         BigDecimal sum = values.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal mean = sum.divide(BigDecimal.valueOf(values.size()), MathContext.DECIMAL64);
@@ -65,8 +68,8 @@ public class VarianceDashboardService {
         BigDecimal max = values.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
 
         return new VarianceStatResponse(
-                criterionId,
-                criterionName,
+                criterion.getId(),
+                criterion.getName(),
                 values.size(),
                 mean.setScale(2, RoundingMode.HALF_UP),
                 stdDev.setScale(2, RoundingMode.HALF_UP),

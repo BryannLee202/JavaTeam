@@ -2,8 +2,17 @@ package com.seal.hackathon.domain.entity;
 
 import com.seal.hackathon.domain.enums.AccountStatus;
 import com.seal.hackathon.domain.enums.UserCategory;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.Instant;
 
 @Getter

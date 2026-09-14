@@ -10,4 +10,5 @@ public record AuthResponse(
         String fullName,
         String email,
         List<String> roles
-) {}
+) {
+}

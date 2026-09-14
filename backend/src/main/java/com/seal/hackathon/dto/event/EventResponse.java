@@ -1,5 +1,6 @@
 package com.seal.hackathon.dto.event;
 
+import com.seal.hackathon.domain.entity.HackathonEvent;
 import com.seal.hackathon.domain.enums.EventStatus;
 
 import java.time.LocalDate;
@@ -15,4 +16,16 @@ public record EventResponse(
         UUID baseCriteriaTemplateId,
         boolean rblEnabled
 ) {
+    public static EventResponse from(HackathonEvent event) {
+        return new EventResponse(
+                event.getId(),
+                event.getName(),
+                event.getDescription(),
+                event.getStartDate(),
+                event.getEndDate(),
+                event.getStatus(),
+                event.getBaseCriteriaTemplate() == null ? null : event.getBaseCriteriaTemplate().getId(),
+                event.isRblEnabled()
+        );
+    }
 }

@@ -85,12 +85,6 @@ export interface DisqualificationPayload {
   teamId: string | null;
   submissionId: string | null;
   reason: string;
-  /**
-   * Backend cần eventId để liệt kê quyết định theo sự kiện. Bản cũ suy ra được
-   * qua Team -> Event, nhưng entity Team thuộc BE-4 và chưa có trên main nên
-   * giao diện phải gửi thẳng.
-   */
-  eventId: string;
 }
 
 /* ── Dữ liệu tra cứu cho dropdown ───────────────────────────────────── */

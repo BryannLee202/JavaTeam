@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface CriterionRepository extends JpaRepository<Criterion, UUID> {
-
     List<Criterion> findByTemplateId(UUID templateId);
-
     List<Criterion> findByRoundId(UUID roundId);
 }

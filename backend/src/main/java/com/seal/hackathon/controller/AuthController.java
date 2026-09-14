@@ -1,5 +1,5 @@
 package com.seal.hackathon.controller;
- 
+
 import com.seal.hackathon.dto.auth.AuthResponse;
 import com.seal.hackathon.dto.auth.LoginRequest;
 import com.seal.hackathon.dto.auth.RefreshTokenRequest;
@@ -16,38 +16,32 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
- 
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
- 
+
     private final AuthService authService;
- 
+
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
- 
+
     @PostMapping("/register")
     public ResponseEntity<UserSummaryResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
-    @GetMapping("/check-email")
-    public ResponseEntity<java.util.Map<String, Boolean>> checkEmail(@org.springframework.web.bind.annotation.RequestParam String email) {
-        boolean available = authService.isEmailAvailable(email);
-        return ResponseEntity.ok(java.util.Map.of("available", available));
-    }
- 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
- 
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refresh(request.refreshToken()));
     }
- 
+
     @GetMapping("/me")
     public ResponseEntity<AuthenticatedPrincipal> me(@AuthenticationPrincipal AuthenticatedPrincipal principal) {
         return ResponseEntity.ok(principal);

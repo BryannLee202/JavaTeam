@@ -22,10 +22,7 @@ public class ReportExportController {
     }
 
     @GetMapping("/api/rounds/{roundId}/rankings/export.xlsx")
-    public ResponseEntity<byte[]> exportRankingExcel(
-            @PathVariable UUID roundId,
-            @AuthenticationPrincipal AuthenticatedPrincipal principal
-    ) {
+    public ResponseEntity<byte[]> exportRankingExcel(@PathVariable UUID roundId, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         byte[] bytes = reportExportService.exportRankingExcel(roundId, principal);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))

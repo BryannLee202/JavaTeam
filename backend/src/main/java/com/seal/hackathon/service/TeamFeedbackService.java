@@ -1,6 +1,7 @@
 package com.seal.hackathon.service;
 
 import com.seal.hackathon.domain.entity.MentorFeedbackMessage;
+import com.seal.hackathon.domain.entity.Team;
 import com.seal.hackathon.domain.entity.User;
 import com.seal.hackathon.domain.enums.AuditAction;
 import com.seal.hackathon.domain.enums.FeedbackAuthorRole;
@@ -10,6 +11,8 @@ import com.seal.hackathon.dto.mentor.FeedbackMessageRequest;
 import com.seal.hackathon.dto.mentor.FeedbackMessageResponse;
 import com.seal.hackathon.exception.ApiException;
 import com.seal.hackathon.repository.MentorFeedbackMessageRepository;
+import com.seal.hackathon.repository.TeamMemberRepository;
+import com.seal.hackathon.repository.TeamRepository;
 import com.seal.hackathon.repository.UserRepository;
 import com.seal.hackathon.security.AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
@@ -22,18 +25,21 @@ import java.util.stream.Collectors;
 @Service
 public class TeamFeedbackService {
 
-    private final TeamAccessProvider teamAccessProvider;
+    private final TeamRepository teamRepository;
+    private final TeamMemberRepository teamMemberRepository;
     private final MentorFeedbackMessageRepository messageRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
 
     public TeamFeedbackService(
-            TeamAccessProvider teamAccessProvider,
+            TeamRepository teamRepository,
+            TeamMemberRepository teamMemberRepository,
             MentorFeedbackMessageRepository messageRepository,
             UserRepository userRepository,
             AuditService auditService
     ) {
-        this.teamAccessProvider = teamAccessProvider;
+        this.teamRepository = teamRepository;
+        this.teamMemberRepository = teamMemberRepository;
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.auditService = auditService;
@@ -41,8 +47,8 @@ public class TeamFeedbackService {
 
     @Transactional(readOnly = true)
     public List<FeedbackMessageResponse> list(UUID teamId, AuthenticatedPrincipal principal) {
-        assertTeamExists(teamId);
-        assertCanAccess(teamId, principal);
+        Team team = findOrThrow(teamId);
+        assertCanAccess(team, principal);
         return messageRepository.findByTeamIdWithAuthorOrderByCreatedAtAsc(teamId).stream()
                 .map(m -> FeedbackMessageResponse.from(m, teamId))
                 .collect(Collectors.toList());
@@ -50,13 +56,13 @@ public class TeamFeedbackService {
 
     @Transactional
     public FeedbackMessageResponse post(UUID teamId, FeedbackMessageRequest request, AuthenticatedPrincipal principal) {
-        assertTeamExists(teamId);
-        FeedbackAuthorRole role = assertCanAccess(teamId, principal);
+        Team team = findOrThrow(teamId);
+        FeedbackAuthorRole role = assertCanAccess(team, principal);
         User author = userRepository.findById(principal.userId())
                 .orElseThrow(() -> ApiException.notFound("Không tìm thấy người dùng"));
 
         MentorFeedbackMessage message = MentorFeedbackMessage.builder()
-                .teamId(teamId)
+                .team(team)
                 .author(author)
                 .authorRole(role)
                 .body(request.body().trim())
@@ -67,26 +73,23 @@ public class TeamFeedbackService {
         return FeedbackMessageResponse.from(message, teamId);
     }
 
-    private FeedbackAuthorRole assertCanAccess(UUID teamId, AuthenticatedPrincipal principal) {
-        if (principal == null) {
-            throw ApiException.unauthorized("Cần đăng nhập để thực hiện thao tác này");
-        }
-        if (teamAccessProvider.isTeamMember(teamId, principal.userId())) {
+    /** Returns the role the caller is acting as; the role is always derived server-side, never taken from the client. */
+    private FeedbackAuthorRole assertCanAccess(Team team, AuthenticatedPrincipal principal) {
+        if (teamMemberRepository.existsByTeamIdAndUserId(team.getId(), principal.userId())) {
             return FeedbackAuthorRole.TEAM_MEMBER;
         }
-        UUID trackId = teamAccessProvider.getTeamTrackId(teamId);
-        if (trackId != null && principal.hasRoleInScope(RoleName.MENTOR, ScopeType.TRACK, trackId)) {
+        if (team.getTrack() != null
+                && principal.hasRoleInScope(RoleName.MENTOR, ScopeType.TRACK, team.getTrack().getId())) {
             return FeedbackAuthorRole.MENTOR;
         }
-        if (principal.isCoordinator() || principal.hasRole(RoleName.MENTOR)) {
+        if (principal.isCoordinator()) {
             return FeedbackAuthorRole.MENTOR;
         }
         throw ApiException.forbidden("Bạn không có quyền truy cập trao đổi của đội này");
     }
 
-    private void assertTeamExists(UUID teamId) {
-        if (!teamAccessProvider.teamExists(teamId)) {
-            throw ApiException.notFound("Không tìm thấy đội thi");
-        }
+    private Team findOrThrow(UUID teamId) {
+        return teamRepository.findById(teamId)
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đội thi"));
     }
 }
