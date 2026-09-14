@@ -67,6 +67,15 @@ public class TeamController {
         return teamService.acceptInvite(inviteId, principal.userId());
     }
 
+    @PostMapping("/api/invites/{inviteId}/decline")
+    public void declineInvite(
+            @PathVariable UUID inviteId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal
+    ) {
+        teamService.declineInvite(inviteId, principal.userId());
+    }
+
+
     @PostMapping("/api/teams/{teamId}/register-track")
     public TeamResponse registerTrack(
             @PathVariable UUID teamId,

@@ -7,6 +7,8 @@ import com.seal.hackathon.domain.entity.TeamMember;
 import com.seal.hackathon.domain.enums.RoleName;
 import com.seal.hackathon.domain.enums.ScopeType;
 import com.seal.hackathon.domain.enums.TeamMemberRole;
+import com.seal.hackathon.domain.enums.SubmissionStatus;
+import com.seal.hackathon.dto.submission.SubmissionStatusResponse;
 import com.seal.hackathon.dto.submission.SubmissionRequest;
 import com.seal.hackathon.dto.submission.SubmissionResponse;
 import com.seal.hackathon.exception.ApiException;
@@ -18,7 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -62,20 +63,74 @@ public class SubmissionService {
         if (!round.getEvent().getId().equals(team.getEvent().getId())) {
             throw ApiException.badRequest("Vòng thi không thuộc sự kiện của đội");
         }
-        if (Instant.now().isAfter(round.getSubmissionDeadline())) {
-            throw ApiException.conflict("Đã quá hạn nộp bài cho vòng thi này");
-        }
+
+        Instant submittedAt = Instant.now();
+        boolean isLate = submittedAt.isAfter(round.getSubmissionDeadline());
 
         Submission submission = submissionRepository.findByTeamIdAndRoundId(teamId, roundId)
                 .orElseGet(() -> Submission.builder().team(team).round(round).build());
         submission.setRepoUrl(request.repoUrl());
         submission.setDemoUrl(request.demoUrl());
         submission.setDocUrl(request.docUrl());
-        submission.setSubmittedAt(Instant.now());
-        submission.setLate(false);
+        submission.setSubmittedAt(submittedAt);
+        submission.setLate(isLate);
 
         return SubmissionResponse.from(submissionRepository.save(submission));
     }
+
+
+    @Transactional(readOnly = true)
+    public SubmissionStatusResponse getStatus(UUID teamId, UUID roundId, AuthenticatedPrincipal principal) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy đội thi"));
+
+        Round round = roundService.findOrThrow(roundId);
+
+        if (!round.getEvent().getId().equals(team.getEvent().getId())) {
+            throw ApiException.badRequest("Vòng thi không thuộc sự kiện của đội");
+        }
+
+        if (!principal.isCoordinator()
+                && !teamMemberRepository.existsByTeamIdAndUserId(teamId, principal.userId())
+                && !judgeAssignmentService.isJudgeAssignedToRound(principal.userId(), roundId)
+                && (team.getTrack() == null
+                || !principal.hasRoleInScope(
+                RoleName.MENTOR,
+                ScopeType.TRACK,
+                team.getTrack().getId()
+        ))) {
+
+            throw ApiException.forbidden(
+                    "Bạn không có quyền xem trạng thái bài nộp này"
+            );
+        }
+
+        var submissionOptional =
+                submissionRepository.findByTeamIdAndRoundId(teamId, roundId);
+
+        SubmissionStatus status;
+
+        if (submissionOptional.isPresent()) {
+            Submission submission = submissionOptional.get();
+
+            status = submission.isLate()
+                    ? SubmissionStatus.LATE
+                    : SubmissionStatus.ON_TIME;
+        } else {
+            if (!Instant.now().isAfter(round.getSubmissionDeadline())) {
+                status = SubmissionStatus.PENDING;
+            } else {
+                status = SubmissionStatus.MISSING;
+            }
+        }
+
+        return new SubmissionStatusResponse(
+                teamId,
+                roundId,
+                status
+        );
+    }
+
 
     @Transactional(readOnly = true)
     public Page<SubmissionResponse> listByRound(UUID roundId, AuthenticatedPrincipal principal, Pageable pageable) {

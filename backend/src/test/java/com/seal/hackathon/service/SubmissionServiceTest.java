@@ -8,6 +8,7 @@ import com.seal.hackathon.domain.entity.TeamMember;
 import com.seal.hackathon.domain.entity.Track;
 import com.seal.hackathon.domain.enums.RoleName;
 import com.seal.hackathon.domain.enums.ScopeType;
+import com.seal.hackathon.domain.enums.SubmissionStatus;
 import com.seal.hackathon.domain.enums.TeamMemberRole;
 import com.seal.hackathon.dto.submission.SubmissionRequest;
 import com.seal.hackathon.exception.ApiException;
@@ -121,14 +122,35 @@ class SubmissionServiceTest {
     }
 
     @Test
-    void submit_shouldThrowConflict_whenSubmissionDeadlinePassed() {
+    void submit_shouldMarkAsLate_whenSubmissionDeadlinePassed() {
         round.setSubmissionDeadline(Instant.now().minusSeconds(3600));
-        TeamMember member = TeamMember.builder().team(team).roleInTeam(TeamMemberRole.LEADER).build();
-        when(teamMemberRepository.findByTeamIdAndUserId(teamId, userId)).thenReturn(Optional.of(member));
 
-        assertThatThrownBy(() -> submissionService.submit(teamId, roundId, request, userId))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("quá hạn nộp bài");
+        TeamMember member = TeamMember.builder()
+                .team(team)
+                .roleInTeam(TeamMemberRole.LEADER)
+                .build();
+
+        when(teamMemberRepository.findByTeamIdAndUserId(teamId, userId))
+                .thenReturn(Optional.of(member));
+
+        when(submissionRepository.findByTeamIdAndRoundId(teamId, roundId))
+                .thenReturn(Optional.empty());
+
+        when(submissionRepository.save(any(Submission.class)))
+                .thenAnswer(invocation -> {
+                    Submission submission = invocation.getArgument(0);
+                    submission.setId(UUID.randomUUID());
+                    return submission;
+                });
+
+        var response = submissionService.submit(
+                teamId,
+                roundId,
+                request,
+                userId
+        );
+
+        assertThat(response.isLate()).isTrue();
     }
 
     @Test
@@ -208,5 +230,21 @@ class SubmissionServiceTest {
         var response = submissionService.get(submission.getId(), judgePrincipal);
 
         assertThat(response.repoUrl()).isEqualTo("https://x");
+    }
+
+    @Test
+    void getStatus_shouldReturnPending_whenNoSubmissionAndDeadlineNotPassed() {
+        when(teamMemberRepository.existsByTeamIdAndUserId(teamId, userId))
+                .thenReturn(true);
+
+        when(submissionRepository.findByTeamIdAndRoundId(teamId, roundId))
+                .thenReturn(Optional.empty());
+
+        AuthenticatedPrincipal member =
+                principalWithRole(userId, RoleName.TEAM_MEMBER);
+
+        var response = submissionService.getStatus(teamId, roundId, member);
+
+        assertThat(response.status()).isEqualTo(SubmissionStatus.PENDING);
     }
 }

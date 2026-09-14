@@ -2,6 +2,7 @@ package com.seal.hackathon.controller;
 
 import com.seal.hackathon.dto.submission.SubmissionRequest;
 import com.seal.hackathon.dto.submission.SubmissionResponse;
+import com.seal.hackathon.dto.submission.SubmissionStatusResponse;
 import com.seal.hackathon.security.AuthenticatedPrincipal;
 import com.seal.hackathon.service.SubmissionService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
 
 import java.util.UUID;
 
@@ -39,6 +41,15 @@ public class SubmissionController {
             @AuthenticationPrincipal AuthenticatedPrincipal principal
     ) {
         return submissionService.getByTeamAndRound(teamId, roundId, principal);
+    }
+
+    @GetMapping("/api/teams/{teamId}/rounds/{roundId}/submission/status")
+    public SubmissionStatusResponse getStatus(
+            @PathVariable UUID teamId,
+            @PathVariable UUID roundId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal
+    ) {
+        return submissionService.getStatus(teamId, roundId, principal);
     }
 
     @GetMapping("/api/rounds/{roundId}/submissions")
