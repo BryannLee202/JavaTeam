@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PersonPicker from "../../components/PersonPicker";
+import { teamApi } from "@/api/teamApi";
 
 type Member = {
     name: string;
@@ -12,6 +13,7 @@ type Invitation = {
 };
 
 type IncomingInvitation = {
+    id: string;
     teamName: string;
     invitedBy: string;
     invitedEmail: string;
@@ -53,7 +55,7 @@ function MyTeam() {
         useState<IncomingInvitation[]>([]);
 
     // Invitation view state
-    const [isInvitedUser] = useState(false);
+    const isInvitedUser = incomingInvitations.length > 0;
 
     // Notification message
     const [message, setMessage] = useState("");
@@ -79,8 +81,80 @@ function MyTeam() {
     const [currentRound] = useState<Round | null>(null);
 
     const [timeLeft, setTimeLeft] = useState("");
+
     const [isDeadlinePassed, setIsDeadlinePassed] =
         useState(false);
+        
+    useEffect(() => {
+    const loadMyTeams = async () => {
+        try {
+            const teams = await teamApi.getMyTeams();
+
+            if (teams.length === 0) {
+                setHasTeam(false);
+                return;
+            }
+
+            const team = teams[0];
+
+            setHasTeam(true);
+            setTeamName(team.name);
+
+            setMembers(
+                team.members.map((member) => ({
+                    name: member.fullName || member.email,
+                    role: member.isLeader
+                        ? "Leader"
+                        : "Member",
+                }))
+            );
+
+            if (team.trackName) {
+                setRegisteredTrack(team.trackName);
+            }
+        } catch (error) {
+            console.error(
+                "Failed to load team information:",
+                error
+            );
+        }
+    };
+
+    void loadMyTeams();
+}, []);
+
+
+
+
+useEffect(() => {
+    const loadMyInvites = async () => {
+        try {
+            const invites = await teamApi.getMyInvites();
+
+            setIncomingInvitations(
+                invites
+                    .filter(
+                        (invite) =>
+                            invite.status.toLowerCase() === "pending"
+                    )
+                    .map((invite) => ({
+                        id: invite.id, 
+                        teamName: invite.teamName,
+                        invitedBy: invite.invitedBy,
+                        invitedEmail: invite.email,
+                    }))
+            );
+        } catch (error) {
+            console.error(
+                "Failed to load team invitations:",
+                error
+            );
+        }
+    };
+
+    void loadMyInvites();
+}, []);
+
 
     useEffect(() => {
         if (!currentRound) {
@@ -152,13 +226,6 @@ function MyTeam() {
 
     setInvitations(newInvitations);
 
-    setIncomingInvitations(
-        selectedPeople.map((email) => ({
-            teamName: normalizedTeamName,
-            invitedBy: "Leader",
-            invitedEmail: email,
-        }))
-    );
 
     setHasTeam(true);
     setShowCreateForm(false);
@@ -218,62 +285,51 @@ function MyTeam() {
             },
         ]);
 
-        setIncomingInvitations((prevInvitations) => [
-            ...prevInvitations,
-            {
-                teamName: teamName,
-                invitedBy: "Leader",
-                invitedEmail: normalizedEmail,
-            },
-        ]);
-
         setMessage("");
         setInviteEmail("");
         setShowInviteForm(false);
     };
 
-    const handleAcceptInvitation = (email: string) => {
-        if (members.length >= 5) {
-            alert("Team can have maximum 5 members");
-            return;
-        }
-
-        const existedMember = members.some(
-            (member) =>
-                member.name.toLowerCase() ===
-                email.toLowerCase()
-        );
-
-        if (existedMember) {
-            alert("This user is already a team member");
-            return;
-        }
-
-        setMembers((prevMembers) => [
-            ...prevMembers,
-            {
-                name: email,
-                role: "Member",
-            },
-        ]);
-
-        setInvitations((prevInvitations) =>
-            prevInvitations.filter(
-                (invitation) => invitation.email !== email
-            )
-        );
+    const handleAcceptInvitation = async (inviteId: string) => {
+    try {
+        await teamApi.acceptInvite(inviteId);
 
         setIncomingInvitations((prevInvitations) =>
             prevInvitations.filter(
-                (invitation) =>
-                    invitation.invitedEmail !== email
+                (invitation) => invitation.id !== inviteId
             )
         );
 
-        setMessage(
-            `${email} accepted the team invitation.`
+        const teams = await teamApi.getMyTeams();
+
+        if (teams.length > 0) {
+            const team = teams[0];
+
+            setHasTeam(true);
+            setTeamName(team.name);
+
+            setMembers(
+                team.members.map((member) => ({
+                    name: member.fullName || member.email,
+                    role: member.isLeader
+                        ? "Leader"
+                        : "Member",
+                }))
+            );
+
+            if (team.trackName) {
+                setRegisteredTrack(team.trackName);
+            }
+        }
+
+        setMessage("Team invitation accepted successfully.");
+    } catch (error) {
+        console.error(
+            "Failed to accept team invitation:",
+            error
         );
-    };
+    }
+};
 
     const handleRejectInvitation = (email: string) => {
         setInvitations((prevInvitations) =>
@@ -483,7 +539,7 @@ return (
                                                     className="btn-primary"
                                                     onClick={() =>
                                                         handleAcceptInvitation(
-                                                            invitation.invitedEmail
+                                                            invitation.id
                                                         )
                                                     }
                                                 >
