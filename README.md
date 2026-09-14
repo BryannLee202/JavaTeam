@@ -175,6 +175,19 @@ frontend/src/
 bff/src/               NestJS: auth, proxy, voting
 ```
 
+## Ai làm mảng nào
+
+| Mảng | Nội dung | Người phụ trách |
+|---|---|---|
+| **BE-1 / FE-4** | Nền tảng User, phân quyền, JWT, lớp bảo mật BFF; đăng ký và duyệt tài khoản | Phạm Nguyễn Hoài Long |
+| **BE-2 / FE-6** | Cấu trúc cuộc thi: Event, Track, Round; trang chủ theo vai trò | Tạ Huỳnh Nguyên |
+| **BE-3 / FE-5** | Tiêu chí chấm, giải thưởng, xử lý vi phạm; bình chọn khán giả | Lê Minh Tài |
+| **BE-4 / FE-2 / FE-3** | Đội thi, thành viên, bài nộp; tab Đội thi; màn hình thí sinh | Trần Thị Yến Vy |
+| **BE-5 / FE-7** | Chấm điểm, hiệu chuẩn, phân công giám khảo, xếp hạng; màn mentor | Thục Toàn |
+| **BE-6 / FE-1** | Trang công khai, bình chọn, mentor, xuất báo cáo; landing page và bảng xếp hạng | Hoàng Lê Giang |
+
+Theo dõi tiến độ trên Jira, project **JAV**.
+
 ## Quy trình làm việc
 
 Mỗi người làm trên nhánh riêng, xong mở Pull Request vào `main`.
