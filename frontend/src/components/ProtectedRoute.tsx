@@ -4,7 +4,13 @@ import { useAuth } from "../context/AuthContext";
 import { Layout } from "./Layout";
 import type { RoleName } from "../api/types";
 
-export function ProtectedRoute({ children, requireRole }: { children: ReactNode; requireRole?: RoleName }) {
+export function ProtectedRoute({
+  children,
+  requireRole,
+}: {
+  children: ReactNode;
+  requireRole?: RoleName | RoleName[];
+}) {
   const { user, loading, hasRole } = useAuth();
 
   if (loading) {
@@ -13,7 +19,14 @@ export function ProtectedRoute({ children, requireRole }: { children: ReactNode;
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  if (requireRole && !hasRole(requireRole)) {
+  if (
+    requireRole &&
+    !(
+      Array.isArray(requireRole)
+        ? requireRole.some((role) => hasRole(role))
+        : hasRole(requireRole)
+    )
+  ) {
     return (
       <Layout>
         <div className="alert error">Bạn không có quyền truy cập trang này.</div>

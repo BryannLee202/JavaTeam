@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import PersonPicker from "../../components/PersonPicker";
 import { teamApi } from "@/api/teamApi";
+import { eventsApi } from "@/api/events";
+import { useAuth } from "@/context/AuthContext";
 
 type Member = {
+    userId: string;
     name: string;
+    email: string;
     role: "Leader" | "Member";
 };
 
@@ -15,38 +19,44 @@ type Invitation = {
 type IncomingInvitation = {
     id: string;
     teamName: string;
-    invitedBy: string;
     invitedEmail: string;
 };
 
 type Round = {
-    id: number;
+    id: string;
     name: string;
-    deadline: string;
+    submissionDeadline: string;
 };
 
 type Track = {
-    id: number;
+    id: string;
+    name: string;
+};
+
+type EventOption = {
+    id: string;
     name: string;
 };
 
 function MyTeam() {
+    const { hasRole, refreshPermissions } = useAuth();
+    const isTeamLeader = hasRole("TEAM_LEADER");
+
     const [hasTeam, setHasTeam] = useState(false);
     const [teamName, setTeamName] = useState("");
-    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [teamId, setTeamId] = useState("");
+    const [eventId, setEventId] = useState("");
+    const [events, setEvents] = useState<EventOption[]>([]);
+    const [selectedEventId, setSelectedEventId] = useState("");
 
+    const [showCreateForm, setShowCreateForm] = useState(false);
     const [createTeamStep, setCreateTeamStep] = useState(1);
     const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
 
     const [showInviteForm, setShowInviteForm] = useState(false);
     const [inviteEmail, setInviteEmail] = useState("");
 
-    const [members, setMembers] = useState<Member[]>([
-        {
-            name: "You",
-            role: "Leader",
-        },
-    ]);
+    const [members, setMembers] = useState<Member[]>([]);
 
     const [invitations, setInvitations] = useState<Invitation[]>([]);
 
@@ -63,7 +73,7 @@ function MyTeam() {
     // Track
     const [selectedTrack, setSelectedTrack] = useState("");
     const [registeredTrack, setRegisteredTrack] = useState("");
-    const [tracks] = useState<Track[]>([]);
+    const [tracks, setTracks] = useState<Track[]>([]);
 
     // Submission
     const [showSubmissionForm, setShowSubmissionForm] =
@@ -78,13 +88,19 @@ function MyTeam() {
     const [submissionLoadError, setSubmissionLoadError] =
         useState(false);
 
-    const [currentRound] = useState<Round | null>(null);
+    const [submissionStatus, setSubmissionStatus] =
+        useState<"PENDING" | "ON_TIME" | "LATE" | "MISSING">(
+            "PENDING"
+        );
+
+    const [currentRound, setCurrentRound] =
+        useState<Round | null>(null);
 
     const [timeLeft, setTimeLeft] = useState("");
 
     const [isDeadlinePassed, setIsDeadlinePassed] =
         useState(false);
-        
+
     useEffect(() => {
     const loadMyTeams = async () => {
         try {
@@ -97,17 +113,22 @@ function MyTeam() {
 
             const team = teams[0];
 
+            setTeamId(team.id);
+            setEventId(team.eventId);
             setHasTeam(true);
             setTeamName(team.name);
 
             setMembers(
-                team.members.map((member) => ({
-                    name: member.fullName || member.email,
-                    role: member.isLeader
-                        ? "Leader"
-                        : "Member",
-                }))
-            );
+    team.members.map((member) => ({
+    userId: member.userId,
+    name: member.fullName || member.email,
+    email: member.email,
+    role:
+        member.roleInTeam === "LEADER"
+            ? "Leader"
+            : "Member",
+}))
+);
 
             if (team.trackName) {
                 setRegisteredTrack(team.trackName);
@@ -122,6 +143,90 @@ function MyTeam() {
 
     void loadMyTeams();
 }, []);
+
+    useEffect(() => {
+    const loadRounds = async () => {
+        if (!eventId) {
+            return;
+        }
+
+        try {
+            const rounds = await eventsApi.listRounds(eventId);
+
+            if (rounds.length === 0) {
+                setCurrentRound(null);
+                return;
+            }
+
+            const sortedRounds = [...rounds].sort(
+                (a, b) => a.order - b.order
+            );
+
+            setCurrentRound(sortedRounds[0]);
+        } catch (error) {
+            console.error(
+                "Failed to load rounds:",
+                error
+            );
+        }
+    };
+
+    void loadRounds();
+}, [eventId]);
+
+useEffect(() => {
+    const loadTracks = async () => {
+        if (!eventId) return;
+
+        try {
+            const data = await eventsApi.listTracks(eventId);
+            setTracks(data);
+        } catch (error) {
+            console.error("Failed to load tracks:", error);
+        }
+    };
+
+    void loadTracks();
+}, [eventId]);
+
+useEffect(() => {
+    const loadSubmissionStatus = async () => {
+        if (!teamId || !currentRound) return;
+
+        try {
+            const response = await teamApi.getSubmissionStatus(
+                teamId,
+                currentRound.id
+            );
+
+            setSubmissionStatus(response.status);
+
+            const hasSubmission =
+                response.status === "ON_TIME" ||
+                response.status === "LATE";
+
+            setSubmitted(hasSubmission);
+
+            if (hasSubmission) {
+                const submission = await teamApi.getRoundSubmission(
+                    teamId,
+                    currentRound.id
+                );
+
+                setRepositoryUrl(submission.repoUrl);
+                setDemoUrl(submission.demoUrl || "");
+                setReportSlideUrl(submission.slideUrl || "");
+            }
+
+            setSubmissionLoadError(false);
+        } catch (error) {
+            console.error("Failed to load submission status:", error);
+            setSubmissionLoadError(true);
+        }
+    };
+
+    void loadSubmissionStatus();
+}, [teamId, currentRound]);
 
 
 
@@ -138,10 +243,9 @@ useEffect(() => {
                             invite.status.toLowerCase() === "pending"
                     )
                     .map((invite) => ({
-                        id: invite.id, 
+                        id: invite.id,
                         teamName: invite.teamName,
-                        invitedBy: invite.invitedBy,
-                        invitedEmail: invite.email,
+                        invitedEmail: invite.invitedEmail,
                     }))
             );
         } catch (error) {
@@ -164,7 +268,7 @@ useEffect(() => {
         }
         const updateCountdown = () => {
             const deadlineTime = new Date(
-                currentRound.deadline
+                currentRound.submissionDeadline
             ).getTime();
 
             const now = new Date().getTime();
@@ -208,32 +312,100 @@ useEffect(() => {
     }, [currentRound]);
 
 
-    const handleCreateTeam = () => {
+    useEffect(() => {
+    const loadEvents = async () => {
+        try {
+            const data = await eventsApi.list();
+
+            setEvents(
+                data.map((event) => ({
+                    id: event.id,
+                    name: event.name,
+                }))
+            );
+        } catch (error) {
+            console.error("Failed to load events:", error);
+        }
+    };
+
+    if (!hasTeam) {
+        loadEvents();
+    }
+}, [hasTeam]);
+
+
+    const handleCreateTeam = async () => {
     const normalizedTeamName = teamName.trim();
+
+    if (!selectedEventId) {
+        alert("Please select an event.");
+        return;
+    }
 
     if (!normalizedTeamName) {
         alert("Please enter a team name.");
         return;
     }
 
-    setTeamName(normalizedTeamName);
+    try {
+        const createdTeam = await teamApi.createTeam(
+            selectedEventId,
+            {
+                name: normalizedTeamName,
+            }
+        );
 
-    const newInvitations: Invitation[] =
-        selectedPeople.map((email) => ({
-            email,
-            status: "Pending",
-        }));
+        await refreshPermissions();
 
-    setInvitations(newInvitations);
+        setTeamId(createdTeam.id);
+        setEventId(selectedEventId);
+        setTeamName(createdTeam.name);
+        setHasTeam(true);
 
+        const newInvitations: Invitation[] = [];
 
-    setHasTeam(true);
-    setShowCreateForm(false);
-    setCreateTeamStep(1);
-    setSelectedPeople([]);
+        for (const email of selectedPeople) {
+            try {
+                await teamApi.inviteMember(createdTeam.id, {
+                    email,
+                });
+
+                newInvitations.push({
+                    email,
+                    status: "Pending",
+                });
+            } catch (error) {
+                console.error(
+                    `Failed to invite ${email}:`,
+                    error
+                );
+            }
+        }
+
+        setInvitations(newInvitations);
+        setShowCreateForm(false);
+        setCreateTeamStep(1);
+        setSelectedPeople([]);
+
+        setMessage("Team created successfully.");
+    } catch (error) {
+        console.error("Failed to create team:", error);
+        alert("Unable to create team.");
+    }
 };
 
-    const handleInviteMember = () => {
+    const handleInviteMember = async () => {
+        if (!isTeamLeader) {
+            alert("Only the team leader can invite members.");
+            return;
+        }
+
+
+        if (!teamId) {
+            alert("Team information is not available.");
+            return;
+        }
+
         if (!inviteEmail.trim()) {
             alert("Please enter member email");
             return;
@@ -252,13 +424,10 @@ useEffect(() => {
             return;
         }
 
-        const normalizedEmail = inviteEmail
-            .trim()
-            .toLowerCase();
+        const normalizedEmail = inviteEmail.trim().toLowerCase();
 
         const existedMember = members.some(
-            (member) =>
-                member.name.toLowerCase() === normalizedEmail
+            (member) => member.email.toLowerCase() === normalizedEmail
         );
 
         if (existedMember) {
@@ -268,8 +437,7 @@ useEffect(() => {
 
         const existedInvitation = invitations.some(
             (invitation) =>
-                invitation.email.toLowerCase() ===
-                normalizedEmail
+                invitation.email.toLowerCase() === normalizedEmail
         );
 
         if (existedInvitation) {
@@ -277,18 +445,71 @@ useEffect(() => {
             return;
         }
 
-        setInvitations((prevInvitations) => [
-            ...prevInvitations,
-            {
+        try {
+            await teamApi.inviteMember(teamId, {
                 email: normalizedEmail,
-                status: "Pending",
-            },
-        ]);
+            });
 
-        setMessage("");
-        setInviteEmail("");
-        setShowInviteForm(false);
+            setInvitations((prevInvitations) => [
+                ...prevInvitations,
+                { email: normalizedEmail, status: "Pending" },
+            ]);
+
+            setMessage("Invitation sent successfully.");
+            setInviteEmail("");
+            setShowInviteForm(false);
+        } catch (error) {
+            console.error("Failed to invite member:", error);
+            alert("Failed to invite member");
+        }
     };
+
+    const handleRemoveMember = async (
+    memberUserId: string,
+    memberName: string
+) => {
+
+        if (!isTeamLeader) {
+        alert("Only the team leader can remove members.");
+        return;
+    }
+
+    if (!teamId) {
+        alert("Team information is not available.");
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Are you sure you want to remove ${memberName} from the team?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await teamApi.removeMember(teamId, memberUserId);
+
+        const updatedTeam = await teamApi.getTeam(teamId);
+
+        setMembers(
+            updatedTeam.members.map((member) => ({
+                userId: member.userId,
+                name: member.fullName || member.email,
+                email: member.email,
+                role:
+                    member.roleInTeam === "LEADER"
+                        ? "Leader"
+                        : "Member",
+            }))
+        );
+
+        setMessage(`${memberName} removed from the team.`);
+    } catch (error) {
+        console.error("Failed to remove team member:", error);
+        alert("Failed to remove team member.");
+    }
+};
 
     const handleAcceptInvitation = async (inviteId: string) => {
     try {
@@ -305,17 +526,22 @@ useEffect(() => {
         if (teams.length > 0) {
             const team = teams[0];
 
+            setTeamId(team.id);
+            setEventId(team.eventId);
             setHasTeam(true);
             setTeamName(team.name);
 
             setMembers(
-                team.members.map((member) => ({
-                    name: member.fullName || member.email,
-                    role: member.isLeader
-                        ? "Leader"
-                        : "Member",
-                }))
-            );
+    team.members.map((member) => ({
+        userId: member.userId,
+        name: member.fullName || member.email,
+        email: member.email,
+        role:
+            member.roleInTeam === "LEADER"
+                ? "Leader"
+                : "Member",
+    }))
+);
 
             if (team.trackName) {
                 setRegisteredTrack(team.trackName);
@@ -331,37 +557,44 @@ useEffect(() => {
     }
 };
 
-    const handleRejectInvitation = (email: string) => {
-        setInvitations((prevInvitations) =>
-            prevInvitations.filter(
-                (invitation) => invitation.email !== email
-            )
-        );
+    const handleRejectInvitation = async (inviteId: string) => {
+        try {
+            await teamApi.declineInvite(inviteId);
 
-        setIncomingInvitations((prevInvitations) =>
-            prevInvitations.filter(
-                (invitation) =>
-                    invitation.invitedEmail !== email
-            )
-        );
+            setIncomingInvitations((prevInvitations) =>
+                prevInvitations.filter(
+                    (invitation) => invitation.id !== inviteId
+                )
+            );
 
-        setMessage(
-            `${email} rejected the team invitation.`
-        );
+            setMessage("Team invitation rejected successfully.");
+        } catch (error) {
+            console.error(
+                "Failed to reject team invitation:",
+                error
+            );
+        }
     };
 
-    const handleRegisterTrack = () => {
+    const handleRegisterTrack = async () => {
+
+        if (!isTeamLeader) {
+            alert("Only the team leader can register a track.");
+            return;
+        }
+
+        if (!teamId) {
+            alert("Team information is not available.");
+            return;
+        }
+
         if (registeredTrack) {
-            alert(
-                "Team has already registered for a track"
-            );
+            alert("Team has already registered for a track");
             return;
         }
 
         if (members.length < 3) {
-            alert(
-                "Team must have at least 3 members to register for a track"
-            );
+            alert("Team must have at least 3 members to register for a track");
             return;
         }
 
@@ -370,16 +603,23 @@ useEffect(() => {
             return;
         }
 
-        setRegisteredTrack(selectedTrack);
+        try {
+            await teamApi.registerTrack(teamId, {
+                trackId: selectedTrack,
+            });
 
-        alert(
-            `Successfully registered for ${selectedTrack}`
-        );
+            const track = tracks.find((item) => item.id === selectedTrack);
+            setRegisteredTrack(track?.name || selectedTrack);
+            alert("Track registered successfully");
+        } catch (error) {
+            console.error("Failed to register track:", error);
+            alert("Failed to register track");
+        }
     };
 
-    const handleSubmitProject = () => {
-        if (isDeadlinePassed) {
-            alert("Submission deadline has passed");
+    const handleSubmitProject = async () => {
+        if (!teamId || !currentRound) {
+            alert("Team or round information is not available.");
             return;
         }
 
@@ -400,7 +640,6 @@ useEffect(() => {
         const isValidUrl = (url: string) => {
             try {
                 const parsedUrl = new URL(url.trim());
-
                 return (
                     parsedUrl.protocol === "http:" ||
                     parsedUrl.protocol === "https:"
@@ -421,11 +660,35 @@ useEffect(() => {
             return;
         }
 
-        setSubmitted(true);
-        setSubmissionLoadError(false);
-        setShowSubmissionForm(false);
+        try {
+            await teamApi.submitRound(
+                teamId,
+                currentRound.id,
+                {
+                    repoUrl: repositoryUrl.trim(),
+                    demoUrl: demoUrl.trim(),
+                    slideUrl: reportSlideUrl.trim(),
+                }
+            );
 
-        alert("Submission successful");
+            const statusResponse = await teamApi.getSubmissionStatus(
+                teamId,
+                currentRound.id
+            );
+
+            setSubmissionStatus(statusResponse.status);
+            setSubmitted(
+                statusResponse.status === "ON_TIME" ||
+                statusResponse.status === "LATE"
+            );
+            setSubmissionLoadError(false);
+            setShowSubmissionForm(false);
+
+            alert("Submission successful");
+        } catch (error) {
+            console.error("Failed to submit project:", error);
+            alert("Failed to submit project");
+        }
     };
 
 return (
@@ -461,7 +724,7 @@ return (
 
         <main className="team-main">
 
-            <header className="team-topbar">          
+            <header className="team-topbar">
                 <div className="topbar-user">
                     <div className="user-avatar">T</div>
                     <strong>{teamName || "Team"}</strong>
@@ -514,13 +777,11 @@ return (
                                                 </p>
 
                                                 <p>
-                                                    <strong>
-                                                        Invited by:
-                                                    </strong>{" "}
-                                                    {
-                                                        invitation.invitedBy
-                                                    }
-                                                </p>                                        
+                                                    <strong>Email:</strong>{" "}
+                                                    {invitation.invitedEmail}
+                                                </p>
+
+
                                             </div>
 
                                             <div className="card-actions">
@@ -528,7 +789,7 @@ return (
                                                     className="btn-secondary"
                                                     onClick={() =>
                                                         handleRejectInvitation(
-                                                            invitation.invitedEmail
+                                                            invitation.id
                                                         )
                                                     }
                                                 >
@@ -650,6 +911,30 @@ return (
                         Choose a name for your team.
                     </p>
 
+
+                    <div className="form-group">
+                        <label>Event</label>
+    <select
+        value={selectedEventId}
+        onChange={(e) =>
+            setSelectedEventId(e.target.value)
+        }
+    >
+        <option value="">
+            -- Select Event --
+        </option>
+
+        {events.map((event) => (
+            <option
+                key={event.id}
+                value={event.id}
+            >
+                {event.name}
+            </option>
+        ))}
+    </select>
+</div>
+
                     <div className="form-group">
                         <label>Team Name</label>
 
@@ -680,7 +965,10 @@ return (
 
                         <button
                             className="btn-primary"
-                            disabled={!teamName.trim()}
+                            disabled={
+    !teamName.trim() ||
+    !selectedEventId
+}
                             onClick={() =>
                                 setCreateTeamStep(2)
                             }
@@ -822,7 +1110,7 @@ return (
                             <div>
                                 <h1>
                                     {hasTeam ? teamName : "My Team"}
-                                </h1>                       
+                                </h1>
                             </div>
                         </div>
 
@@ -880,10 +1168,10 @@ return (
                                         <p>
                                             Deadline:{" "}
                                             {new Date(
-                                                currentRound.deadline
+                                                currentRound.submissionDeadline
                                                 ).toLocaleString()}
                                         </p>
-                                        
+
 
                                         <p>
                                             ⏱ Time Left:{" "}
@@ -891,7 +1179,7 @@ return (
                                         </p>
                                     </div>
                                 </section>
-     
+
 ) : (
     <section className="dashboard-card tm-round-card">
         <div className="overview-icon green">
@@ -927,7 +1215,7 @@ return (
                                         </p>
                                     </div>
 
-                                    {!showInviteForm && (
+                                    {isTeamLeader && !showInviteForm && (
                                         <button
                                             className="btn-primary"
                                             onClick={() =>
@@ -942,38 +1230,48 @@ return (
                                 </div>
 
                                 <div className="dashboard-member-list">
-                                    {members.map(
-                                        (member, index) => (
-                                            <div
-                                                className="dashboard-member"
-                                                key={index}
-                                            >
-                                                <div className="member-avatar">
-                                                    {member.name
-                                                        .charAt(0)
-                                                        .toUpperCase()}
-                                                </div>
+    {members.map((member) => (
+        <div
+            className="dashboard-member"
+            key={member.userId}
+        >
+            <div className="member-avatar">
+                {member.name
+                    .charAt(0)
+                    .toUpperCase()}
+            </div>
 
-                                                <div className="member-name">
-                                                    {member.name}
-                                                </div>
+            <div className="member-name">
+                {member.name}
+            </div>
 
-                                                <span
-                                                    className={`dashboard-role ${
-                                                        member.role ===
-                                                        "Leader"
-                                                            ? "leader"
-                                                            : "member"
-                                                    }`}
-                                                >
-                                                    {
-                                                        member.role
-                                                    }
-                                                </span>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
+            <span
+                className={`dashboard-role ${
+                    member.role === "Leader"
+                        ? "leader"
+                        : "member"
+                }`}
+            >
+                {member.role}
+            </span>
+
+            {isTeamLeader && member.role !== "Leader" && (
+                <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() =>
+                        void handleRemoveMember(
+                            member.userId,
+                            member.name
+                        )
+                    }
+                >
+                    Remove
+                </button>
+            )}
+        </div>
+    ))}
+</div>
 
                                 {invitations.length > 0 && (
                                     <div className="pending-section">
@@ -1010,7 +1308,7 @@ return (
                                     </div>
                                 )}
 
-                                {showInviteForm && (
+                                {isTeamLeader && showInviteForm && (
                                     <div className="dashboard-form invite-dashboard-form">
                                         <label>
                                             Member Email
@@ -1056,84 +1354,89 @@ return (
                             </section>
 
                             {/* Track */}
-                            <section className="dashboard-card">
-                                <div className="card-heading-row">
-                                    <div>
-                                        <h2>
-                                            🎯 Track Registration
-                                        </h2>
-                                        <p>
-                                            Choose a track for your
-                                            team.
-                                        </p>
-                                    </div>
-                                </div>
+<section className="dashboard-card">
+    <div className="card-heading-row">
+        <div>
+            <h2>🎯 Track Registration</h2>
+            <p>
+                Choose a track for your team.
+            </p>
+        </div>
+    </div>
 
-                                {!registeredTrack ? (
-                                    <div className="track-dashboard-form">
-                                        <select
-                                            value={selectedTrack}
-                                            onChange={(e) =>
-                                                setSelectedTrack(
-                                                    e.target.value
-                                                )
-                                            }
-                                        >
-                                            <option value="">
-                                                {tracks.length === 0 ? "-- No tracks available --" : "-- Select Track --"}
-                                                </option>
-                                                
-                                                {tracks.map((track) => (
-                                                    <option
-                                                    key={track.id}
-                                                    value={track.name}
-                                                    >
-                                                        {track.name}
-                                                        </option>
-                                                ))}
-                                        </select>
+    {!registeredTrack ? (
+        isTeamLeader ? (
+            <div className="track-dashboard-form">
+                <select
+                    value={selectedTrack}
+                    onChange={(e) =>
+                        setSelectedTrack(e.target.value)
+                    }
+                >
+                    <option value="">
+                        {tracks.length === 0
+                            ? "-- No tracks available --"
+                            : "-- Select Track --"}
+                    </option>
 
-                                        <button
-                                            className="btn-primary full-width"
-                                            onClick={
-                                                handleRegisterTrack
-                                            }
-                                            disabled={
-                                                members.length < 3 ||
-                                                tracks.length === 0
-                                            }
-                                        >
-                                            Register for Track
-                                        </button>
+                    {tracks.map((track) => (
+                        <option
+                            key={track.id}
+                            value={track.id}
+                        >
+                            {track.name}
+                        </option>
+                    ))}
+                </select>
 
-                                        {members.length < 3 && (
-                                            <p className="helper-text">
-                                                You need at least
-                                                3 members to
-                                                register for a
-                                                track.
-                                            </p>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="registered-dashboard">
-                                        <div className="registered-icon">
-                                            ✓
-                                        </div>
+                <button
+                    className="btn-primary full-width"
+                    onClick={handleRegisterTrack}
+                    disabled={
+                        members.length < 3 ||
+                        tracks.length === 0
+                    }
+                >
+                    Register for Track
+                </button>
 
-                                        <div>
-                                            <p>
-                                                Registered Track
-                                            </p>
-                                            <strong>
-                                                {
-                                                    registeredTrack
-                                                }
-                                            </strong>
-                                        </div>
-                                    </div>
-                                )}
-                            </section>
+                {members.length < 3 && (
+                    <p className="helper-text">
+                        You need at least 3 members to
+                        register for a track.
+                    </p>
+                )}
+            </div>
+        ) : (
+            <div className="registered-dashboard">
+                <div className="registered-icon">
+                    ⏳
+                </div>
+
+                <div>
+                    <p>Track Registration</p>
+                    <strong>
+                        Waiting for the team leader to
+                        register a track.
+                    </strong>
+                </div>
+            </div>
+        )
+    ) : (
+        <div className="registered-dashboard">
+            <div className="registered-icon">
+                ✓
+            </div>
+
+            <div>
+                <p>Registered Track</p>
+                <strong>
+                    {registeredTrack}
+                </strong>
+            </div>
+        </div>
+    )}
+</section>
                         </div>
 
                         <section className="dashboard-card submission-dashboard-card">
@@ -1141,60 +1444,59 @@ return (
                                 <div>
                                     <h2>📄 Submission</h2>
                                     <p>
-                                        Submit your project before
-                                        the deadline.
+                                        Submit your project for the current round.
+                                        Late submissions will be marked as late.
                                     </p>
                                 </div>
                             </div>
 
                             {submissionLoadError ? (
                                 <div className="submission-alert warning">
-                                    <div className="alert-icon">
-                                        ⚠
-                                    </div>
-
+                                    <div className="alert-icon">⚠</div>
                                     <div>
-                                        <strong>
-                                            Failed to load
-                                            submission
-                                        </strong>
+                                        <strong>Failed to load submission</strong>
+                                        <p>Submission data could not be loaded.</p>
+                                    </div>
+                                </div>
+                            ) : submissionStatus === "PENDING" ? (
+                                <div className="submission-alert danger">
+                                    <div className="alert-icon">!</div>
+                                    <div>
+                                        <strong>Not submitted</strong>
                                         <p>
-                                            Submission data could
-                                            not be loaded.
+                                            Your team has not submitted the project
+                                            for this round yet.
                                         </p>
                                     </div>
                                 </div>
-                            ) : !submitted ? (
+                            ) : submissionStatus === "MISSING" ? (
                                 <div className="submission-alert danger">
-                                    <div className="alert-icon">
-                                        !
-                                    </div>
-
+                                    <div className="alert-icon">!</div>
                                     <div>
-                                        <strong>
-                                            Not submitted
-                                        </strong>
+                                        <strong>Missing submission</strong>
                                         <p>
-                                            Your team has not
-                                            submitted the project
-                                            for this round yet.
+                                            The deadline has passed and no submission
+                                            was found.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : submissionStatus === "LATE" ? (
+                                <div className="submission-alert warning">
+                                    <div className="alert-icon">⚠</div>
+                                    <div>
+                                        <strong>Submitted late</strong>
+                                        <p>
+                                            Your project was submitted after the deadline.
                                         </p>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="submission-alert success">
-                                    <div className="alert-icon">
-                                        ✓
-                                    </div>
-
+                                    <div className="alert-icon">✓</div>
                                     <div>
-                                        <strong>
-                                            Submitted successfully
-                                        </strong>
+                                        <strong>Submitted on time</strong>
                                         <p>
-                                            Your project has been
-                                            submitted for this
-                                            round.
+                                            Your project was submitted before the deadline.
                                         </p>
                                     </div>
                                 </div>
@@ -1210,14 +1512,13 @@ return (
                                             }
                                             disabled={
                                                 !registeredTrack ||
-                                                !currentRound ||
-                                                isDeadlinePassed
+                                                !currentRound
                                             }
                                         >
                                             {!currentRound
                                                 ? "Submission Not Available"
                                                 : isDeadlinePassed
-                                                ? "Submission Closed"
+                                                ? "⬆ Submit Late"
                                                 : "⬆ Submit Project"}
                                         </button>
 
@@ -1234,8 +1535,7 @@ return (
                                     </div>
                                 )}
 
-                            {showSubmissionForm &&
-                                !isDeadlinePassed && (
+                            {showSubmissionForm && (
                                     <div className="dashboard-form submission-dashboard-form">
                                         <div className="form-group">
                                             <label>
@@ -1311,9 +1611,6 @@ return (
                                                 className="btn-primary"
                                                 onClick={
                                                     handleSubmitProject
-                                                }
-                                                disabled={
-                                                    isDeadlinePassed
                                                 }
                                             >
                                                 Submit

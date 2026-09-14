@@ -1,5 +1,22 @@
 import { api } from "@/api/client";
-import type { Submission, Team } from "@/types";
+import type { Submission } from "@/types";
+
+export interface TeamMember {
+  userId: string;
+  fullName: string;
+  email: string;
+  roleInTeam: "LEADER" | "MEMBER";
+}
+
+export interface Team {
+  id: string;
+  eventId: string;
+  name: string;
+  trackId: string | null;
+  trackName: string | null;
+  status: string;
+  members: TeamMember[];
+}
 
 export interface CreateTeamRequest {
   name: string;
@@ -13,8 +30,7 @@ export interface TeamInvite {
   id: string;
   teamId: string;
   teamName: string;
-  invitedBy: string;
-  email: string;
+  invitedEmail: string;
   status: string;
 }
 
@@ -28,6 +44,12 @@ export interface SubmitRoundRequest {
   slideUrl?: string;
 }
 
+export interface SubmissionStatusResponse {
+  teamId: string;
+  roundId: string;
+  status: "PENDING" | "ON_TIME" | "LATE" | "MISSING";
+}
+
 export interface TeamMessage {
   id: string;
   senderId: string;
@@ -39,7 +61,6 @@ export interface TeamMessage {
 export interface SendTeamMessageRequest {
   content: string;
 }
-
 
 export const teamApi = {
   createTeam: async (
@@ -96,9 +117,24 @@ export const teamApi = {
     return response.data;
   },
 
-    acceptInvite: async (inviteId: string): Promise<void> => {
+  acceptInvite: async (inviteId: string): Promise<void> => {
     await api.post(
       `/api/invites/${inviteId}/accept`,
+    );
+  },
+
+  declineInvite: async (inviteId: string): Promise<void> => {
+    await api.post(
+      `/api/invites/${inviteId}/decline`,
+    );
+  },
+
+  removeMember: async (
+    teamId: string,
+    userId: string,
+  ): Promise<void> => {
+    await api.delete(
+      `/api/teams/${teamId}/members/${userId}`,
     );
   },
 
@@ -129,6 +165,17 @@ export const teamApi = {
   ): Promise<Submission> => {
     const response = await api.get<Submission>(
       `/api/teams/${teamId}/rounds/${roundId}/submission`,
+    );
+
+    return response.data;
+  },
+
+  getSubmissionStatus: async (
+    teamId: string,
+    roundId: string,
+  ): Promise<SubmissionStatusResponse> => {
+    const response = await api.get<SubmissionStatusResponse>(
+      `/api/teams/${teamId}/rounds/${roundId}/submission/status`,
     );
 
     return response.data;
