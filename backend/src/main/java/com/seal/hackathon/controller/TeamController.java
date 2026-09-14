@@ -84,4 +84,17 @@ public class TeamController {
     ) {
         return teamService.registerTrack(teamId, request, principal.userId());
     }
+
+    @DeleteMapping("/api/teams/{teamId}/members/{userId}")
+    public void removeMember(
+            @PathVariable UUID teamId,
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal AuthenticatedPrincipal principal
+    ) {
+        teamService.removeMember(
+                teamId,
+                userId,
+                principal.userId()
+        );
+    }
 }
