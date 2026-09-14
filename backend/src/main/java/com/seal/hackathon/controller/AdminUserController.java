@@ -1,5 +1,5 @@
 package com.seal.hackathon.controller;
- 
+
 import com.seal.hackathon.dto.auth.ApproveUserRequest;
 import com.seal.hackathon.dto.auth.CreateGuestJudgeRequest;
 import com.seal.hackathon.dto.auth.GuestJudgeCreatedResponse;
@@ -20,30 +20,30 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
- 
+
 import java.util.UUID;
- 
+
 @RestController
 @RequestMapping("/api/admin/users")
 @PreAuthorize("hasRole('COORDINATOR')")
 public class AdminUserController {
- 
+
     private final AuthService authService;
- 
+
     public AdminUserController(AuthService authService) {
         this.authService = authService;
     }
- 
+
     @GetMapping("/pending")
     public Page<UserSummaryResponse> listPending(@PageableDefault(size = 200) Pageable pageable) {
         return authService.listPending(pageable);
     }
- 
+
     @GetMapping("/approved")
     public Page<UserSummaryResponse> listApproved(@PageableDefault(size = 200) Pageable pageable) {
         return authService.listApproved(pageable);
     }
- 
+
     @PostMapping("/{userId}/approval")
     public UserSummaryResponse approve(
             @PathVariable UUID userId,
@@ -52,7 +52,7 @@ public class AdminUserController {
     ) {
         return authService.approve(userId, request.approve(), request.rejectionReason(), principal.userId());
     }
- 
+
     @PostMapping("/guest-judges")
     @ResponseStatus(HttpStatus.CREATED)
     public GuestJudgeCreatedResponse createGuestJudge(

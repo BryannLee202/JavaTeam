@@ -5,14 +5,13 @@ import com.seal.hackathon.dto.scoring.DisqualificationResponse;
 import com.seal.hackathon.security.AuthenticatedPrincipal;
 import com.seal.hackathon.service.DisqualificationService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -28,17 +27,16 @@ public class DisqualificationController {
         this.disqualificationService = disqualificationService;
     }
 
-    @GetMapping("/api/events/{eventId}/disqualifications")
-    public List<DisqualificationResponse> list(@PathVariable UUID eventId) {
-        return disqualificationService.listByEvent(eventId);
-    }
-
     @PostMapping("/api/disqualifications")
-    @ResponseStatus(HttpStatus.CREATED)
     public DisqualificationResponse disqualify(
             @Valid @RequestBody DisqualificationRequest request,
             @AuthenticationPrincipal AuthenticatedPrincipal principal
     ) {
         return disqualificationService.disqualify(request, principal.userId());
+    }
+
+    @GetMapping("/api/events/{eventId}/disqualifications")
+    public List<DisqualificationResponse> listByEvent(@PathVariable UUID eventId) {
+        return disqualificationService.listByEvent(eventId);
     }
 }

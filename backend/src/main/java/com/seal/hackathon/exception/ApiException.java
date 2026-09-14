@@ -2,10 +2,6 @@ package com.seal.hackathon.exception;
 
 import org.springframework.http.HttpStatus;
 
-/**
- * Loi nghiep vu co kem ma HTTP. GlobalExceptionHandler doi no thanh response JSON.
- * Dung cac factory ben duoi thay vi new truc tiep de ma loi thong nhat toan he thong.
- */
 public class ApiException extends RuntimeException {
 
     private final HttpStatus status;
@@ -15,20 +11,8 @@ public class ApiException extends RuntimeException {
         this.status = status;
     }
 
-    public HttpStatus getStatus() {
-        return status;
-    }
-
     public static ApiException badRequest(String message) {
         return new ApiException(HttpStatus.BAD_REQUEST, message);
-    }
-
-    public static ApiException unauthorized(String message) {
-        return new ApiException(HttpStatus.UNAUTHORIZED, message);
-    }
-
-    public static ApiException forbidden(String message) {
-        return new ApiException(HttpStatus.FORBIDDEN, message);
     }
 
     public static ApiException notFound(String message) {
@@ -37,5 +21,17 @@ public class ApiException extends RuntimeException {
 
     public static ApiException conflict(String message) {
         return new ApiException(HttpStatus.CONFLICT, message);
+    }
+
+    public static ApiException forbidden(String message) {
+        return new ApiException(HttpStatus.FORBIDDEN, message);
+    }
+
+    public static ApiException unauthorized(String message) {
+        return new ApiException(HttpStatus.UNAUTHORIZED, message);
+    }
+
+    public HttpStatus getStatus() {
+        return status;
     }
 }

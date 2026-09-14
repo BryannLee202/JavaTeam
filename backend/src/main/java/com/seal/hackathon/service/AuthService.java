@@ -1,5 +1,5 @@
 package com.seal.hackathon.service;
- 
+
 import com.seal.hackathon.domain.entity.User;
 import com.seal.hackathon.domain.entity.UserRoleAssignment;
 import com.seal.hackathon.domain.enums.AccountStatus;
@@ -23,22 +23,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
- 
+
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
- 
+
 @Service
 public class AuthService {
- 
+
     private final UserRepository userRepository;
     private final UserRoleAssignmentRepository roleAssignmentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuditService auditService;
- 
+
     public AuthService(
             UserRepository userRepository,
             UserRoleAssignmentRepository roleAssignmentRepository,
@@ -52,68 +52,26 @@ public class AuthService {
         this.jwtService = jwtService;
         this.auditService = auditService;
     }
- 
-    @Transactional(readOnly = true)
-    public boolean isEmailAvailable(String email) {
-        if (email == null || email.isBlank()) {
-            return false;
-        }
-        return !userRepository.existsByEmailIgnoreCase(email.trim());
-    }
 
     @Transactional
     public UserSummaryResponse register(RegisterRequest request) {
-        String fullName = request.fullName() != null ? request.fullName().trim() : "";
-        if (fullName.isEmpty()) {
-            throw ApiException.badRequest("Họ và tên không được để trống");
-        }
-
-        String email = request.email() != null ? request.email().trim().toLowerCase() : "";
-        if (email.isEmpty()) {
-            throw ApiException.badRequest("Email không được để trống");
-        }
-        if (userRepository.existsByEmailIgnoreCase(email)) {
+        if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw ApiException.conflict("Email đã được sử dụng để đăng ký");
         }
-
-        String studentCode = request.studentCode() != null ? request.studentCode().trim() : null;
-        if (studentCode != null && studentCode.isEmpty()) {
-            studentCode = null;
-        }
-
-        String schoolName = request.schoolName() != null ? request.schoolName().trim() : null;
-        if (schoolName != null && schoolName.isEmpty()) {
-            schoolName = null;
-        }
-
-        if (request.userCategory() == UserCategory.FPT_STUDENT) {
-            if (studentCode == null) {
-                throw ApiException.badRequest("Sinh viên FPT bắt buộc phải cung cấp mã số sinh viên");
-            }
-            if (userRepository.existsByStudentCodeIgnoreCaseAndUserCategory(studentCode, UserCategory.FPT_STUDENT)) {
-                throw ApiException.conflict("Mã số sinh viên FPT này đã được đăng ký");
-            }
-        } else if (request.userCategory() == UserCategory.EXTERNAL_STUDENT) {
-            if (studentCode == null) {
-                throw ApiException.badRequest("Sinh viên ngoài trường bắt buộc phải cung cấp mã số sinh viên");
-            }
-            if (schoolName == null) {
-                throw ApiException.badRequest("Sinh viên ngoài trường bắt buộc phải cung cấp tên trường");
-            }
-        }
-
         User user = User.builder()
-                .fullName(fullName)
-                .email(email)
+                .fullName(request.fullName())
+                .email(request.email().toLowerCase())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .userCategory(request.userCategory())
-                .studentCode(studentCode)
-                .schoolName(schoolName)
+                .studentCode(request.studentCode())
+                .schoolName(request.schoolName())
                 .accountStatus(AccountStatus.PENDING)
                 .guestJudge(false)
                 .build();
         user = userRepository.save(user);
- 
+
+        // Default role: every approved participant starts as a TEAM_MEMBER at GLOBAL scope;
+        // TEAM_LEADER is granted implicitly when they create a team.
         UserRoleAssignment defaultRole = UserRoleAssignment.builder()
                 .user(user)
                 .roleName(RoleName.TEAM_MEMBER)
@@ -121,16 +79,16 @@ public class AuthService {
                 .scopeId(null)
                 .build();
         roleAssignmentRepository.save(defaultRole);
- 
+
         auditService.record(user.getId(), AuditAction.ACCOUNT_REGISTER, "User", user.getId(), null, UserSummaryResponse.from(user));
         return UserSummaryResponse.from(user);
     }
- 
+
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> ApiException.unauthorized("Email hoặc mật khẩu không đúng"));
- 
+
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw ApiException.unauthorized("Email hoặc mật khẩu không đúng");
         }
@@ -140,10 +98,10 @@ public class AuthService {
         if (user.isGuestJudge() && user.getGuestAccessExpiresAt() != null && user.getGuestAccessExpiresAt().isBefore(Instant.now())) {
             throw ApiException.forbidden("Tài khoản giám khảo khách mời đã hết hạn truy cập");
         }
- 
+
         return buildAuthResponse(user);
     }
- 
+
     @Transactional(readOnly = true)
     public AuthResponse refresh(String refreshToken) {
         var claims = jwtService.parseClaims(refreshToken);
@@ -158,22 +116,22 @@ public class AuthService {
         }
         return buildAuthResponse(user);
     }
- 
+
     @Transactional(readOnly = true)
     public Page<UserSummaryResponse> listPending(Pageable pageable) {
         return userRepository.findByAccountStatus(AccountStatus.PENDING, pageable)
                 .map(UserSummaryResponse::from);
     }
- 
+
     @Transactional(readOnly = true)
     public Page<UserSummaryResponse> listApproved(Pageable pageable) {
         return userRepository.findByAccountStatus(AccountStatus.APPROVED, pageable)
                 .map(UserSummaryResponse::from);
     }
- 
+
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final String PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#";
- 
+
     @Transactional
     public GuestJudgeCreatedResponse createGuestJudge(CreateGuestJudgeRequest request, UUID actorId) {
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
@@ -190,11 +148,11 @@ public class AuthService {
                 .guestAccessExpiresAt(request.guestAccessExpiresAt())
                 .build();
         user = userRepository.save(user);
- 
+
         auditService.record(actorId, AuditAction.GUEST_JUDGE_CREATE, "User", user.getId(), null, UserSummaryResponse.from(user));
         return new GuestJudgeCreatedResponse(user.getId(), user.getFullName(), user.getEmail(), tempPassword);
     }
- 
+
     private String generateTempPassword() {
         StringBuilder sb = new StringBuilder(12);
         for (int i = 0; i < 12; i++) {
@@ -202,7 +160,7 @@ public class AuthService {
         }
         return sb.toString();
     }
- 
+
     @Transactional
     public UserSummaryResponse approve(UUID userId, boolean approve, String rejectionReason, UUID actorId) {
         User user = userRepository.findById(userId)
@@ -221,18 +179,18 @@ public class AuthService {
                 "User", user.getId(), before, user.getAccountStatus());
         return UserSummaryResponse.from(user);
     }
- 
+
     private AuthResponse buildAuthResponse(User user) {
         List<UserRoleAssignment> assignments = roleAssignmentRepository.findByUserId(user.getId());
         List<AuthenticatedPrincipal.RoleGrant> grants = assignments.stream()
                 .map(a -> new AuthenticatedPrincipal.RoleGrant(a.getRoleName(), a.getScopeType(), a.getScopeId(), a.getJudgeType()))
                 .collect(Collectors.toList());
         AuthenticatedPrincipal principal = new AuthenticatedPrincipal(user.getId(), user.getEmail(), user.getFullName(), grants);
- 
+
         String accessToken = jwtService.generateAccessToken(principal);
         String refreshToken = jwtService.generateRefreshToken(user.getId());
         List<String> roleNames = grants.stream().map(g -> g.roleName().name()).distinct().collect(Collectors.toList());
- 
+
         return new AuthResponse(accessToken, refreshToken, user.getId(), user.getFullName(), user.getEmail(), roleNames);
     }
 }

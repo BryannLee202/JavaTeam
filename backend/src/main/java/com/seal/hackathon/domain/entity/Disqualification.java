@@ -16,14 +16,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.UUID;
 
-/**
- * Quyet dinh loai mot doi hoac mot bai nop. Luon ghi vet ai quyet dinh va vi sao.
- *
- * eventId duoc luu truc tiep de tra cuu theo su kien ma khong phai join qua Team,
- * vi Team thuoc BE-4 va chua co tren main.
- */
 @Getter
 @Setter
 @Entity
@@ -33,22 +26,19 @@ import java.util.UUID;
 @Builder
 public class Disqualification extends BaseEntity {
 
-    @Column(name = "event_id", nullable = false)
-    private UUID eventId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DisqualificationTargetType targetType;
 
-    /** Co gia tri khi targetType = TEAM. */
-    @Column(name = "team_id")
-    private UUID teamId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id")
+    private Team team;
 
-    /** Co gia tri khi targetType = SUBMISSION. */
-    @Column(name = "submission_id")
-    private UUID submissionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "submission_id")
+    private Submission submission;
 
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
