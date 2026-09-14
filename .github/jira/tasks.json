@@ -445,11 +445,7 @@
   "set_status": [
     {
       "key": "JAV-29",
-      "status": "Done"
-    },
-    {
-      "key": "JAV-15",
-      "status": "To Do"
+      "status": "In Progress"
     }
   ]
 }
