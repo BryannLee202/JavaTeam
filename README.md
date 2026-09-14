@@ -16,11 +16,14 @@ Cần sẵn: **JDK 17+**, **Node 20+**, **Maven 3.9+**. Không cần cài databa
 
 ```bash
 cd backend
-mvn spring-boot:run
+SPRING_PROFILES_ACTIVE=demo mvn spring-boot:run
 ```
 
-Mặc định chạy **H2 trong bộ nhớ**, không cần cài Postgres. Server lên ở
-`http://localhost:8080`, kiểm tra bằng:
+> **Phải có `SPRING_PROFILES_ACTIVE=demo`.** Profile mặc định là `dev`, và `dev`
+> trỏ tới Postgres ở `localhost:5432` — không có Postgres thì backend sẽ không
+> khởi động được. Profile `demo` dùng H2 trong bộ nhớ, không cần cài gì.
+
+Server lên ở `http://localhost:8080`, kiểm tra bằng:
 
 ```bash
 curl http://localhost:8080/actuator/health
@@ -41,7 +44,8 @@ Mở `http://localhost:5173`.
 
 ### 3. Đăng nhập
 
-Backend tự tạo sẵn một tài khoản Ban tổ chức khi khởi động lần đầu:
+Backend tự tạo sẵn một tài khoản Ban tổ chức khi khởi động lần đầu
+(`config/DataInitializer.java`):
 
 ```
 Email:    coordinator@seal.edu.vn
@@ -50,7 +54,17 @@ Mật khẩu: Coordinator@123
 
 Hoặc tự đăng ký ở `/register` rồi dùng tài khoản trên để duyệt.
 
----
+> **Lưu ý:** `data-demo.sql` có thêm 3 tài khoản `coordinator@demo.local`,
+> `judge1@demo.local`, `judge2@demo.local`, nhưng mật khẩu của chúng chưa được
+> ghi lại ở đâu cả nên hiện **không đăng nhập được**. Dùng tài khoản ở trên.
+
+### Ba profile
+
+| Profile | Database | Dùng khi nào |
+|---|---|---|
+| `demo` | H2 trong bộ nhớ, tự seed | **Chạy thử, demo** — không cần cài gì |
+| `dev` | Postgres `localhost:5432/seal_hackathon` | Phát triển với DB thật, Flyway chạy V1–V6 |
+| `prod` | Theo biến môi trường | Deploy thật |
 
 ## Xem giao diện khi chưa có backend
 
@@ -87,26 +101,31 @@ Chế độ mock chỉ hoạt động khi chạy `npm run dev`, không có trong
 
 ## Cấu hình
 
-Backend đọc từ biến môi trường, đều có giá trị mặc định để chạy local ngay:
+Backend đọc từ biến môi trường. Tên biến lấy đúng từ `application*.yml`:
 
-| Biến | Mặc định | Ghi chú |
+| Biến | Mặc định (profile `demo`) | Ghi chú |
 |---|---|---|
-| `DB_URL` | H2 trong bộ nhớ | Đổi sang Postgres: `jdbc:postgresql://localhost:5432/shms` |
+| `SPRING_PROFILES_ACTIVE` | `dev` | Đặt `demo` để chạy không cần Postgres |
+| `DB_URL` | `jdbc:h2:mem:demo;MODE=PostgreSQL` | Profile `dev` mặc định là Postgres |
 | `DB_USERNAME` / `DB_PASSWORD` | `sa` / rỗng | |
-| `APP_JWT_SECRET` | khoá dev | **Bắt buộc đặt nếu deploy thật** |
-| `APP_CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Nhiều origin ngăn bằng dấu phẩy |
+| `JWT_SECRET` | khoá dev dựng sẵn | **Bắt buộc đặt nếu deploy thật** |
+| `JWT_ACCESS_EXP_MS` | `3600000` (1 giờ) | |
+| `JWT_REFRESH_EXP_MS` | `604800000` (7 ngày) | |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,3000,4000` | Vite chạy ở 5173 |
 | `SERVER_PORT` | `8080` | |
-| `FLYWAY_ENABLED` | `false` | Bật khi đã đủ bộ migration V1..V5 |
 
 Chạy với Postgres:
 
 ```bash
-DB_URL=jdbc:postgresql://localhost:5432/shms \
+cd backend
+SPRING_PROFILES_ACTIVE=dev \
+DB_URL=jdbc:postgresql://localhost:5432/seal_hackathon \
 DB_USERNAME=postgres DB_PASSWORD=postgres \
-mvn -f backend/pom.xml spring-boot:run
+mvn spring-boot:run
 ```
 
----
+Profile `dev` bật Flyway và chạy đủ bộ migration `V1__init_schema.sql` đến
+`V6__demo_seed_users.sql` trong `backend/src/main/resources/db/migration/`.
 
 ## Kiểm thử
 
@@ -126,27 +145,35 @@ npm test
 ## Cấu trúc thư mục
 
 ```
-backend/src/main/java/com/seal/hackathon/
-├── domain/entity/     Thực thể JPA
+backend/src/main/java/com/seal/hackathon/     157 file, 21 entity
+├── domain/entity/     User, HackathonEvent, Track, Round, Team, TeamMember,
+│                      TeamInvite, Submission, CriteriaTemplate, Criterion,
+│                      Score, Ranking, CalibrationRound, Prize, Vote,
+│                      Disqualification, MentorFeedbackMessage, AuditLog...
 ├── domain/enums/      Enum dùng chung
 ├── repository/        Spring Data JPA
 ├── service/           Nghiệp vụ
-├── controller/        REST API
-├── dto/               Đối tượng vào/ra của API
+├── controller/        REST API — 21 controller
+├── dto/               Đối tượng vào/ra, gom theo mảng nghiệp vụ
 ├── security/          JWT, filter, principal
+├── config/            SecurityConfig, DataInitializer
 └── exception/         ApiException + handler chung
+
+backend/src/main/resources/
+├── application.yml          Cấu hình chung
+├── application-{dev,demo,prod}.yml
+├── db/migration/            Flyway V1..V6
+└── data-demo.sql            Seed cho profile demo
 
 frontend/src/
 ├── api/               Lớp gọi API, gom theo mảng nghiệp vụ
 ├── components/        Component dùng lại
-├── pages/             Màn hình theo đường dẫn
+├── pages/             23 màn hình theo đường dẫn
 ├── context/           AuthContext
 └── styles/            CSS
 
 bff/src/               NestJS: auth, proxy, voting
 ```
-
----
 
 ## Quy trình làm việc
 
