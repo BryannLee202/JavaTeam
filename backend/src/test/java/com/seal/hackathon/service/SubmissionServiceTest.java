@@ -121,14 +121,35 @@ class SubmissionServiceTest {
     }
 
     @Test
-    void submit_shouldThrowConflict_whenSubmissionDeadlinePassed() {
+    void submit_shouldMarkAsLate_whenSubmissionDeadlinePassed() {
         round.setSubmissionDeadline(Instant.now().minusSeconds(3600));
-        TeamMember member = TeamMember.builder().team(team).roleInTeam(TeamMemberRole.LEADER).build();
-        when(teamMemberRepository.findByTeamIdAndUserId(teamId, userId)).thenReturn(Optional.of(member));
 
-        assertThatThrownBy(() -> submissionService.submit(teamId, roundId, request, userId))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("quá hạn nộp bài");
+        TeamMember member = TeamMember.builder()
+                .team(team)
+                .roleInTeam(TeamMemberRole.LEADER)
+                .build();
+
+        when(teamMemberRepository.findByTeamIdAndUserId(teamId, userId))
+                .thenReturn(Optional.of(member));
+
+        when(submissionRepository.findByTeamIdAndRoundId(teamId, roundId))
+                .thenReturn(Optional.empty());
+
+        when(submissionRepository.save(any(Submission.class)))
+                .thenAnswer(invocation -> {
+                    Submission submission = invocation.getArgument(0);
+                    submission.setId(UUID.randomUUID());
+                    return submission;
+                });
+
+        var response = submissionService.submit(
+                teamId,
+                roundId,
+                request,
+                userId
+        );
+
+        assertThat(response.isLate()).isTrue();
     }
 
     @Test
