@@ -77,7 +77,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/team" element={<MyTeam />} />
+      <Route
+        path="/team"
+        element={
+          <ProtectedRoute requireRole={["TEAM_MEMBER", "TEAM_LEADER"]}>
+            <MyTeam />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/mentor" element={<Mentor />} />
 
 	    <Route path="/register" element={<RegisterPage />} />
