@@ -13,12 +13,6 @@ public record CriteriaTemplateResponse(
         List<CriterionResponse> criteria
 ) {
     public static CriteriaTemplateResponse from(CriteriaTemplate t, List<CriterionResponse> criteria) {
-        return new CriteriaTemplateResponse(
-                t.getId(),
-                t.getName(),
-                t.getDescription(),
-                t.isDefault(),
-                criteria
-        );
+        return new CriteriaTemplateResponse(t.getId(), t.getName(), t.getDescription(), t.isDefault(), criteria);
     }
 }

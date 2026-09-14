@@ -5,10 +5,6 @@ import com.seal.hackathon.domain.entity.Criterion;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-/**
- * Khop voi interface CriterionItem trong frontend/src/api/types/criteria.ts.
- * templateId va roundId loai tru nhau: dung mot cai khac null.
- */
 public record CriterionResponse(
         UUID id,
         UUID templateId,
@@ -22,7 +18,7 @@ public record CriterionResponse(
         return new CriterionResponse(
                 c.getId(),
                 c.getTemplate() == null ? null : c.getTemplate().getId(),
-                c.getRoundId(),
+                c.getRound() == null ? null : c.getRound().getId(),
                 c.getName(),
                 c.getDescription(),
                 c.getWeight(),

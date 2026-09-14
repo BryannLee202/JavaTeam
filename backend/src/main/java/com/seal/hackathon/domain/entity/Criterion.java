@@ -13,14 +13,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 /**
- * Mot tieu cham diem. Thuoc VE MOT TRONG HAI: mot bo mau, hoac mot vong thi —
- * khong bao gio ca hai, va khong bao gio ca hai deu null.
- *
- * roundId de dang UUID tran thay vi @ManyToOne vi entity Round thuoc BE-2 va
- * chua co tren main. Khi BE-2 len, doi sang quan he that ma khong pha hop dong API.
+ * Either belongs to a CriteriaTemplate (reusable master definition) OR to a Round
+ * (the actual scoring criteria applied when judges score submissions) - exactly one is set.
  */
 @Getter
 @Setter
@@ -35,19 +31,19 @@ public class Criterion extends BaseEntity {
     @JoinColumn(name = "template_id")
     private CriteriaTemplate template;
 
-    @Column(name = "round_id")
-    private UUID roundId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "round_id")
+    private Round round;
 
     @Column(nullable = false)
     private String name;
 
     private String description;
 
-    /** Trong so phan tram. Tong cac tieu chi trong cung mot vong quy uoc bang 100. */
-    @Column(nullable = false, precision = 6, scale = 2)
+    /** Percentage weight, all criteria within the same set (template or round) must sum to 100. */
+    @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal weight;
 
-    /** Diem toi da giam khao cham cho tieu chi nay. */
-    @Column(nullable = false, precision = 6, scale = 2)
+    @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal maxScore;
 }

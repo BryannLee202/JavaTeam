@@ -1,20 +1,26 @@
 package com.seal.hackathon.exception;
 
+import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** Doi exception thanh JSON thong nhat, thay vi tra ve trang loi mac dinh cua Spring. */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<Map<String, Object>> handleApiException(ApiException ex) {
@@ -24,21 +30,41 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
-                .map(this::describe)
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
-        return ResponseEntity.badRequest().body(body(HttpStatus.BAD_REQUEST, message));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body(HttpStatus.BAD_REQUEST, message));
     }
 
-    private String describe(FieldError error) {
-        return error.getField() + ": " + error.getDefaultMessage();
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body(HttpStatus.BAD_REQUEST, ex.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện hành động này"));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
+        log.warn("Vi phạm ràng buộc dữ liệu tại {}: {}", request.getDescription(false), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(body(HttpStatus.CONFLICT, "Dữ liệu bị trùng lặp hoặc vi phạm ràng buộc, vui lòng kiểm tra lại"));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex, WebRequest request) {
+        log.error("Lỗi hệ thống chưa xử lý tại {}", request.getDescription(false), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(body(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi, vui lòng thử lại sau"));
     }
 
     private Map<String, Object> body(HttpStatus status, String message) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("timestamp", Instant.now().toString());
-        payload.put("status", status.value());
-        payload.put("error", status.getReasonPhrase());
-        payload.put("message", message);
-        return payload;
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("timestamp", Instant.now().toString());
+        map.put("status", status.value());
+        map.put("error", status.getReasonPhrase());
+        map.put("message", message);
+        return map;
     }
 }

@@ -70,7 +70,9 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
-		<!-- In-memory DB for local demo/tests -->
+		<!-- H2 trong bo nho: dung cho profile demo va cho test. Khong co thi
+		     SPRING_PROFILES_ACTIVE=demo va toan bo test se loi
+		     "Cannot load driver class: org.h2.Driver". -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>

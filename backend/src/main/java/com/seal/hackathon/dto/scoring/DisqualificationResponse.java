@@ -6,7 +6,6 @@ import com.seal.hackathon.domain.enums.DisqualificationTargetType;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Khop voi interface DisqualificationItem trong frontend/src/api/types/criteria.ts. */
 public record DisqualificationResponse(
         UUID id,
         DisqualificationTargetType targetType,
@@ -21,8 +20,8 @@ public record DisqualificationResponse(
         return new DisqualificationResponse(
                 d.getId(),
                 d.getTargetType(),
-                d.getTeamId(),
-                d.getSubmissionId(),
+                d.getTeam() == null ? null : d.getTeam().getId(),
+                d.getSubmission() == null ? null : d.getSubmission().getId(),
                 d.getReason(),
                 d.getDecidedBy().getFullName(),
                 d.getDecidedAt(),

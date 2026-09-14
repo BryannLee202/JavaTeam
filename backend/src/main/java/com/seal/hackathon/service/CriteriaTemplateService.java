@@ -14,36 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-/** Quan ly cac bo tieu chi mau dung lai duoc giua nhieu su kien. */
 @Service
 public class CriteriaTemplateService {
 
     private final CriteriaTemplateRepository templateRepository;
     private final CriterionRepository criterionRepository;
-    private final CriterionWeightPolicy weightPolicy;
 
-    public CriteriaTemplateService(
-            CriteriaTemplateRepository templateRepository,
-            CriterionRepository criterionRepository,
-            CriterionWeightPolicy weightPolicy
-    ) {
+    public CriteriaTemplateService(CriteriaTemplateRepository templateRepository, CriterionRepository criterionRepository) {
         this.templateRepository = templateRepository;
         this.criterionRepository = criterionRepository;
-        this.weightPolicy = weightPolicy;
-    }
-
-    @Transactional(readOnly = true)
-    public List<CriteriaTemplateResponse> list() {
-        return templateRepository.findAll().stream()
-                .map(t -> CriteriaTemplateResponse.from(t, criteriaOf(t.getId())))
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public CriteriaTemplateResponse get(UUID templateId) {
-        CriteriaTemplate template = findOrThrow(templateId);
-        return CriteriaTemplateResponse.from(template, criteriaOf(templateId));
     }
 
     @Transactional
@@ -53,14 +34,26 @@ public class CriteriaTemplateService {
                 .description(request.description())
                 .isDefault(false)
                 .build();
-        return CriteriaTemplateResponse.from(templateRepository.save(template), List.of());
+        template = templateRepository.save(template);
+        return CriteriaTemplateResponse.from(template, List.of());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CriteriaTemplateResponse> list() {
+        return templateRepository.findAll().stream()
+                .map(t -> CriteriaTemplateResponse.from(t, criteriaOf(t.getId())))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public CriteriaTemplateResponse get(UUID id) {
+        CriteriaTemplate template = findOrThrow(id);
+        return CriteriaTemplateResponse.from(template, criteriaOf(id));
     }
 
     @Transactional
     public CriterionResponse addCriterion(UUID templateId, CriterionRequest request) {
         CriteriaTemplate template = findOrThrow(templateId);
-        weightPolicy.assertFits(criterionRepository.findByTemplateId(templateId), null, request.weight());
-
         Criterion criterion = Criterion.builder()
                 .template(template)
                 .name(request.name())
@@ -74,21 +67,20 @@ public class CriteriaTemplateService {
     @Transactional
     public void removeCriterion(UUID templateId, UUID criterionId) {
         Criterion criterion = criterionRepository.findById(criterionId)
-                .orElseThrow(() -> ApiException.notFound("Khong tim thay tieu chi"));
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy tiêu chí"));
         if (criterion.getTemplate() == null || !criterion.getTemplate().getId().equals(templateId)) {
-            throw ApiException.badRequest("Tieu chi nay khong thuoc bo mau da chon");
+            throw ApiException.badRequest("Tiêu chí không thuộc mẫu này");
         }
         criterionRepository.delete(criterion);
     }
 
     private List<CriterionResponse> criteriaOf(UUID templateId) {
         return criterionRepository.findByTemplateId(templateId).stream()
-                .map(CriterionResponse::from)
-                .toList();
+                .map(CriterionResponse::from).collect(Collectors.toList());
     }
 
-    private CriteriaTemplate findOrThrow(UUID templateId) {
-        return templateRepository.findById(templateId)
-                .orElseThrow(() -> ApiException.notFound("Khong tim thay bo tieu chi mau"));
+    CriteriaTemplate findOrThrow(UUID id) {
+        return templateRepository.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Không tìm thấy mẫu tiêu chí"));
     }
 }

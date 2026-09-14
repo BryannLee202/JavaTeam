@@ -8,7 +8,6 @@ import java.util.UUID;
 
 public record AuditLogResponse(
         UUID id,
-        UUID actorId,
         String actorName,
         AuditAction action,
         String entityType,
@@ -18,12 +17,9 @@ public record AuditLogResponse(
         Instant timestamp
 ) {
     public static AuditLogResponse from(AuditLog log) {
-        // actor cho phep null: cac hanh dong he thong tu sinh khong gan voi nguoi dung nao.
-        var actor = log.getActor();
         return new AuditLogResponse(
                 log.getId(),
-                actor == null ? null : actor.getId(),
-                actor == null ? null : actor.getFullName(),
+                log.getActor() == null ? "system" : log.getActor().getFullName(),
                 log.getAction(),
                 log.getEntityType(),
                 log.getEntityId(),
