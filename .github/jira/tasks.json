@@ -444,20 +444,12 @@
   "remove_links": [],
   "set_status": [
     {
-      "key": "JAV-17",
+      "key": "JAV-29",
       "status": "Done"
     },
     {
-      "key": "JAV-19",
-      "status": "Done"
-    },
-    {
-      "key": "JAV-20",
-      "status": "Done"
-    },
-    {
-      "key": "JAV-21",
-      "status": "Done"
+      "key": "JAV-15",
+      "status": "To Do"
     }
   ]
 }
