@@ -98,13 +98,13 @@ Password: Demo@123456
 
 | Hạng mục | Số lượng |
 |---|---|
-| Controller (backend) | 24 |
+| Controller (backend) | 22 |
 | Entity | 21 |
-| Service | 29 |
+| Service | 23 |
 | Màn hình (frontend) | 24 |
-| Migration Flyway | 6 (V1 → V6) |
-| Test backend | 49, tất cả pass |
-| Test frontend | 7, tất cả pass |
+| Migration Flyway | 6 (V001 → V006) |
+| Test backend | 53, tất cả pass |
+| Test frontend | 59, tất cả pass |
 
 ## Phân chia công việc
 
@@ -122,6 +122,22 @@ Password: Demo@123456
 > lịch sử nhánh thật trên GitHub nếu cần tra cứu.
 
 Chi tiết quy trình làm việc: xem mục "Đóng góp" bên dưới.
+
+## Tài liệu dự án
+
+Toàn bộ tài liệu nằm trong [`docs/`](./docs/), đánh số theo pha làm việc.
+
+| Cần biết | Đọc ở đâu |
+|---|---|
+| Hệ thống phải làm được gì | [`docs/01-yeu-cau/SRS.md`](./docs/01-yeu-cau/SRS.md) — 27 use case |
+| Yêu cầu nào đã code xong, ở file nào | [`docs/01-yeu-cau/ma-tran-truy-vet.md`](./docs/01-yeu-cau/ma-tran-truy-vet.md) |
+| Luật nghiệp vụ nào code chưa thực thi | [`docs/02-phan-tich/rang-buoc-nghiep-vu.md`](./docs/02-phan-tich/rang-buoc-nghiep-vu.md) |
+| Vì sao chọn kiến trúc này | [`docs/08-quyet-dinh-kien-truc/`](./docs/08-quyet-dinh-kien-truc/) — 3 ADR |
+| Đã thay đổi những gì | [`docs/CHANGELOG.md`](./docs/CHANGELOG.md) — 38 pull request |
+
+Ba tài liệu **sinh tự động** và có CI gác: ma trận truy vết, CHANGELOG, và các
+phép kiểm ADR. Đổi tên một file code mà quên cập nhật là CI đỏ ngay — xem
+[`scripts/README.md`](./scripts/README.md).
 
 ## Đóng góp
 
