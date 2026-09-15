@@ -1,0 +1,72 @@
+# =============================================================================
+# Docker CI — Kiem tra cau hinh va kha nang dong goi Container
+# =============================================================================
+# Trigger: moi PR vao main va push len main co sua docker-compose.yml hoac Dockerfile
+# Actions:
+#   1. Xac thuc cu phap docker compose config voi bien moi truong mau
+#   2. Thiet lap Docker Buildx va build thu cac service (backend, bff, frontend)
+#
+# Muc dich: Chan tinh trang loi cu phap docker-compose.yml hoac Dockerfile bi loi
+# thoi/hong build ma khong duoc may kiem truoc khi merge vao main.
+# =============================================================================
+
+name: "Docker CI"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docker-compose.yml"
+      - "backend/Dockerfile"
+      - "bff/Dockerfile"
+      - "frontend/Dockerfile"
+      - "frontend/nginx.conf"
+      - ".github/workflows/docker-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "docker-compose.yml"
+      - "backend/Dockerfile"
+      - "bff/Dockerfile"
+      - "frontend/Dockerfile"
+      - "frontend/nginx.conf"
+      - ".github/workflows/docker-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JWT_SECRET: "ci-dummy-jwt-secret-for-compose-validation-32bytes-min"
+
+jobs:
+  validate-compose:
+    name: Kiem tra cu phap Docker Compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ma nguon
+        uses: actions/checkout@v4
+
+      - name: Xac thuc cu phap docker compose config
+        run: docker compose config
+
+  build-images:
+    name: Build thu nghiem Docker Images
+    needs: validate-compose
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build cac service backend, bff, frontend
+        run: docker compose build backend bff frontend
