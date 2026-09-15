@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface TrackRepository extends JpaRepository<Track, UUID> {
     List<Track> findByEventId(UUID eventId);
+
+    long countByEventId(UUID eventId);
 }

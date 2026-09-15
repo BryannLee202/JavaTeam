@@ -12,4 +12,8 @@ public interface TeamRepository extends JpaRepository<Team, UUID> {
     Page<Team> findByEventId(UUID eventId, Pageable pageable);
     List<Team> findByTrackId(UUID trackId);
     List<Team> findByTrackIdIn(List<UUID> trackIds);
+
+    long countByEventId(UUID eventId);
+
+    long countByTrackId(UUID trackId);
 }

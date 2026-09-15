@@ -8,6 +8,9 @@ import com.seal.hackathon.dto.event.EventResponse;
 import com.seal.hackathon.exception.ApiException;
 import com.seal.hackathon.repository.CriteriaTemplateRepository;
 import com.seal.hackathon.repository.HackathonEventRepository;
+import com.seal.hackathon.repository.RoundRepository;
+import com.seal.hackathon.repository.TeamRepository;
+import com.seal.hackathon.repository.TrackRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +23,20 @@ public class EventService {
 
     private final HackathonEventRepository eventRepository;
     private final CriteriaTemplateRepository criteriaTemplateRepository;
+    private final TrackRepository trackRepository;
+    private final RoundRepository roundRepository;
+    private final TeamRepository teamRepository;
 
-    public EventService(HackathonEventRepository eventRepository, CriteriaTemplateRepository criteriaTemplateRepository) {
+    public EventService(HackathonEventRepository eventRepository,
+                        CriteriaTemplateRepository criteriaTemplateRepository,
+                        TrackRepository trackRepository,
+                        RoundRepository roundRepository,
+                        TeamRepository teamRepository) {
         this.eventRepository = eventRepository;
         this.criteriaTemplateRepository = criteriaTemplateRepository;
+        this.trackRepository = trackRepository;
+        this.roundRepository = roundRepository;
+        this.teamRepository = teamRepository;
     }
 
     @Transactional
@@ -47,12 +60,27 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public List<EventResponse> list() {
-        return eventRepository.findAll().stream().map(EventResponse::from).collect(Collectors.toList());
+        return eventRepository.findAll().stream().map(this::toResponseWithCounts).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public EventResponse get(UUID id) {
-        return EventResponse.from(findOrThrow(id));
+        return toResponseWithCounts(findOrThrow(id));
+    }
+
+    /**
+     * Gắn ba số liệu đếm vào một sự kiện.
+     *
+     * Chỉ dùng cho hai đường đọc (list và get) — ba đường ghi bên dưới vẫn trả
+     * EventResponse.from() vì màn hình gọi chúng không hiện mấy ô số liệu này.
+     */
+    private EventResponse toResponseWithCounts(HackathonEvent event) {
+        UUID eventId = event.getId();
+        return EventResponse.withCounts(
+                event,
+                trackRepository.countByEventId(eventId),
+                roundRepository.countByEventId(eventId),
+                teamRepository.countByEventId(eventId));
     }
 
     @Transactional

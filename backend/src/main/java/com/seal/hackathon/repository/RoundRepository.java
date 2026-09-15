@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface RoundRepository extends JpaRepository<Round, UUID> {
     List<Round> findByEventIdOrderByOrderIndexAsc(UUID eventId);
+
+    long countByEventId(UUID eventId);
 }
