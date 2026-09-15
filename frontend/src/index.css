@@ -1104,7 +1104,10 @@ html {
 }
 
 .dashboard-metric-value {
-  font-family: "Lexend", "Plus Jakarta Sans", sans-serif;
+  /* Ghi ca ten ban variable lan ten tran: nhanh font-tu-host cai font kem theo
+     du an duoi ten "Lexend Variable", con neu chua merge nhanh do thi ten tran
+     van dung duoc. Hai kieu deu chay. */
+  font-family: "Lexend Variable", "Lexend", "Plus Jakarta Sans", sans-serif;
   font-size: 24px;
   font-weight: 800;
   line-height: 1.1;
