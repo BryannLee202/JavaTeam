@@ -128,6 +128,12 @@ function Mentor() {
                 </header>
 
                 <div className="team-content">
+                    {error && (
+                        <div className="alert error" role="alert">
+                            {error}
+                        </div>
+                    )}
+
                     <div className="section-header main-heading">
                         <div>
                             <h1>Mentor</h1>
@@ -174,7 +180,7 @@ function Mentor() {
                                 </span>
 
                                 <h2>
-                                    {teams.length} Teams
+                                    {loadingTeams ? "..." : `${teams.length} doi`}
                                 </h2>
 
                                 <p>
@@ -199,9 +205,16 @@ function Mentor() {
                         </div>
 
                         <div className="mentor-dashboard-list">
-    {teams.length === 0 ? (
+    {loadingTeams ? (
         <div className="mentor-empty-state">
-            <p>No teams assigned yet.</p>
+            <p>Dang tai danh sach doi...</p>
+        </div>
+    ) : teams.length === 0 ? (
+        <div className="mentor-empty-state">
+            <p>Ban chua duoc phan cong doi nao.</p>
+            <p className="muted">
+                Dieu phoi vien can phan cong ban vao mot hang muc truoc.
+            </p>
         </div>
     ) : (
         teams.map((team) => (
