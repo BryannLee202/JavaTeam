@@ -1,0 +1,64 @@
+# =============================================================================
+# BFF CI — Kiem tra ma nguon tang Proxy & API Gateway (NestJS)
+# =============================================================================
+# Trigger: moi PR vao main va push len main co sua doi trong bff/
+# Actions:
+#   1. Cai dependency dung theo bff/package-lock.json (npm ci)
+#   2. Bien dich TypeScript sang dist/ (npm run build)
+#   3. Chay toan bo bo kiem thu unit test Jest (npm test)
+#
+# Muc dich: Dam bao tang BFF giu vung hop dong API, co che cookie httpOnly,
+# bao ve CSRF Guard va khong bi loi bien dich khi phat trien tiep.
+# =============================================================================
+
+name: "BFF CI"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "bff/**"
+      - ".github/workflows/bff-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "bff/**"
+      - ".github/workflows/bff-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bff-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: bff
+
+jobs:
+  build-and-test:
+    name: Build va test BFF NestJS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: bff/package-lock.json
+
+      - name: Cai dat dependencies
+        run: npm ci
+
+      - name: Bien dich TypeScript
+        run: npm run build
+
+      - name: Chay bo kiem thu Jest
+        run: npm test
