@@ -5,6 +5,24 @@ Dinh dang nhat ky tuan thu chat che theo chuan [Keep a Changelog](https://keepac
 
 ---
 
+## [1.6.0] - 2026-09-16
+
+### Added (Them moi)
+- **Chuong trinh Chay kiem thu Tu dong 1-click (PR #78)**:
+  - `run-automated-tests.bat`: Chay tu dong xac thuc RTM, 94 backend JUnit tests, 101 frontend Vitest tests va tsc typecheck voi giao dien dong lenh truc quan.
+- **Chuong trinh Khoi dong He thong 1-click (PR #79)**:
+  - `start-system.bat`: Tu dong khoi tao tep `.env` mac dinh an toan va menu khoi chay Docker Compose / PostgreSQL nhanh chong cho buoi bao ve do an.
+- **Ban do Ma nguon He thong Toan dien (PR #80)**:
+  - `docs/08-report-prep/BAN_DO_SOURCE.md`: Ban do cau truc chi tiet toan bo ma nguon Backend, Frontend, BFF, CSDL va anh xa day du 27 Use Cases, 6 Business Rules (BR-01 den BR-06).
+- **Cam nang On tap & Van dap Phan bien Nhanh (PR #81)**:
+  - `docs/08-report-prep/ON_TAP_NHANH.md`: Bo 30+ cau hoi - dap chuyen sau phan chia theo 6 linh vuc chuyen mon cua 6 thanh vien trong nhom (Spring Boot, BFF, JWT HttpOnly, CSRF, AI Hybrid, Heuristic Fallback, Z-Score Calibration, RTM).
+- **Danh muc Kiem tra Truoc gio G & Kich ban Demo 5 phut (PR #82)**:
+  - `docs/08-report-prep/VIVA_DEFENSE_CHECKLIST.md`: Danh muc kiem tra thiet bi, danh sach tai khoan demo san sang, kich ban demo 5 phut mau va ke hoach du phong su co B.
+- **Phat hanh Phien ban v1.6.0 Production Ready & Cap nhat README (PR #83)**:
+  - Cap nhat `README.md` huong dan cac script 1-click va lien ket toi toan bo ho so bao ve do an.
+
+---
+
 ## [1.5.0] - 2026-09-16
 
 ### Added (Them moi)
