@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AuthController } from "./auth/auth.controller";
 import { AuthService } from "./auth/auth.service";
 import { CsrfGuard } from "./common/csrf.guard";
+import { HealthController } from "./health/health.controller";
 import { VotingController } from "./voting/voting.controller";
 import { ProxyController } from "./proxy/proxy.controller";
 import { ProxyService } from "./proxy/proxy.service";
@@ -16,7 +17,7 @@ import { ProxyService } from "./proxy/proxy.service";
     HttpModule.register({ timeout: 15000 }),
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
   ],
-  controllers: [AuthController, VotingController, ProxyController],
+  controllers: [HealthController, AuthController, VotingController, ProxyController],
   providers: [
     AuthService,
     ProxyService,
