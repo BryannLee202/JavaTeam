@@ -5,6 +5,32 @@ Dinh dang nhat ky tuan thu chat che theo chuan [Keep a Changelog](https://keepac
 
 ---
 
+## [1.3.0] - 2026-09-16
+
+### Added (Them moi)
+- **He thong Design System & UI Components nguyen tu (PR #60)**:
+  - Cac component tai su dung cao: `Button` (variants primary, secondary, danger, ghost; sizes sm, md, lg; trang thai loading/disabled), `Badge` (variants success, warning, danger, primary, info, neutral), `Card` (CardHeader, CardTitle, CardContent, CardFooter).
+  - Barrel export chuan tai `frontend/src/components/ui/index.ts`.
+- **Hop nhat phan hoi trang thai & Motion Tokens (PR #61)**:
+  - Component `StateFeedback` hop nhat ba trang thai: dang tai (loading spinner), trong (empty data icon/description), va loi (error message voi nut thu lai onRetry).
+  - Bo Motion Tokens chuan hoa animation va transition trong `index.css`: `--motion-duration-*`, `--motion-ease-*`.
+- **Hop thoai Modal Dialog chuan muc (PR #62)**:
+  - Component `Modal` ho tro backdrop blur, khoa cuon trang tu dong (`overflow: hidden`), dong bang phim `Escape` va click overlay, day du tieu chuan a11y ARIA (`role="dialog"`, `aria-modal="true"`).
+- **Che do Giao dien Dark Mode & Tuong phan truc quan (PR #63)**:
+  - `ThemeContext` ho tro 3 che do: `light`, `dark`, `system` (tu dong theo `prefers-color-scheme`), luu tru qua `localStorage`.
+  - Bien CSS Dark Theme toan dien trong `index.css` voi bang mau toi chuyen nghiep va do tuong phan cao.
+  - Component `ThemeToggle` chuyen doi nhanh giao dien kem hieu ung icon muot ma.
+- **He thong Da ngon ngu Song ngu VI/EN (i18n) (PR #64)**:
+  - Tu dien song ngu toan dien tai `frontend/src/locales/translations.ts` ho tro Tieng Viet va Tieng Anh cho toan bo dieu huong, hanh dong, trang thai va bang dieu khien.
+  - `LanguageContext` voi hook `useLanguage` va ham `t()` an toan ve mat kieu, ho tro noi suy tham so (interpolation) va fallback an toan.
+  - Component `LanguageSwitcher` truc quan voi bieu tuong quoc ky va ma ngon ngu.
+- **Tich hop giao dien toan dien vao Layout & Dashboard (PR #65)**:
+  - Dong bo thanh dieu huong `Layout` voi `ThemeToggle`, `LanguageSwitcher` va cac nhan menu song ngu.
+  - Cap nhat `DashboardPage` su dung `Button`, `Card` va he thong da ngon ngu.
+  - Bo sung test bao phu toan dien cho `Layout`, `Modal`, `StateFeedback`, `ThemeContext`, `LanguageContext`, nang tong so unit test frontend tu 58 tests len **90 tests** (pass 100%).
+
+---
+
 ## [1.2.0] - 2026-09-15
 
 ### Added (Them moi)
