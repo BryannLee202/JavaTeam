@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import { ThemeToggle } from "./ThemeToggle";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import {
   IconCalendar,
   IconGavel,
@@ -21,19 +24,22 @@ interface NavItem {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, hasRole, logout } = useAuth();
+  const { language } = useLanguage();
   const navigate = useNavigate();
+
+  const isEn = language === "en";
 
   // Hai mục ai đăng nhập cũng thấy. Bảng xếp hạng trước đây chỉ vào được bằng
   // cách gõ tay URL /rankings — không có lối nào trong giao diện dẫn tới nó.
   const navItems: NavItem[] = [
     {
       to: "/app",
-      label: "Trang chủ",
+      label: isEn ? "Dashboard" : "Trang chủ",
       icon: <IconHome />,
     },
     {
       to: "/rankings",
-      label: "Bảng xếp hạng",
+      label: isEn ? "Leaderboard" : "Bảng xếp hạng",
       icon: <IconTrophy />,
     },
   ];
@@ -44,7 +50,7 @@ export function Layout({ children }: { children: ReactNode }) {
   ) {
     navItems.push({
       to: "/team",
-      label: "Đội của tôi",
+      label: isEn ? "My Team" : "Đội của tôi",
       icon: <IconUsers />,
     });
   }
@@ -52,7 +58,7 @@ export function Layout({ children }: { children: ReactNode }) {
   if (hasRole("JUDGE")) {
     navItems.push({
       to: "/judge",
-      label: "Chấm điểm",
+      label: isEn ? "Judging" : "Chấm điểm",
       icon: <IconGavel />,
     });
   }
@@ -62,7 +68,7 @@ export function Layout({ children }: { children: ReactNode }) {
   if (hasRole("MENTOR")) {
     navItems.push({
       to: "/mentor",
-      label: "Đội được phân công",
+      label: isEn ? "Assigned Teams" : "Đội được phân công",
       icon: <IconMessageCircle />,
     });
   }
@@ -70,19 +76,19 @@ export function Layout({ children }: { children: ReactNode }) {
   if (hasRole("COORDINATOR")) {
     navItems.push({
       to: "/coordinator/events",
-      label: "Quản lý cuộc thi",
+      label: isEn ? "Competitions" : "Quản lý cuộc thi",
       icon: <IconCalendar />,
     });
 
     navItems.push({
       to: "/coordinator/users",
-      label: "Duyệt tài khoản",
+      label: isEn ? "User Approvals" : "Duyệt tài khoản",
       icon: <IconShieldCheck />,
     });
 
     navItems.push({
       to: "/coordinator/audit-logs",
-      label: "Nhật ký thao tác",
+      label: isEn ? "Audit Logs" : "Nhật ký thao tác",
       icon: <IconHistory />,
     });
   }
@@ -113,7 +119,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="nav-section-label">
-          Điều hướng
+          {isEn ? "Navigation" : "Điều hướng"}
         </div>
 
         {navItems.map((item) => (
@@ -130,6 +136,11 @@ export function Layout({ children }: { children: ReactNode }) {
         ))}
 
         <div className="sidebar-footer">
+          <div className="sidebar-tools" style={{ display: "flex", gap: "8px", marginBottom: "12px", alignItems: "center" }}>
+            <ThemeToggle />
+            <LanguageSwitcher />
+          </div>
+
           <div className="sidebar-user">
             <div className="sidebar-user-avatar">
               {initials}
@@ -152,7 +163,7 @@ export function Layout({ children }: { children: ReactNode }) {
           >
             <IconLogOut width={15} height={15} />
             <span className="btn-label">
-              Đăng xuất
+              {isEn ? "Log out" : "Đăng xuất"}
             </span>
           </button>
         </div>
