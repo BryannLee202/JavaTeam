@@ -59,9 +59,10 @@ Invoke-WebRequest -Uri 'http://localhost:3001/'                   # 200, HTML
 
 Mở trình duyệt: `http://localhost:3001/login`
 
-> Lưu ý: cổng frontend khi chạy Docker (`docker compose up`, xem
-> `docker-compose.yml`) là **3000** qua Nginx — khác với cổng **3001** khi chạy
-> `vite` trực tiếp lúc dev như trên. Cả hai đều đúng, chỉ khác ngữ cảnh sử dụng.
+<!-- Ghi chú: chưa nhắc tới cổng Docker (3000) ở đây vì docker-compose.yml
+     chưa tồn tại trên nhánh này — việc khôi phục Docker nằm ở PR riêng
+     (khoi-phuc-docker). Thêm lại đoạn này sau khi PR đó merge vào main. -->
+
 
 ## Biến môi trường
 
@@ -109,11 +110,11 @@ Password: Demo@123456
 | Người phụ trách | Phần việc |
 |---|---|
 | Phạm Nguyễn Hoài Long | Nền tảng + xác thực, phê duyệt tài khoản (Auth, AdminUser) |
-| Lê Minh Tài | Landing page, bình chọn công khai, bảng kết quả (Public Voting, Public Ranking) |
+| Hoàng Lê Giang | Trang công khai, bình chọn khán giả, bảng xếp hạng, dữ liệu mẫu demo |
 | Tạ Huỳnh Nguyên | Coordinator — cấu trúc cuộc thi (Event, Track, Round, RoundCriterion) |
-| Huỳnh Thúc Toàn | Chấm điểm + hiệu chuẩn (Judge Assignment, Score, Calibration, RBL) |
-| Trần Thị Yến Vy | Đội thi và mentor (Team, TeamInvite, Mentor, Feedback) |
-| Lê Minh Tài | Tiêu chí chấm + giải thưởng (CriteriaTemplate, Prize, Disqualification) |
+| Huỳnh Thúc Toàn | Chấm điểm + hiệu chuẩn, màn hình Mentor (Judge Assignment, Score, Calibration, RBL, Mentor) |
+| Trần Thị Yến Vy | Đội thi, mời thành viên và tài trợ |
+| Lê Minh Tài | Tiêu chí chấm + giải thưởng, xử lý vi phạm, CI/CD |
 
 > Không liệt kê tên nhánh ở đây nữa — các nhánh JAV-9, JAV-11... phía trên đã
 > merge xong hoặc bị bỏ, giữ lại dễ gây hiểu nhầm là đang còn hiệu lực. Xem
