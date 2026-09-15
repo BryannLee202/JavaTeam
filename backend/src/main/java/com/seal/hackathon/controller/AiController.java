@@ -1,6 +1,9 @@
 package com.seal.hackathon.controller;
 
 import com.seal.hackathon.dto.ai.AiSubmissionAnalysisDto;
+import com.seal.hackathon.dto.ai.AiFeedbackSuggestionRequestDto;
+import com.seal.hackathon.dto.ai.AiFeedbackSuggestionResponseDto;
+import org.springframework.web.bind.annotation.RequestBody;
 import com.seal.hackathon.service.AiAssistantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,5 +41,12 @@ public class AiController {
     public ResponseEntity<AiSubmissionAnalysisDto> analyzeSubmission(@PathVariable UUID submissionId) {
         AiSubmissionAnalysisDto analysis = aiAssistantService.analyzeSubmission(submissionId);
         return ResponseEntity.ok(analysis);
+    }
+    @Operation(summary = "Gợi ý nhận xét chấm điểm theo Rubric cho Giám khảo")
+    @PostMapping("/rubric-feedback/suggest")
+    public ResponseEntity<AiFeedbackSuggestionResponseDto> suggestRubricFeedback(
+            @RequestBody AiFeedbackSuggestionRequestDto request) {
+        AiFeedbackSuggestionResponseDto response = aiAssistantService.suggestFeedback(request);
+        return ResponseEntity.ok(response);
     }
 }
