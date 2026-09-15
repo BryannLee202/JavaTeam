@@ -8,6 +8,10 @@ import com.seal.hackathon.domain.entity.Submission;
 import com.seal.hackathon.domain.entity.Team;
 import com.seal.hackathon.domain.entity.Track;
 import com.seal.hackathon.dto.ai.AiSubmissionAnalysisDto;
+import com.seal.hackathon.dto.ai.AiFeedbackSuggestionRequestDto;
+import com.seal.hackathon.dto.ai.AiFeedbackSuggestionResponseDto;
+import java.math.BigDecimal;
+import java.util.Map;
 import com.seal.hackathon.exception.ApiException;
 import com.seal.hackathon.repository.SubmissionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,5 +108,40 @@ class AiAssistantServiceTest {
         assertThat(result.getTeamName()).isEqualTo("TechTitans");
         assertThat(result.getCounterQuestions().get(0)).contains("hiệu năng");
         assertThat(result.getStrengths()).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("suggestFeedback: Goi y nhan xet cho diem xuat sac (>= 85)")
+    void suggestFeedback_ExcellentScore() {
+        AiFeedbackSuggestionRequestDto request = AiFeedbackSuggestionRequestDto.builder()
+                .teamName("AlphaTech")
+                .totalScore(new BigDecimal("92.5"))
+                .criterionScores(Map.of("Innovation", new BigDecimal("9.5"), "Tech", new BigDecimal("9.0")))
+                .build();
+
+        AiFeedbackSuggestionResponseDto response = aiAssistantService.suggestFeedback(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getSource()).isEqualTo("HEURISTIC_FALLBACK");
+        assertThat(response.getGeneralComment()).contains("xuất sắc");
+        assertThat(response.getKeyHighlights()).isNotEmpty();
+        assertThat(response.getImprovementSuggestions()).isNotEmpty();
+        assertThat(response.getFormattedDraft()).contains("AlphaTech");
+    }
+
+    @Test
+    @DisplayName("suggestFeedback: Goi y nhan xet cho diem trung binh (< 70)")
+    void suggestFeedback_ModerateScore() {
+        AiFeedbackSuggestionRequestDto request = AiFeedbackSuggestionRequestDto.builder()
+                .teamName("BetaTeam")
+                .totalScore(new BigDecimal("65.0"))
+                .build();
+
+        AiFeedbackSuggestionResponseDto response = aiAssistantService.suggestFeedback(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getSource()).isEqualTo("HEURISTIC_FALLBACK");
+        assertThat(response.getGeneralComment()).contains("tiềm năng");
+        assertThat(response.getImprovementSuggestions().get(0)).contains("Happy Path");
     }
 }

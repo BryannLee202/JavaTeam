@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seal.hackathon.config.AiConfigurationProperties;
 import com.seal.hackathon.domain.entity.Submission;
 import com.seal.hackathon.dto.ai.AiSubmissionAnalysisDto;
+import com.seal.hackathon.dto.ai.AiFeedbackSuggestionRequestDto;
+import com.seal.hackathon.dto.ai.AiFeedbackSuggestionResponseDto;
+
 import com.seal.hackathon.exception.ApiException;
 import com.seal.hackathon.repository.SubmissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -196,6 +200,153 @@ public class AiAssistantService {
                 .strengths(strengths)
                 .concerns(concerns)
                 .counterQuestions(counterQuestions)
+                .source("HEURISTIC_FALLBACK")
+                .build();
+    }
+
+
+    /**
+     * Gợi ý nhận xét đánh giá theo Rubric cho Giám khảo dựa trên điểm số và ghi chú thô.
+     */
+    public AiFeedbackSuggestionResponseDto suggestFeedback(AiFeedbackSuggestionRequestDto request) {
+        String teamName = request.getTeamName() != null ? request.getTeamName() : "Đội thi";
+        BigDecimal totalScore = request.getTotalScore() != null ? request.getTotalScore() : BigDecimal.ZERO;
+
+        if (!aiProperties.isEnabled() || aiProperties.getApiKey() == null || aiProperties.getApiKey().isBlank()) {
+            return generateHeuristicFeedback(request);
+        }
+
+        try {
+            return callLlmForFeedback(request);
+        } catch (Exception ex) {
+            log.warn("Gọi AI gợi ý nhận xét thất bại ({}), chuyển sang Heuristic Fallback", ex.getMessage());
+            return generateHeuristicFeedback(request);
+        }
+    }
+
+    private AiFeedbackSuggestionResponseDto callLlmForFeedback(AiFeedbackSuggestionRequestDto request) throws Exception {
+        String prompt = String.format(
+                "Bạn là trợ lý Giám khảo Hackathon. Hãy soạn nhận xét sư phạm xây dựng dựa trên kết quả chấm điểm:\n" +
+                "Đội thi: %s\nTổng điểm: %s / 100\nGhi chú của giám khảo: %s\n\n" +
+                "Trả về DUY NHẤT một JSON hợp lệ:\n" +
+                "{\n" +
+                "  \"generalComment\": \"Nhận xét tổng thể 2-3 câu\",\n" +
+                "  \"keyHighlights\": [\"Điểm nổi bật 1\", \"Điểm 2\"],\n" +
+                "  \"improvementSuggestions\": [\"Gợi ý cải tiến 1\", \"Gợi ý 2\"],\n" +
+                "  \"formattedDraft\": \"Đoạn văn nhận xét hoàn chỉnh chuẩn mực\"\n" +
+                "}",
+                request.getTeamName(), request.getTotalScore(),
+                request.getJudgeNotes() != null ? request.getJudgeNotes() : "Chưa có ghi chú thêm"
+        );
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", aiProperties.getModel());
+        requestBody.put("temperature", 0.2);
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", "Bạn là trợ lý gợi ý nhận xét chấm thi hackathon chuyên nghiệp. Trả về định dạng JSON thuần."));
+        messages.add(Map.of("role", "user", "content", prompt));
+        requestBody.put("messages", messages);
+
+        String jsonPayload = objectMapper.writeValueAsString(requestBody);
+
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(aiProperties.getTimeoutMs()))
+                .build();
+
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(aiProperties.getEndpoint()))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + aiProperties.getApiKey())
+                .timeout(Duration.ofMillis(aiProperties.getTimeoutMs()))
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("API AI phản hồi mã lỗi HTTP: " + response.statusCode());
+        }
+
+        JsonNode root = objectMapper.readTree(response.body());
+        String content = root.path("choices").get(0).path("message").path("content").asText();
+        content = cleanMarkdownFence(content);
+
+        JsonNode resJson = objectMapper.readTree(content);
+        List<String> highlights = new ArrayList<>();
+        if (resJson.has("keyHighlights")) {
+            resJson.get("keyHighlights").forEach(n -> highlights.add(n.asText()));
+        }
+
+        List<String> improvements = new ArrayList<>();
+        if (resJson.has("improvementSuggestions")) {
+            resJson.get("improvementSuggestions").forEach(n -> improvements.add(n.asText()));
+        }
+
+        return AiFeedbackSuggestionResponseDto.builder()
+                .generalComment(resJson.path("generalComment").asText("Bài thi đạt chất lượng tốt."))
+                .keyHighlights(highlights)
+                .improvementSuggestions(improvements)
+                .formattedDraft(resJson.path("formattedDraft").asText(""))
+                .source("AI_LIVE")
+                .build();
+    }
+
+    public AiFeedbackSuggestionResponseDto generateHeuristicFeedback(AiFeedbackSuggestionRequestDto request) {
+        String teamName = request.getTeamName() != null ? request.getTeamName() : "Đội thi";
+        double total = request.getTotalScore() != null ? request.getTotalScore().doubleValue() : 75.0;
+
+        String generalComment;
+        List<String> highlights;
+        List<String> improvements;
+
+        if (total >= 85.0) {
+            generalComment = String.format("Đội %s có phần thể hiện xuất sắc, ý tưởng đột phá và giải pháp hoàn thiện cả về kỹ thuật lẫn khả năng giải quyết bài toán thực tế.", teamName);
+            highlights = Arrays.asList(
+                    "Sản phẩm demo hoạt động trơn tru, giao diện hiện đại và mạch lạc.",
+                    "Kiến trúc hệ thống chặt chẽ, áp dụng các chuẩn kỹ thuật cao.",
+                    "Phần trả lời phản biện tự tin, làm rõ được tính ứng dụng của giải pháp."
+            );
+            improvements = Arrays.asList(
+                    "Cân nhắc bổ sung kịch bản kiểm thử tải tự động và tối ưu hóa chi phí vận hành đám mây.",
+                    "Chuẩn bị lộ trình bảo vệ quyền sở hữu trí tuệ cho các thuật toán cốt lõi."
+            );
+        } else if (total >= 70.0) {
+            generalComment = String.format("Đội %s đạt kết quả khá tốt, giải pháp bám sát mục tiêu đề tài và đáp ứng được các yêu cầu chức năng cơ bản.", teamName);
+            highlights = Arrays.asList(
+                    "Ý tưởng có tính khả thi cao, phù hợp với nhu cầu thực tế.",
+                    "Nỗ lực triển khai tốt các tính năng chính trong thời gian ngắn của hackathon."
+            );
+            improvements = Arrays.asList(
+                    "Cần trau chuốt thêm giao diện người dùng và xử lý các trạng thái lỗi/rỗng mượt mà hơn.",
+                    "Cần củng cố thêm các cơ chế bảo mật và phân quyền chi tiết cho API."
+            );
+        } else {
+            generalComment = String.format("Đội %s có ý tưởng tiềm năng nhưng sản phẩm cần được đầu tư sâu hơn về mức độ hoàn thiện tính năng và tính ổn định kỹ thuật.", teamName);
+            highlights = Arrays.asList(
+                    "Định hướng đề tài thú vị, tinh thần đồng đội tích cực."
+            );
+            improvements = Arrays.asList(
+                    "Tập trung hoàn thiện luồng người dùng cốt lõi (Happy Path) trước khi mở rộng tính năng phụ.",
+                    "Gia tăng độ ổn định của bản demo và bổ sung tài liệu hướng dẫn cài đặt cụ thể."
+            );
+        }
+
+        StringBuilder draft = new StringBuilder();
+        draft.append(generalComment).append("\n\n");
+        draft.append("Điểm nổi bật:\n");
+        for (String h : highlights) {
+            draft.append("- ").append(h).append("\n");
+        }
+        draft.append("\nĐề xuất cải tiến:\n");
+        for (String imp : improvements) {
+            draft.append("- ").append(imp).append("\n");
+        }
+
+        return AiFeedbackSuggestionResponseDto.builder()
+                .generalComment(generalComment)
+                .keyHighlights(highlights)
+                .improvementSuggestions(improvements)
+                .formattedDraft(draft.toString().trim())
                 .source("HEURISTIC_FALLBACK")
                 .build();
     }
