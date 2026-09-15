@@ -19,7 +19,9 @@ bằng cặp cookie `XSRF-TOKEN` + header `X-XSRF-TOKEN`.
 
 ## Tai lieu he thong & Lich su thay doi
 
-- **Ho so tai lieu 8 phan khu chuan cong nghiep**: Xem tai [docs/README.md](./docs/README.md).
+- **Ho so tai lieu he thong & Ho so kien truc ADR**: Xem tai [docs/README.md](./docs/README.md).
+    - Ke hoach va ket qua kiem thu: [docs/06-testing/README.md](./docs/06-testing/README.md)
+    - Huong dan van hanh va Docker Compose: [docs/07-deployment/README.md](./docs/07-deployment/README.md)
   - Dac ta yeu cau phan mem (SRS v1.0): [docs/01-requirements/srs.md](./docs/01-requirements/srs.md)
   - Ma tran truy xuat yeu cau (Traceability Matrix): [docs/01-requirements/traceability-matrix.md](./docs/01-requirements/traceability-matrix.md)
   - Ho so quyet dinh kien truc: [docs/adr/README.md](./docs/adr/README.md)
