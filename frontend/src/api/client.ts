@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_BFF_URL ?? "http://localhost:4001",
+  baseURL: import.meta.env.VITE_BFF_URL ?? "http://localhost:4000",
   withCredentials: true,
   xsrfCookieName: "XSRF-TOKEN",
   xsrfHeaderName: "X-XSRF-TOKEN",

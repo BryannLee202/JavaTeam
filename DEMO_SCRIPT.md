@@ -23,13 +23,13 @@ mvnw.cmd spring-boot:run
 # Terminal 2: BFF (đã chạy)
 cd D:/JavaTeam_project/JavaTeam/bff
 npm run start:dev
-# Chờ đến: "SEAL Hackathon BFF listening on http://localhost:4001"
+# Chờ đến: "SEAL Hackathon BFF listening on http://localhost:4000"
 ```
 
 ```powershell
 # Terminal 3: Frontend (đã chạy)
 cd D:/JavaTeam_project/JavaTeam/frontend
-$env:VITE_BFF_URL='http://localhost:4001'
+$env:VITE_BFF_URL='http://localhost:4000'
 npx vite --host 0.0.0.0 --port 3001
 # Chờ đến: "ready in X ms" và "Local: http://localhost:3001/"
 ```
@@ -42,7 +42,7 @@ Invoke-WebRequest -Uri 'http://localhost:8080/actuator/health'
 # Kỳ vọng: StatusCode 200
 
 # Kiểm tra BFF
-Invoke-WebRequest -Uri 'http://localhost:4001/health'
+Invoke-WebRequest -Uri 'http://localhost:4000/health'
 # Kỳ vọng: StatusCode 200, nội dung: {"status":"ok"}
 
 # Kiểm tra frontend
