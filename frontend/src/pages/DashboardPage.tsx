@@ -354,7 +354,9 @@ function TeamOverview() {
       <SectionLabel>Hoạt động gần đây</SectionLabel>
       <ActivityList
         entries={activities}
+        emptyText="Chưa có hoạt động nào."
         moreTo="/team"
+        moreLabel="Xem toàn bộ trao đổi"
       />
     </>
   );
@@ -548,9 +550,9 @@ function MentorOverview() {
       <ActivityList
         entries={activities}
         emptyText="Chưa có hoạt động nào."
-        
+
         moreTo="/mentor"
-        moreLabel="Xem tất cả đội được phân công →"
+        moreLabel="Xem tất cả đội được phân công"
       />
     </>
   );
