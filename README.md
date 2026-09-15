@@ -17,6 +17,15 @@ trong cookie `httpOnly` (`shms_at`, `shms_rt`), trình duyệt không đọc/ch�
 vào token; BFF là bên giữ và gắn token khi gọi tiếp xuống Backend. Chống CSRF
 bằng cặp cookie `XSRF-TOKEN` + header `X-XSRF-TOKEN`.
 
+## Tai lieu he thong & Lich su thay doi
+
+- **Ho so tai lieu 8 phan khu chuan cong nghiep**: Xem tai [docs/README.md](./docs/README.md).
+  - Dac ta yeu cau phan mem (SRS v1.0): [docs/01-requirements/srs.md](./docs/01-requirements/srs.md)
+  - Ma tran truy xuat yeu cau (Traceability Matrix): [docs/01-requirements/traceability-matrix.md](./docs/01-requirements/traceability-matrix.md)
+  - Ho so quyet dinh kien truc: [docs/adr/README.md](./docs/adr/README.md)
+  - Phan tich khoang trong quy tac nghiep vu: [docs/02-analysis/business-rules-gap-analysis.md](./docs/02-analysis/business-rules-gap-analysis.md)
+- **Lich su thay doi he thong**: Xem tai [docs/CHANGELOG.md](./docs/CHANGELOG.md).
+
 ## Cách chạy (dev, 3 terminal riêng)
 
 > Copy từ [`DEMO_SCRIPT.md`](./DEMO_SCRIPT.md), mục "Chuẩn bị trước khi demo".
