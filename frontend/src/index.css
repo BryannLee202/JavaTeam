@@ -1149,3 +1149,60 @@ html {
   font-weight: 700;
   color: var(--color-primary);
 }
+
+/* ---------- Motion Tokens & State Feedback ---------- */
+:root {
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 250ms;
+  --motion-duration-slow: 400ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.state-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 40px 20px;
+  border-radius: var(--radius-lg);
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.state-feedback.loading {
+  color: var(--color-primary);
+}
+
+.state-feedback.error {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  border: 1px solid rgba(229, 72, 77, 0.2);
+}
+
+.state-feedback.empty {
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+}
+
+.state-feedback-title {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--color-text);
+}
+
+.state-feedback-message {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  max-width: 360px;
+  margin-top: 4px;
+}
+
+.state-feedback-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
