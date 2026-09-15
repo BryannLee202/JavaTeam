@@ -53,3 +53,9 @@ jobs:
       # Script viết bằng Node trần, không cần npm install.
       - name: Kiểm ma trận truy vết
         run: node scripts/sinh-ma-tran-truy-vet.mjs --check
+
+      # Chạy phần "Kiểm chứng bằng cách nào" của cả ba ADR. Ai đi tắt qua tầng
+      # BFF, lưu token vào localStorage, hay thêm cột điểm tổng vào cơ sở dữ
+      # liệu thì bước này đỏ.
+      - name: Kiểm các quyết định kiến trúc còn hiệu lực
+        run: bash scripts/kiem-adr.sh
