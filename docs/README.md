@@ -30,4 +30,8 @@ sửa thẳng vào file — lần chạy sau sẽ ghi đè mất.
 
 - Muốn hiểu hệ thống làm gì: [`01-yeu-cau/SRS.md`](./01-yeu-cau/SRS.md)
 - Muốn biết yêu cầu nào đã code xong: [`01-yeu-cau/ma-tran-truy-vet.md`](./01-yeu-cau/ma-tran-truy-vet.md)
+  — 27 use case, mỗi cái chỉ thẳng tới file code và file test. Bảng này sinh tự động
+  và có CI gác, nên không mục theo thời gian.
+- Muốn biết luật nghiệp vụ nào chưa được code thực thi:
+  [`02-phan-tich/rang-buoc-nghiep-vu.md`](./02-phan-tich/rang-buoc-nghiep-vu.md)
 - Muốn chạy hệ thống lên: [`../README.md`](../README.md) và [`../DEMO_SCRIPT.md`](../DEMO_SCRIPT.md)
