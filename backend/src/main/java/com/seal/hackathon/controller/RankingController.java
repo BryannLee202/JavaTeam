@@ -3,10 +3,13 @@ package com.seal.hackathon.controller;
 import com.seal.hackathon.dto.scoring.RankingResponse;
 import com.seal.hackathon.security.AuthenticatedPrincipal;
 import com.seal.hackathon.service.RankingService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,5 +32,15 @@ public class RankingController {
     @GetMapping
     public List<RankingResponse> list(@PathVariable UUID roundId, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         return rankingService.list(roundId, principal);
+    }
+
+    @GetMapping(value = "/export", produces = "text/csv; charset=UTF-8")
+    public ResponseEntity<byte[]> exportCsv(@PathVariable UUID roundId, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+        String csv = rankingService.exportCsv(roundId, principal);
+        byte[] bytes = csv.getBytes(StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"rankings_" + roundId + ".csv\"")
+                .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(bytes);
     }
 }
