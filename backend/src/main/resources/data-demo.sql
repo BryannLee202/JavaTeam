@@ -5,7 +5,7 @@ VALUES (
     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
     'Demo Coordinator',
     'coordinator@demo.local',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeEk9d5oYqTJ3hJ0e7C4F3z5SYJB6rMhW',
+    '$2a$10$R1VsPPKvp46JANEngp/4c.37STCKsYGl2M6NX8Wymc8fXyZIyKmvi',
     'FPT_STUDENT',
     'APPROVED',
     false
@@ -17,7 +17,7 @@ VALUES (
     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
     'Judge One',
     'judge1@demo.local',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeEk9d5oYqTJ3hJ0e7C4F3z5SYJB6rMhW',
+    '$2a$10$R1VsPPKvp46JANEngp/4c.37STCKsYGl2M6NX8Wymc8fXyZIyKmvi',
     'FPT_STUDENT',
     'APPROVED',
     false
@@ -29,7 +29,7 @@ VALUES (
     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
     'Judge Two',
     'judge2@demo.local',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeEk9d5oYqTJ3hJ0e7C4F3z5SYJB6rMhW',
+    '$2a$10$R1VsPPKvp46JANEngp/4c.37STCKsYGl2M6NX8Wymc8fXyZIyKmvi',
     'FPT_STUDENT',
     'APPROVED',
     false
