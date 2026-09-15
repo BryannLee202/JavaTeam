@@ -77,7 +77,7 @@ use_cases:
   status: Done
   controller: backend/src/main/java/com/seal/hackathon/controller/TrackController.java
   service: backend/src/main/java/com/seal/hackathon/service/TrackService.java
-  test: backend/src/test/java/com/seal/hackathon/service/TrackServiceTest.java
+  test: backend/src/test/java/com/seal/hackathon/service/MentorServiceTest.java
   ui: frontend/src/pages/tabs/JudgesMentorsTab.tsx
 - id: UC-11
   title: Thanh lap doi thi va moi thanh vien
@@ -149,7 +149,7 @@ use_cases:
   status: Done
   controller: backend/src/main/java/com/seal/hackathon/controller/DisqualificationController.java
   service: backend/src/main/java/com/seal/hackathon/service/DisqualificationService.java
-  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  test: backend/src/test/java/com/seal/hackathon/service/DisqualificationServiceTest.java
   ui: frontend/src/pages/coordinator/DisqualificationsTab.tsx
 - id: UC-20
   title: Ghi va truy van nhat ky kiem tra (Audit Log)
@@ -157,7 +157,7 @@ use_cases:
   status: Done
   controller: backend/src/main/java/com/seal/hackathon/controller/AuditLogController.java
   service: backend/src/main/java/com/seal/hackathon/service/AuditLogQueryService.java
-  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  test: backend/src/test/java/com/seal/hackathon/service/AuditServiceTest.java
   ui: frontend/src/pages/coordinator/AuditLogPage.tsx
 - id: UC-21
   title: Luu diem chi tiet tung giam khao va tieu chi (Score raw)
@@ -197,7 +197,7 @@ use_cases:
   status: Done
   controller: backend/src/main/java/com/seal/hackathon/controller/PrizeController.java
   service: backend/src/main/java/com/seal/hackathon/service/PrizeService.java
-  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  test: backend/src/test/java/com/seal/hackathon/service/PrizeServiceTest.java
   ui: frontend/src/pages/coordinator/PrizesTab.tsx
 - id: UC-26
   title: Cong bo ket qua va binh chon truc tuyen cong khai
@@ -205,7 +205,7 @@ use_cases:
   status: Done
   controller: backend/src/main/java/com/seal/hackathon/controller/PublicRankingController.java
   service: backend/src/main/java/com/seal/hackathon/service/PublicVotingService.java
-  test: backend/src/test/java/com/seal/hackathon/controller/RankingControllerTest.java
+  test: backend/src/test/java/com/seal/hackathon/service/PublicVotingServiceTest.java
   ui: frontend/src/pages/public/RankingPage.tsx
 - id: UC-27
   title: Xuat bao cao tong hop xep hang va diem so (CSV/Excel)
