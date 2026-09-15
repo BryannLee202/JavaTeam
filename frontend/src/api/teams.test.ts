@@ -40,7 +40,7 @@ describe("eventsApi — đội thi", () => {
       ],
     });
 
-    expect(created.trackName).toBe("AI/ML");
+    expect(created.trackName).toBe("Web / Cloud");
     expect(created.status).toBe("forming");
     expect(created.members).toHaveLength(3);
     expect(created.members.every((m) => m.id)).toBe(true);
