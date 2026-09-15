@@ -35,6 +35,20 @@ VALUES (
     false
 );
 
+-- Mentor phu trach hang muc AI / Machine Learning. Khong co tai khoan nay thi
+-- man hinh /mentor khong dang nhap vao xem duoc.
+INSERT INTO app_user (id, created_at, updated_at, full_name, email, password_hash, user_category, account_status, guest_judge)
+VALUES (
+    '10000000-0000-0000-0000-000000000004',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
+    'Mentor One',
+    'mentor1@demo.local',
+    '$2a$10$R1VsPPKvp46JANEngp/4c.37STCKsYGl2M6NX8Wymc8fXyZIyKmvi',
+    'FPT_STUDENT',
+    'APPROVED',
+    false
+);
+
 INSERT INTO user_role_assignment (id, created_at, updated_at, user_id, role_name, scope_type, scope_id)
 VALUES ('10000000-0000-0000-0000-000000000101', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000001', 'COORDINATOR', 'GLOBAL', NULL);
 
@@ -43,6 +57,12 @@ VALUES ('10000000-0000-0000-0000-000000000102', CURRENT_TIMESTAMP, CURRENT_TIMES
 
 INSERT INTO user_role_assignment (id, created_at, updated_at, user_id, role_name, scope_type, scope_id)
 VALUES ('10000000-0000-0000-0000-000000000103', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000003', 'JUDGE', 'GLOBAL', NULL);
+
+-- MentorService.listMyTeams loc dung hai dieu kien: role_name = MENTOR VA
+-- scope_type = TRACK, roi lay scope_id lam trackId. Thieu mot trong hai thi
+-- danh sach doi tra ve rong.
+INSERT INTO user_role_assignment (id, created_at, updated_at, user_id, role_name, scope_type, scope_id)
+VALUES ('10000000-0000-0000-0000-000000000104', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000004', 'MENTOR', 'TRACK', '30000000-0000-0000-0000-000000000001');
 
 -- 1. Hackathon Event (status ONGOING de mo binh chon va xem danh sach)
 INSERT INTO hackathon_event (id, created_at, updated_at, name, description, start_date, end_date, status, rbl_enabled)
