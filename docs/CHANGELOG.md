@@ -1,0 +1,72 @@
+﻿# Nhat ky Thay doi (Changelog)
+
+Tat ca cac thay doi dang ke cua he thong **SHMS (SEAL Hackathon Management System)** se duoc ghi nhan tai tai lieu nay.  
+Dinh dang nhat ky tuan thu chat che theo chuan [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) va ap dung nguyen tac [Semantic Versioning](https://semver.org/).
+
+---
+
+## [1.1.0] - 2026-09-15
+
+### Added (Them moi)
+- **Cau truc tai lieu 8 phan khu**: Khoi tao thu muc `docs/` theo mo hinh tieu chuan cong nghiep gom cac phan khu requirements, analysis, architecture, database, api, testing, deployment va adr.
+- **Dac ta SRS Markdown**: Chuyen doi toan bo 208 doan va 49 bang bieu tu dac ta Microsoft Word sang `docs/01-requirements/srs.md` (giu nguyen tinh toan ven va dinh dang bang hop le).
+- **Traceability Matrix tu dong hoa**:
+  - Tep nguon su that `docs/01-requirements/use-cases.yaml` chuan hoa 27 Use Cases va 108 thanh phan ma nguon/test.
+  - Script `scripts/traceability.py` tu dong kiem tra su ton tai cua ma nguon tren o dia va sinh bang Markdown `docs/01-requirements/traceability-matrix.md` dat ty le 100%.
+  - Bo sung co `--verify` san sang tich hop CI pipeline de chan dut tinh trang tai lieu lech pha voi code.
+  - Bo test tu dong `scripts/test_traceability.py` kiem thu cong cu truy xuat.
+- **Bo 3 quyet dinh kien truc (ADR)**:
+  - `ADR-001`: Kien truc 3 tang voi Backend-for-Frontend (BFF) NestJS lam API Gateway va quan ly phien.
+  - `ADR-002`: Co che xac thuc Token qua Cookie HttpOnly va phong chong CSRF Double-Submit.
+  - `ADR-003`: Mo hinh cham diem Rubric da tieu chi co trong so va hieu chuan do lech giam khao (Calibration).
+- **Bao cao doi chieu quy tac nghiep vu**: `docs/02-analysis/business-rules-gap-analysis.md` phan tich chuyen sau 5 quy tac nghiep vu cot loi va chi ro 3 diem can cai thien.
+
+---
+
+## [1.0.0] - 2026-09-15
+
+### Added (Them moi)
+- **Trang chu theo vai tro (Dashboard Priority IA)**: Thiet ke lai giao dien `/app` theo mo hinh 3 khoi uu tien (Can chu y, Tong quan, Hoat dong gan day) rieng biet cho Ban to chuc (Coordinator) va Giam khao (Judge).
+- **Phan cong giam khao theo vong**: Bo sung 4 ban ghi phan cong pham vi `ROUND` vao `data-demo.sql` giup giam khao nhin thay dung cac bai thi duoc giao cham tai `/judge`.
+- **Chan quyen man duyet nguoi dung**: Bao ve tuyen duong `/coordinator/users` bang `ProtectedRoute`.
+
+### Changed (Thay doi)
+- **Gioi han Request BFF**: Nang nguong `ThrottlerModule` tu 30 len 200 requests/phut de tranh loi chan nham khi tai giao dien nhieu thanh phan.
+- **Dong bo CSS & Font tu host**: Loai bo xung dot giua 3 file CSS (`index.css`, `global.css`, `team-mentor.css`), dong thoi nhung font `@fontsource-variable` noi bo giup he thong hoat dong offline khong phu thuoc Google Fonts.
+
+### Fixed (Sua loi)
+- **CORS cong 3001**: Bo sung origin `http://localhost:3001` vao danh sach cho phep cua BFF, khac phuc loi `Network Error` khi chay dev theo dung README.
+- **Cookie & CSRF tren fetch**: Cap nhat `frontend/src/api/http.ts` gui kem cookie phien (`credentials: 'include'`) va token CSRF cho cac phuong thuc thay doi du lieu.
+- **Hien thi EmptyState**: Khac phuc loi chu den tren nen den tai cac trang cong khai `/vote` va `/rankings`.
+
+---
+
+## [0.9.0] - 2026-09-03
+
+### Added (Them moi)
+- **Phan he Mentor**: Giao dien `/mentor` cho phep giang vien huong dan theo doi tien do cac doi thi trong track va trao doi phan hoi.
+- **Nhat ky He thong (Audit Log)**: Giao dien `/coordinator/audit-logs` ho tro Ban to chuc tra cuu lich su thao tac cham diem, loai doi va phe duyet.
+- **Hieu chuan diem so (Calibration)**: Tich hop bang dieu khien phuong sai va thuat toan tinh toan he so hieu chuan giam khao.
+- **Du lieu mau Demo chuan**: `backend/src/main/resources/data-demo.sql` gom 1 su kien, 3 hang muc, 2 vong thi, 6 doi thi va 42 luot cham diem day du.
+
+---
+
+## [0.8.0] - 2026-08-20
+
+### Added (Them moi)
+- **Cau truc cuoc thi**: Cac API va giao dien quan ly Event, Track, Round va bo tieu chi RoundCriterion.
+- **Quan ly doi thi**: Chuc nang tao doi, moi thanh vien qua email, chap nhan loi moi va kiem soat so luong thanh vien.
+- **Nop bai du thi**: Ho tro nop link ma nguon, tu dong kiem tra deadline va phan loai trang thai ON_TIME / LATE.
+- **Bang xep hang & Binh chon**: Trang cong khai `/rankings` va `/vote` cho phep khach tham quan binh chon truc tuyen.
+- **Chinh sach trong so tieu chi**: `CriterionWeightPolicy` dam bao tong trong so luon dat 100%.
+
+### Removed (Go bo)
+- Go bo hoan toan quy trinh va hook rang buoc Jira cu de toi gian hoa quy trinh phat trien.
+
+---
+
+## [0.1.0] - 2026-07-28
+
+### Added (Them moi)
+- Khoi tao kien truc goc: Spring Boot 4.1 (Java 21), NestJS BFF, React 19 (TypeScript, Vite).
+- He thong xac thuc JWT, phan quyen RBAC, Flyway migration V1 den V6.
