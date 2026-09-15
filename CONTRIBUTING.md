@@ -1,112 +1,125 @@
-# 📋 Hướng dẫn làm việc — JavaTeam
+# Hướng dẫn làm việc — JavaTeam
 
-## ⚙️ Setup ban đầu (làm 1 lần)
+## Setup ban đầu (làm 1 lần)
 
-### 1. Clone repo
 ```bash
 git clone https://github.com/BryannLee202/JavaTeam.git
 cd JavaTeam
 ```
 
-### 2. Cài đặt Git Hook
-
-**Windows:** Double-click file `.github\hooks\setup-hooks.bat`
-
-**Mac/Linux:**
-```bash
-bash .github/hooks/setup-hooks.sh
-```
-
-> Hook này bắt buộc mọi commit phải chứa mã task Jira (JAV-xxx).
-
----
-
-## 🔄 Quy trình làm việc hàng ngày
-
-### Bước 1: Nhận task trên Jira
-- Vào [Jira Board](https://taileminh2202.atlassian.net/jira/software/projects/JAV/boards/3)
-- Kéo task sang **In Progress**
-- Ghi nhớ mã task (ví dụ: `JAV-42`)
-
-### Bước 2: Tạo branch
-```bash
-# Cập nhật code mới nhất
-git checkout frontend
-git pull origin frontend
-
-# Tạo branch theo mã task Jira
-git checkout -b JAV-42
-```
-
-> ⚠️ **Tên branch PHẢI là mã task Jira** (ví dụ: `JAV-42`), không đặt tên tự do.
-
-### Bước 3: Code và commit
-```bash
-# Commit message PHẢI chứa mã Jira
-git commit -m "JAV-42 thêm trang login"
-git commit -m "JAV-42 fix responsive cho mobile"
-```
-
-**Ví dụ commit message hợp lệ:**
-```
-✅ JAV-42 thêm trang login
-✅ [JAV-42] fix bug auth
-✅ JAV-42: refactor component
-```
-
-**Ví dụ commit message KHÔNG hợp lệ:**
-```
-❌ thêm trang login          (thiếu mã Jira)
-❌ fix bug                    (thiếu mã Jira)
-❌ update code               (thiếu mã Jira)
-```
-
-### Bước 4: Push và tạo Pull Request
-```bash
-git push origin JAV-42
-```
-
-Sau đó vào GitHub tạo **Pull Request**:
-- Title: `JAV-42 Thêm trang login`
-- Base: `frontend`
-- Compare: `JAV-42`
-
-> 🤖 **Tự động:** Jira sẽ chuyển task sang **In Review** và comment link PR.
-
-### Bước 5: Review và Merge
-- Chờ review từ team lead
-- Sau khi approve → **Merge PR**
-
-> 🤖 **Tự động:** Jira sẽ chuyển task sang **Done** và comment "Merged".
+> Nếu trước đây bạn đã chạy `setup-hooks.sh` hoặc `setup-hooks.bat`, chạy thêm
+> lệnh này một lần để gỡ cấu hình hook cũ:
+>
+> ```bash
+> git config --unset core.hooksPath
+> ```
+>
+> Hook cũ bắt buộc mọi commit phải chứa mã Jira. Nhóm không dùng Jira nữa nên
+> hook đã được gỡ khỏi repo.
 
 ---
 
-## 📊 Thầy sẽ thấy gì trên Jira?
+## Quy trình làm việc hàng ngày
 
-Khi mở một task (ví dụ JAV-42), thầy sẽ thấy panel **Development** gồm:
+### Bước 1: Tạo nhánh từ `main` mới nhất
 
-| Mục | Nội dung |
-|-----|----------|
-| 🔀 Branch | `JAV-42` |
-| 📝 Commits | `JAV-42 thêm trang login` (by PhamNguyenHoaiLong, 16/08) |
-| 🔗 Pull Request | PR #5: JAV-42 Thêm trang login (merged) |
-| 💬 Comments | "✅ Merged via PR #5" |
+```bash
+git checkout main
+git pull origin main
+git checkout -b ten-nhanh-mo-ta-viec
+```
+
+Đặt tên nhánh theo việc đang làm, viết thường, nối bằng dấu gạch ngang.
+Ví dụ: `tab-doi-thi`, `man-hinh-mentor`, `seed-du-lieu-demo`.
+
+### Bước 2: Code và commit
+
+Commit message viết bằng lời, nói rõ **làm gì** và nếu cần thì **vì sao**:
+
+```
+them tab Doi thi trong khu dieu phoi
+sua loi 401 khi khach xem bang xep hang
+```
+
+Commit nhỏ, mỗi commit một việc. Đừng dồn cả ngày vào một commit.
+
+### Bước 3: Push và mở Pull Request
+
+```bash
+git push -u origin ten-nhanh-mo-ta-viec
+```
+
+Vào GitHub mở Pull Request, base là `main`.
+
+Trong phần mô tả PR, ghi rõ:
+- Làm gì
+- Sửa file nào, vì sao
+- Đã chạy kiểm tra gì (`mvn test`, `npm run build`, `npm test`)
+
+### Bước 4: Chờ review rồi merge
+
+Chờ trưởng nhóm review. Merge bằng **merge commit**, không squash — để mọi
+người giữ được đầy đủ lịch sử commit của mình.
 
 ---
 
-## ❓ FAQ
+## Luật quan trọng nhất: đừng thay cả file của người khác
 
-### Quên ghi mã Jira trong commit?
+Nhóm đã ba lần hỏng vì lỗi này — có người chép đè nguyên file thay vì thêm vào,
+làm mất route, mất hàm, có lần vỡ cả bản build backend.
+
+**Trước khi push, luôn chạy:**
+
 ```bash
-# Sửa commit message gần nhất
-git commit --amend -m "JAV-42 thêm trang login"
+git diff origin/main --stat
 ```
 
-### Không biết mã task?
-Vào [Jira Board](https://taileminh2202.atlassian.net/jira/software/projects/JAV/boards/3) để xem task được giao.
+Nhìn cột số dòng bị xoá. Nếu thấy file mình không định đụng tới mà lại có
+nhiều dòng bị xoá, dừng lại kiểm tra.
 
-### Lỡ đặt tên branch sai?
+Đặc biệt cẩn thận với các file dùng chung:
+`App.tsx`, `Layout.tsx`, `ProtectedRoute.tsx`, `api/events.ts`, `api/types.ts`,
+`pom.xml`, `SecurityConfig.java`.
+
+---
+
+## Trước khi mở PR, tự kiểm tra
+
+**Backend:**
 ```bash
-# Đổi tên branch
-git branch -m old-name JAV-42
+cd backend
+./mvnw test
 ```
+
+**Frontend:**
+```bash
+cd frontend
+npm run lint
+npm run build
+npm test
+```
+
+Cả hai đều có CI tự chạy khi mở PR, nhưng chạy trước ở máy mình thì đỡ mất
+một vòng chờ.
+
+---
+
+## Hỏi đáp
+
+**Lỡ đặt tên nhánh sai?**
+```bash
+git branch -m ten-cu ten-moi
+```
+
+**Muốn sửa commit message gần nhất?**
+```bash
+git commit --amend -m "mo ta moi"
+```
+Chỉ làm khi commit đó **chưa push**.
+
+**Nhánh của mình bị xung đột với `main`?**
+```bash
+git fetch origin main
+git merge origin/main
+```
+Gộp `main` vào nhánh mình rồi gỡ xung đột — đừng rebase nhánh đã push.
