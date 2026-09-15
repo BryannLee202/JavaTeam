@@ -5,6 +5,29 @@ Dinh dang nhat ky tuan thu chat che theo chuan [Keep a Changelog](https://keepac
 
 ---
 
+## [1.4.0] - 2026-09-16
+
+### Added (Them moi)
+- **Kiem tra gioi han toi thieu thanh vien doi thi (BR-01, PR #66)**:
+  - Bo sung phuong thuc `countByTeamId(UUID teamId)` trong `TeamMemberRepository.java`.
+  - Chan nop bai neu doi thi co duoi 3 thanh vien trong `SubmissionService.java`, nem loi `ApiException.badRequest("Đội thi phải có tối thiểu 3 thành viên mới đủ điều kiện nộp bài")`.
+  - Kiem thu bao phu day du trong `SubmissionServiceTest.java`.
+- **Tu dong phat nop muon trong bang xep hang (BR-02, PR #67)**:
+  - Bo sung co che tinh diem phat nop muon trong `RankingService.java`: chiet khau tu dong 10% tong diem co trong so neu bai nop co trang thai `isLate() == true`.
+  - Kiem thu bao phu tinh toan diem tru va lam tron trong `RankingServiceTest.java`.
+- **Ngan chan xung dot loi ich hai chieu giua Mentor va Giam khao (BR-03, PR #68)**:
+  - Bo sung truy van kiem tra phan quyen theo pham vi `existsByUserIdAndRoleNameAndScopeTypeAndScopeIdIn` trong `UserRoleAssignmentRepository.java`.
+  - Bo sung kiem tra cheo 2 chieu tai `JudgeAssignmentService.java`: khong cho phep Mentor lam Giam khao va nguoc lai trong cung mot su kien hackathon.
+  - Xay dung bo test moi `JudgeAssignmentServiceTest.java` voi 5 test cases kiem thu toan dien.
+- **Xuat bang xep hang ra dinh dang CSV (BR-06, PR #69 & PR #70)**:
+  - Xay dung API backend xuat bang diem CSV `exportCsv()` va `exportCsvByRound()` tai `RankingService.java`, cung cap cac endpoint `GET /api/rounds/{roundId}/rankings/export` va `GET /api/public/rankings/rounds/{roundId}/export`.
+  - Tich hop nut UI tai file CSV trong `RankingPage.tsx` voi trang thai `isLoading` va ho tro ca tieng Viet/tieng Anh.
+  - Kiem thu backend `RankingServiceTest.java` va frontend `RankingPage.test.tsx` (92/92 tests pass).
+- **Cap nhat Bao cao Phan tich Khoang trong Quy tac Nghiep vu (PR #71)**:
+  - Nang cap toan dien `docs/02-analysis/business-rules-gap-analysis.md` ghi nhan 100% quy tac nghiep vu (BR-01 den BR-06) da duoc trien khai va dong goi kiem thu tu dong.
+
+---
+
 ## [1.3.0] - 2026-09-16
 
 ### Added (Them moi)
