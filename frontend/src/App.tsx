@@ -9,6 +9,7 @@ import EventsPage from "@/pages/EventsPage";
 import EventDetailPage from "@/pages/EventDetailPage";
 import { DEFAULT_TAB } from "@/pages/tabConfig";
 import { ToastContainer } from "./components/Toast";
+import AuditLogPage from "./pages/coordinator/AuditLogPage";
 import "@/styles/global.css";
 
 // /coordinator/events/:eventId (khong co doan tab) -> nhay ve tab mac dinh.
@@ -66,6 +67,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+	  <Route
+	    path="/coordinator/audit-logs"
+	    element={
+	      <ProtectedRoute requireRole="COORDINATOR">
+	        <AuditLogPage />
+	      </ProtectedRoute>
+	    }
+	  />
       <Route
         path="/coordinator/events/:eventId/:tab"
         element={

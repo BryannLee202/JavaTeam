@@ -19,6 +19,7 @@ export function Layout({ children }: { children: ReactNode }) {
   }
   if (hasRole("COORDINATOR")) {
     navItems.push({ to: "/coordinator/events", label: "Quản lý cuộc thi", icon: <IconTrophy /> });
+	navItems.push({ to: "/coordinator/audit-logs", label: "Nhật ký thao tác", icon: <IconGavel /> });
   }
 
   async function handleLogout() {
