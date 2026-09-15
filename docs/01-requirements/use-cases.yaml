@@ -1,0 +1,217 @@
+use_cases:
+- id: UC-01
+  title: Dang ky tai khoan thi sinh va giang vien
+  actor: Thi sinh / Giang vien
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/AuthController.java
+  service: backend/src/main/java/com/seal/hackathon/service/AuthService.java
+  test: backend/src/test/java/com/seal/hackathon/service/AuthServiceTest.java
+  ui: frontend/src/pages/RegisterPage.tsx
+- id: UC-02
+  title: Phe duyet tai khoan nguoi dung
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/AdminUserApprovalController.java
+  service: backend/src/main/java/com/seal/hackathon/service/AuthService.java
+  test: backend/src/test/java/com/seal/hackathon/service/AuthServiceTest.java
+  ui: frontend/src/pages/coordinator/UsersApprovalPage.tsx
+- id: UC-03
+  title: Dang nhap he thong qua JWT va Cookie HttpOnly
+  actor: Tat ca tac nhan
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/AuthController.java
+  service: backend/src/main/java/com/seal/hackathon/service/AuthService.java
+  test: backend/src/test/java/com/seal/hackathon/service/AuthServiceTest.java
+  ui: frontend/src/pages/LoginPage.tsx
+- id: UC-04
+  title: Khoi tao tai khoan Giam khao khach moi
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/JudgeAssignmentController.java
+  service: backend/src/main/java/com/seal/hackathon/service/JudgeAssignmentService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-05
+  title: Tao va quan ly su kien Hackathon
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/EventController.java
+  service: backend/src/main/java/com/seal/hackathon/service/EventService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-06
+  title: Cau hinh cac vong thi trong su kien
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/RoundController.java
+  service: backend/src/main/java/com/seal/hackathon/service/RoundService.java
+  test: backend/src/test/java/com/seal/hackathon/service/RoundServiceTest.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-07
+  title: Duy tri mau tieu chi mac dinh (Criteria Template)
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/CriteriaTemplateController.java
+  service: backend/src/main/java/com/seal/hackathon/service/CriteriaTemplateService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-08
+  title: Tuy chinh tieu chi danh gia theo su kien
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/RoundCriterionController.java
+  service: backend/src/main/java/com/seal/hackathon/service/RoundCriterionService.java
+  test: backend/src/test/java/com/seal/hackathon/service/CriterionWeightPolicyTest.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-09
+  title: Tao Hang muc thi dau (Track)
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/TrackController.java
+  service: backend/src/main/java/com/seal/hackathon/service/TrackService.java
+  test: backend/src/test/java/com/seal/hackathon/service/TrackServiceTest.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-10
+  title: Phan cong Mentor huong dan cho Hang muc
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/TrackMentorController.java
+  service: backend/src/main/java/com/seal/hackathon/service/TrackService.java
+  test: backend/src/test/java/com/seal/hackathon/service/TrackServiceTest.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-11
+  title: Thanh lap doi thi va moi thanh vien
+  actor: Doi truong (Team Leader)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/TeamController.java
+  service: backend/src/main/java/com/seal/hackathon/service/TeamService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/team/MyTeam.tsx
+- id: UC-12
+  title: Dang ky doi vao Hang muc thi dau
+  actor: Doi truong (Team Leader)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/TeamController.java
+  service: backend/src/main/java/com/seal/hackathon/service/TeamService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/team/MyTeam.tsx
+- id: UC-13
+  title: Nop bai du thi theo tung vong thi
+  actor: Doi truong (Team Leader)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/SubmissionController.java
+  service: backend/src/main/java/com/seal/hackathon/service/SubmissionService.java
+  test: backend/src/test/java/com/seal/hackathon/service/SubmissionServiceTest.java
+  ui: frontend/src/pages/team/MyTeam.tsx
+- id: UC-14
+  title: Tu dong lay metadata repository (Git URL / Repo link)
+  actor: He thong / Doi thi
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/SubmissionController.java
+  service: backend/src/main/java/com/seal/hackathon/service/SubmissionService.java
+  test: backend/src/test/java/com/seal/hackathon/service/SubmissionServiceTest.java
+  ui: frontend/src/pages/team/MyTeam.tsx
+- id: UC-15
+  title: Phan cong Giam khao cham diem cho vong thi
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/JudgeAssignmentController.java
+  service: backend/src/main/java/com/seal/hackathon/service/JudgeAssignmentService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-16
+  title: Giam khao cham diem bai nop theo tieu chi
+  actor: Giam khao (Judge)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/ScoreController.java
+  service: backend/src/main/java/com/seal/hackathon/service/ScoreService.java
+  test: backend/src/test/java/com/seal/hackathon/service/ScoreServiceTest.java
+  ui: frontend/src/pages/judge/JudgePage.tsx
+- id: UC-17
+  title: Tu dong tinh toan va xep hang doi thi
+  actor: He thong / Ban to chuc
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/RankingController.java
+  service: backend/src/main/java/com/seal/hackathon/service/RankingService.java
+  test: backend/src/test/java/com/seal/hackathon/service/RankingServiceTest.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-18
+  title: Xet duyet va tinh toan doi thang vong tiep theo
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/RoundController.java
+  service: backend/src/main/java/com/seal/hackathon/service/RoundService.java
+  test: backend/src/test/java/com/seal/hackathon/service/RoundServiceTest.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-19
+  title: Xu ly vi pham va loai doi thi / bai nop
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/DisqualificationController.java
+  service: backend/src/main/java/com/seal/hackathon/service/DisqualificationService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-20
+  title: Ghi va truy van nhat ky kiem tra (Audit Log)
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/AuditLogController.java
+  service: backend/src/main/java/com/seal/hackathon/service/AuditLogQueryService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/AuditLogPage.tsx
+- id: UC-21
+  title: Luu diem chi tiet tung giam khao va tieu chi (Score raw)
+  actor: He thong / Giam khao
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/ScoreController.java
+  service: backend/src/main/java/com/seal/hackathon/service/ScoreService.java
+  test: backend/src/test/java/com/seal/hackathon/service/ScoreServiceTest.java
+  ui: frontend/src/pages/judge/JudgePage.tsx
+- id: UC-22
+  title: To chuc vong hieu chuan va danh gia do lech (Calibration)
+  actor: Ban to chuc / Giam khao
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/CalibrationController.java
+  service: backend/src/main/java/com/seal/hackathon/service/CalibrationService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/judge/JudgePage.tsx
+- id: UC-23
+  title: Xuat du lieu cham diem an danh nghien cuu (RBL CSV Export)
+  actor: Ban to chuc / Nha nghien cuu
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/RblExportController.java
+  service: backend/src/main/java/com/seal/hackathon/service/RblExportService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-24
+  title: Bang dieu khien phuong sai diem giua cac giam khao
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/VarianceDashboardController.java
+  service: backend/src/main/java/com/seal/hackathon/service/VarianceDashboardService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-25
+  title: Cau hinh va trao giai thuong theo xep hang
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/PrizeController.java
+  service: backend/src/main/java/com/seal/hackathon/service/PrizeService.java
+  test: backend/src/test/java/com/seal/hackathon/HackathonBackendApplicationTests.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
+- id: UC-26
+  title: Cong bo ket qua va binh chon truc tuyen cong khai
+  actor: Cong chung / Khach tham quan
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/PublicRankingController.java
+  service: backend/src/main/java/com/seal/hackathon/service/PublicVotingService.java
+  test: backend/src/test/java/com/seal/hackathon/controller/RankingControllerTest.java
+  ui: frontend/src/pages/public/RankingPage.tsx
+- id: UC-27
+  title: Xuat bao cao tong hop xep hang va diem so (CSV/Excel)
+  actor: Ban to chuc (Coordinator)
+  status: Done
+  controller: backend/src/main/java/com/seal/hackathon/controller/ReportExportController.java
+  service: backend/src/main/java/com/seal/hackathon/service/ReportExportService.java
+  test: backend/src/test/java/com/seal/hackathon/controller/ReportExportControllerTest.java
+  ui: frontend/src/pages/coordinator/EventsPage.tsx
