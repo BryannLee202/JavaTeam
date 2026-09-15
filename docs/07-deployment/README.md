@@ -1,4 +1,4 @@
-﻿# 08 - Van hanh & Trien khai (Production Deployment & Docker)
+﻿# 07 - Van hanh & Trien khai (Production Deployment & Docker)
 
 Thu muc nay huong dan cau hinh ha tang, gioi han tai nguyen va van hanh he thong SHMS tren moi truong Docker.
 

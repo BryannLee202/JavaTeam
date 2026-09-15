@@ -70,3 +70,54 @@ Dinh dang nhat ky tuan thu chat che theo chuan [Keep a Changelog](https://keepac
 ### Added (Them moi)
 - Khoi tao kien truc goc: Spring Boot 4.1 (Java 21), NestJS BFF, React 19 (TypeScript, Vite).
 - He thong xac thuc JWT, phan quyen RBAC, Flyway migration V1 den V6.
+
+---
+
+## Danh muc Chi tiet 44 Pull Requests da Merge vao main
+
+| STT | Pull Request | Nhanh nguon | Noi dung thay doi chinh | Phien ban |
+|---|---|---|---|---|
+| 1 | [**#52**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/52) | gioi-han-tai-nguyen-docker | gioi han tai nguyen docker | v1.1.0 |
+| 2 | [**#51**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/51) | chuan-hoa-flyway-migration | chuan hoa flyway migration | v1.1.0 |
+| 3 | [**#49**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/49) | lich-su-thay-doi-changelog | lich su thay doi changelog | v1.1.0 |
+| 4 | [**#48**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/48) | thiet-ke-kien-truc-adr | thiet ke kien truc adr | v1.1.0 |
+| 5 | [**#47**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/47) | traceability-tu-dong | traceability tu dong | v1.1.0 |
+| 6 | [**#45**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/45) | khung-docs-va-srs | khung docs va srs | v1.1.0 |
+| 7 | [**#44**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/44) | trang-chu-btc-giam-khao | trang chu btc giam khao | v1.0.0 |
+| 8 | [**#43**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/43) | font-tu-host | font tu host | v1.0.0 |
+| 9 | [**#42**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/42) | bo-du-lieu-gia | bo du lieu gia | v1.0.0 |
+| 10 | [**#41**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/41) | dieu-huong-va-quyen | dieu huong va quyen | v1.0.0 |
+| 11 | [**#40**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/40) | them-tai-khoan-mentor | them tai khoan mentor | v0.9.0 |
+| 12 | [**#39**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/39) | khoi-phuc-test-binh-chon | khoi phuc test binh chon | v0.9.0 |
+| 13 | [**#38**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/38) | man-hinh-nhat-ky | man hinh nhat ky | v0.9.0 |
+| 14 | [**#37**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/37) | khoi-phuc-docker | khoi phuc docker | v0.9.0 |
+| 15 | [**#36**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/36) | viet-lai-readme | viet lai readme | v0.9.0 |
+| 16 | [**#35**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/35) | man-hinh-mentor | man hinh mentor | v0.9.0 |
+| 17 | [**#34**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/34) | sua-du-lieu-mau-trung-khoa | sua du lieu mau trung khoa | v0.9.0 |
+| 18 | [**#33**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/33) | fix-health-env | fix health env | v0.9.0 |
+| 19 | [**#32**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/32) | sync-mockdata | sync mockdata | v0.9.0 |
+| 20 | [**#31**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/31) | JAV-21-seed-va-public-api | JAV 21 seed va public api | v0.9.0 |
+| 21 | [**#29**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/29) | remove-jira | remove jira | v0.8.0 |
+| 22 | [**#28**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/28) | JAV-23-coordinator-teams | JAV 23 coordinator teams | v0.8.0 |
+| 23 | [**#27**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/27) | ci-backend-test | ci backend test | v0.8.0 |
+| 24 | [**#25**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/25) | JAV-24-contestant-team | JAV 24 contestant team | v0.8.0 |
+| 25 | [**#24**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/24) | JAV-19-team-submission | JAV 19 team submission | v0.8.0 |
+| 26 | [**#23**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/23) | JAV-21-trang-cong-khai | JAV 21 trang cong khai | v0.8.0 |
+| 27 | [**#22**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/22) | JAV-14-team-api | JAV 14 team api | v0.8.0 |
+| 28 | [**#21**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/21) | JAV-11-cong-khai | JAV 11 cong khai | v0.8.0 |
+| 29 | [**#21**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/21) | JAV-11-cong-khai | JAV 11 cong khai | v0.8.0 |
+| 30 | [**#20**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/20) | JAV-12-event-track-round | JAV 12 event track round | v0.8.0 |
+| 31 | [**#19**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/19) | JAV-14-team-mentor-ui | JAV 14 team mentor ui | v0.8.0 |
+| 32 | [**#19**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/19) | JAV-14-team-mentor-ui | JAV 14 team mentor ui | v0.8.0 |
+| 33 | [**#16**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/16) | BE-cham-diem: | dua bo backend day du vao main | v0.8.0 |
+| 34 | [**#12**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/12) | claude/restore-status | claude/restore status | v0.1.0 |
+| 35 | [**#11**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/11) | claude/fix-remove-link-415 | claude/fix remove link 415 | v0.1.0 |
+| 36 | [**#10**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/10) | claude/fix-link-scope | claude/fix link scope | v0.1.0 |
+| 37 | [**#9**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/9) | claude/fix-jira-dev-links | claude/fix jira dev links | v0.1.0 |
+| 38 | [**#8**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/8) | claude/jira-close-done | claude/jira close done | v0.1.0 |
+| 39 | [**#7**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/7) | claude/jira-fe-demo | claude/jira fe demo | v0.1.0 |
+| 40 | [**#6**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/6) | claude/jira-backend-split | claude/jira backend split | v0.1.0 |
+| 41 | [**#5**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/5) | claude/jira-fe-task | claude/jira fe task | v0.1.0 |
+| 42 | [**#4**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/4) | claude/jira-list-issues | claude/jira list issues | v0.1.0 |
+| 43 | [**#3**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/3) | claude/review-branches-merge-main-v7nrtz | claude/review branches merge main v7nrtz | v0.1.0 |
+| 44 | [**#2**](https://github.com/BryannLee202/SEAL_HACKATHON/pull/2) | claude/review-branches-merge-main-v7nrtz | claude/review branches merge main v7nrtz | v0.1.0 |
