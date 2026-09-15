@@ -6,6 +6,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { IconDownload, IconTrophy } from "../../components/icons";
 import { toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import { Button } from "../../components/ui";
 
 const MEDALS = ["gold", "silver", "bronze"] as const;
 
@@ -75,35 +76,39 @@ export function RankingPage() {
       .finally(() => setLoadingRankings(false));
   }, [roundId]);
 
-  // 4. Export Excel file handler
-  async function handleExportExcel() {
+  // 4. Export CSV file handler
+  async function handleExportCsv() {
     if (!roundId) {
       toast.error("Vui lòng chọn vòng thi cần xuất kết quả.");
       return;
     }
     setIsExporting(true);
     try {
-      const res = await api.get(`/api/rounds/${roundId}/rankings/export.xlsx`, {
+      const endpoint = user
+        ? `/api/rounds/${roundId}/rankings/export`
+        : `/api/public/rankings/rounds/${roundId}/export`;
+
+      const res = await api.get(endpoint, {
         responseType: "blob",
       });
 
       const blob = new Blob([res.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type: "text/csv;charset=utf-8;",
       });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       const selectedRound = rounds.find((r) => r.id === roundId);
       const roundNameSlug = selectedRound ? selectedRound.name.replace(/\s+/g, "_") : roundId;
-      a.download = `Bang_Xep_Hang_${roundNameSlug}.xlsx`;
+      a.download = `Bang_Xep_Hang_${roundNameSlug}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      toast.success("Đã tải xuống file bảng xếp hạng Excel thành công!");
+      toast.success("Đã tải xuống file bảng xếp hạng CSV thành công!");
     } catch (err) {
-      toast.error("Không thể tải file Excel: " + (err as Error).message);
+      toast.error("Không thể tải file CSV: " + (err as Error).message);
     } finally {
       setIsExporting(false);
     }
@@ -156,15 +161,16 @@ export function RankingPage() {
           </div>
 
           {user && (
-            <button
-              className="l-btn-primary"
-              style={{ padding: "10px 18px", gap: 8 }}
+            <Button
+              variant="secondary"
+              isLoading={isExporting}
               disabled={isExporting || rankings.length === 0}
-              onClick={handleExportExcel}
+              onClick={handleExportCsv}
+              data-testid="export-csv-button"
             >
               <IconDownload width={16} height={16} />
-              {isExporting ? "Đang xuất file..." : "Tải Bảng Điểm Excel (.xlsx)"}
-            </button>
+              {isExporting ? "Đang xuất file..." : "Xuất Bảng Điểm (CSV)"}
+            </Button>
           )}
         </div>
 
