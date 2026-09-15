@@ -1,3 +1,29 @@
+# =============================================================================
+# SHMS — bốn service chạy bằng Docker
+# =============================================================================
+# Thứ tự khởi động do healthcheck quyết định, không do thứ tự khai báo:
+#   postgres → backend → bff → frontend
+#
+# Mỗi service đều có:
+#   deploy.resources.limits   chặn một service ăn hết RAM/CPU của máy
+#   logging.options           chặn file log phình vô hạn
+#
+# Hai thứ này trước đây không có. Một vòng lặp lỗi trong backend có thể sinh
+# hàng GB log và làm đầy ổ đĩa — trên máy demo thì hỏng cả buổi.
+#
+# Chạy:  docker compose up --build
+# Dừng:  docker compose down          (giữ dữ liệu)
+#        docker compose down -v       (xoá luôn dữ liệu)
+# =============================================================================
+
+x-logging: &ghi-log
+  # Giữ tối đa 2 file × 10 MB cho mỗi service. Quá thì Docker tự xoay vòng,
+  # log cũ nhất bị bỏ. Không đặt thì file log lớn không giới hạn.
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "2"
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -12,6 +38,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+    logging: *ghi-log
 
   backend:
     build: ./backend
@@ -33,6 +65,12 @@ services:
       timeout: 5s
       retries: 10
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 1024M
+    logging: *ghi-log
 
   bff:
     build: ./bff
@@ -52,6 +90,12 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 384M
+    logging: *ghi-log
 
   frontend:
     build:
@@ -63,6 +107,12 @@ services:
     depends_on:
       bff:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+    logging: *ghi-log
 
 volumes:
   postgres_data:
