@@ -1,3 +1,4 @@
+import { MascotChatDrawer } from "./MascotChatDrawer";
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -170,6 +171,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       <main className="main">{children}</main>
+      <MascotChatDrawer />
     </div>
   );
 }
