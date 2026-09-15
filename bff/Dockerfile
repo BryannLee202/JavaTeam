@@ -11,10 +11,12 @@ RUN npm run build
 FROM node:22-alpine
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY --chown=node:node package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY --from=build /app/dist dist
+COPY --from=build --chown=node:node /app/dist dist
+
+USER node
 
 EXPOSE 4000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=5 \
