@@ -104,7 +104,14 @@ function AppRoutes() {
       />
 
 	    <Route path="/register" element={<RegisterPage />} />
-	    <Route path="/coordinator/users" element={<UsersApprovalPage />} />
+      <Route
+        path="/coordinator/users"
+        element={
+          <ProtectedRoute requireRole="COORDINATOR">
+            <UsersApprovalPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

@@ -123,3 +123,21 @@ export function IconDownload(props: IconProps) {
     </svg>
   );
 }
+
+export function IconHistory(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  );
+}
+
+export function IconMessageCircle(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.9L3 21l1.9-5.1A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z" />
+    </svg>
+  );
+}
