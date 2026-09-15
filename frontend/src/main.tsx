@@ -1,5 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+
+// Font cai kem trong node_modules, khong tai tu Google Fonts nua.
+// Ban variable: mot file cho moi day can nang thay vi mot file moi day nang.
+import '@fontsource-variable/plus-jakarta-sans'
+import '@fontsource-variable/lexend'
+
 import './index.css'
 import App from './App.tsx'
 

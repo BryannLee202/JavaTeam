@@ -7,51 +7,49 @@
    ------------------------------------------------------------------- */
 
 :root {
-  --c-bg: #f5f6fa;
-  --c-surface: #ffffff;
-  --c-border: #e2e5ed;
-  --c-border-strong: #cbd0dd;
-  --c-ink: #171b26;
-  --c-muted: #6b7280;
-  --c-accent: #4f46e5;
-  --c-accent-soft: #eef0fd;
-  --c-success: #0e9488;
-  --c-success-soft: #e4f6f3;
-  --c-warning: #b45309;
-  --c-warning-soft: #fdf1e2;
-  --c-danger: #dc2626;
-  --c-danger-soft: #fdecec;
+  /* Các biến --c-* dưới đây KHÔNG còn màu riêng: chúng trỏ thẳng về bộ token
+     --color-* của index.css. Trước đây hai file khai báo hai bảng màu khác
+     nhau (tím #7c3aed bên index.css, chàm #4f46e5 bên này) và hai bộ font
+     khác nhau, nên cùng một ứng dụng mà hai nửa nhìn như hai sản phẩm.
 
-  --font-display: "Space Grotesk", "Inter", sans-serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+     Giữ nguyên tên --c-* thay vì sửa hết 100 chỗ dùng trong file này và trong
+     StatusBadge.tsx — đổi tên là một lần sửa lớn dễ sót, còn cách này cho kết
+     quả giống hệt mà mỗi lần chỉ sửa một dòng. */
+  --c-bg: var(--color-bg);
+  --c-surface: var(--color-surface);
+  --c-border: var(--color-border);
+  --c-border-strong: var(--color-border);
+  --c-ink: var(--color-text);
+  --c-muted: var(--color-text-muted);
+  --c-accent: var(--color-primary);
+  --c-accent-soft: var(--color-primary-light);
+  --c-success: var(--color-success);
+  --c-success-soft: var(--color-success-soft);
+  --c-warning: var(--color-warning);
+  --c-warning-soft: var(--color-warning-soft);
+  --c-danger: var(--color-danger);
+  --c-danger-soft: var(--color-danger-soft);
 
-  --radius-sm: 6px;
+  /* Một bộ font cho cả ứng dụng. Trước đây trang công khai dùng Space Grotesk
+     + Inter + IBM Plex Mono, còn khu vận hành dùng Lexend + Plus Jakarta Sans
+     — năm bộ font tải về chỉ để hiện cùng một sản phẩm. */
+  --font-display: "Lexend Variable", "Lexend", "Plus Jakarta Sans Variable", "Plus Jakarta Sans", sans-serif;
+  --font-body: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  /* --radius-sm và --radius-lg cũng do index.css khai báo, với giá trị khác
+     (8px / 18px). Bỏ hai dòng đó ở đây, chỉ giữ --radius-md vì index.css
+     không có. */
   --radius-md: 10px;
-  --radius-lg: 16px;
-  --shadow-card: 0 1px 2px rgba(23, 27, 38, 0.04), 0 8px 24px -12px rgba(23, 27, 38, 0.12);
-  --shadow-modal: 0 24px 60px -20px rgba(23, 27, 38, 0.35);
+  --shadow-card: var(--shadow-sm);
+  --shadow-modal: var(--shadow-lg);
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  background: var(--c-bg);
-  color: var(--c-ink);
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
+/* Phần reset nền (`*`, `html/body/#root`, `body`) đã bỏ khỏi đây.
+   index.css khai báo y hệt những selector này và được nạp trước (main.tsx),
+   còn file này nạp sau (App.tsx) nên nó đè lên — kéo theo nền và cỡ chữ của
+   TOÀN bộ ứng dụng đổi theo, kể cả những màn hình không dùng file này.
+   Từ giờ index.css là nơi duy nhất khai báo phần nền. */
 
 h1,
 h2,
@@ -962,4 +960,23 @@ select:focus {
   .spinner {
     animation: none;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Sửa chữ đen trên nền đen ở ba trang công khai
+   --------------------------------------------------------------------------
+   <EmptyState /> dùng chung cho cả khu vận hành (nền sáng) lẫn ba trang công
+   khai (nền tối). index.css đặt màu tiêu đề của nó là var(--color-text) —
+   gần như đen — nên ở /vote và /rankings dòng "Chưa có hạng mục thi đấu"
+   biến mất hẳn, chỉ còn đọc được dòng mô tả bên dưới.
+
+   Chỉ ghi đè trong phạm vi .landing để khu vận hành giữ nguyên.
+   -------------------------------------------------------------------------- */
+
+.landing .empty-state-rich .title {
+  color: #f4f2ff;
+}
+
+.landing .empty-state-rich .desc {
+  color: rgba(244, 242, 255, 0.72);
 }

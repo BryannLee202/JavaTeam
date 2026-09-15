@@ -1,14 +1,14 @@
 ﻿/* MY TEAM / SHARED LAYOUT */
-* {
-    box-sizing: border-box;
-}
+/* Khoi reset nen (`*` va `body`) da bo khoi day — day la file thu BA khai bao
+   cung mot thu, va vi App.tsx nap no sau cung nen no thang ca index.css lan
+   global.css. Hau qua tren toan ung dung, khong rieng man "Doi cua toi":
 
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: #f4f7fb;
-    color: #1f2937;
-}
+     font chu than bai  -> Arial, Helvetica  (dat ten font trong index.css
+                                              chua bao gio co tac dung)
+     nen                -> #f4f7fb
+     mau chu            -> #1f2937
+
+   index.css la noi duy nhat khai bao phan nen. */
 
 button,
 input,
