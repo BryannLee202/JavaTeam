@@ -44,6 +44,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Lấy toàn bộ lịch sử: bước kiểm CHANGELOG đọc các commit merge, bản
+          # rút gọn mặc định (fetch-depth 1) không có chúng.
+          fetch-depth: 0
 
       - name: Cài Node.js
         uses: actions/setup-node@v4
@@ -59,3 +63,9 @@ jobs:
       # liệu thì bước này đỏ.
       - name: Kiểm các quyết định kiến trúc còn hiệu lực
         run: bash scripts/kiem-adr.sh
+
+      # CHANGELOG sinh từ lịch sử git. Cần toàn bộ lịch sử chứ không phải bản
+      # rút gọn mặc định của actions/checkout, nên bước checkout ở trên đặt
+      # fetch-depth: 0.
+      - name: Kiểm CHANGELOG khớp lịch sử git
+        run: node scripts/sinh-changelog.mjs --check
