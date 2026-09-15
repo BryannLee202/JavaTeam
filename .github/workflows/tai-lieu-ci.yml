@@ -1,0 +1,55 @@
+# =============================================================================
+# Tài liệu CI — gác cho ma trận truy vết không bị mục
+# =============================================================================
+# Vấn đề muốn chặn: bảng truy vết yêu cầu viết tay luôn mục dần. Người ta đổi
+# tên class, gộp file, xoá test — bảng vẫn ghi đường dẫn cũ và vẫn TRÔNG NHƯ
+# ĐÚNG. Càng để lâu càng sai, mà không có tín hiệu nào báo.
+#
+# Job này chạy scripts/sinh-ma-tran-truy-vet.mjs --check ở mỗi PR và mỗi lần
+# push lên main. Nó đỏ khi:
+#   1. một đường dẫn bằng chứng trong truy-vet.yml không còn tồn tại
+#   2. file ma-tran-truy-vet.md đã cũ so với truy-vet.yml
+#   3. một use case khai là "xong" nhưng không có đường dẫn code nào
+#
+# Tức là đổi tên một file code là CI đỏ ngay lần push kế tiếp, buộc phải cập
+# nhật bảng cùng lúc với code.
+#
+# Không có bước `paths` lọc theo docs/ — cố ý. Thay đổi làm bảng sai nằm ở
+# backend/ và frontend/ chứ không nằm ở docs/, nên lọc theo docs/ là hỏng đúng
+# mục đích của job này.
+# =============================================================================
+
+name: "Tài liệu CI"
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tai-lieu-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kiem-ma-tran-truy-vet:
+    name: Kiểm ma trận truy vết yêu cầu
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Script viết bằng Node trần, không cần npm install.
+      - name: Kiểm ma trận truy vết
+        run: node scripts/sinh-ma-tran-truy-vet.mjs --check
