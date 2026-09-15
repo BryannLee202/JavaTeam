@@ -9,8 +9,7 @@ VALUES (
     gen_random_uuid(),
     'Demo Coordinator',
     'coordinator@demo.local',
-    -- BCrypt hash of 'Demo@123456' (pre-computed for demo consistency)
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeEk9d5oYqTJ3hJ0e7C4F3z5SYJB6rMhW',
+    crypt('Demo@123456', gen_salt('bf')),
     'STAFF',
     'APPROVED',
     false
@@ -27,8 +26,8 @@ VALUES (
     gen_random_uuid(),
     'Judge One',
     'judge1@demo.local',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeEk9d5oYqTJ3hJ0e7C4F3z5SYJB6rMhW',
-    'JUDGE',
+    crypt('Demo@123456', gen_salt('bf')),
+    'STAFF',
     'APPROVED',
     false
 );
@@ -39,8 +38,8 @@ VALUES (
     gen_random_uuid(),
     'Judge Two',
     'judge2@demo.local',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeEk9d5oYqTJ3hJ0e7C4F3z5SYJB6rMhW',
-    'JUDGE',
+    crypt('Demo@123456', gen_salt('bf')),
+    'STAFF',
     'APPROVED',
     false
 );
@@ -52,8 +51,8 @@ VALUES (
     gen_random_uuid(),
     'Demo Team Leader',
     'leader@demo.local',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeEk9d5oYqTJ3hJ0e7C4F3z5SYJB6rMhW',
-    'STUDENT',
+    crypt('Demo@123456', gen_salt('bf')),
+    'FPT_STUDENT',
     'APPROVED',
     false
 );
