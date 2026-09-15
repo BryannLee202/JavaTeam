@@ -17,6 +17,15 @@ trong cookie `httpOnly` (`shms_at`, `shms_rt`), trình duyệt không đọc/ch�
 vào token; BFF là bên giữ và gắn token khi gọi tiếp xuống Backend. Chống CSRF
 bằng cặp cookie `XSRF-TOKEN` + header `X-XSRF-TOKEN`.
 
+## Khoi dong Nhanh & Kiem thu 1-Click (Danh cho Buoi Bao ve / Demo)
+
+- **Khoi dong toan bo he thong (1-Click)**: Nhap dup chuot vao file [`start-system.bat`](./start-system.bat) (tu dong kiem tra `.env` va khoi chay Docker Compose / PostgreSQL).
+- **Chay toan bo kiem thu tu dong (1-Click)**: Nhap dup chuot vao file [`run-automated-tests.bat`](./run-automated-tests.bat) (chay xac thuc Ma tran RTM 27 Use Cases, 94 tests Backend, 101 tests Frontend va TypeScript).
+- **Ho so chuan bi bao ve do an**:
+  - [Ban do ma nguon toan dien (Source Map)](./docs/08-report-prep/BAN_DO_SOURCE.md)
+  - [Cam nang on tap & van dap phan bien nhanh (30+ Q&A)](./docs/08-report-prep/ON_TAP_NHANH.md)
+  - [Danh muc kiem tra truoc gio G (Viva Checklist)](./docs/08-report-prep/VIVA_DEFENSE_CHECKLIST.md)
+
 ## Tai lieu he thong & Lich su thay doi
 
 - **Ho so tai lieu he thong & Ho so kien truc ADR**: Xem tai [docs/README.md](./docs/README.md).
