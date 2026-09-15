@@ -14,7 +14,12 @@ async function bootstrap() {
   app.use(helmet({ contentSecurityPolicy: false }));
   app.useGlobalPipes(new ValidationPipe({ transform: true, forbidUnknownValues: true }));
  
-  const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:3000").split(",");
+  // 3000 = frontend chay bang Docker (qua Nginx), 3001 = chay vite truc tiep
+  // luc dev nhu huong dan trong README. Thieu 3001 thi lam dung theo README se
+  // dang nhap khong duoc: trinh duyet chan loi goi /api/auth/login vi CORS.
+  const allowedOrigins = (
+    process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:3000,http://localhost:3001"
+  ).split(",");
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
