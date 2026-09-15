@@ -60,3 +60,18 @@ Nhom quyet dinh trien khai kien truc **3 tang doc lap**:
 ### Danh doi / Nhuoc diem:
 - **Them mot hop phan can van hanh**: He thong co them service NestJS (cong 4000), yeu cau them quy trinh build Docker va giam sat container.
 - **Do tre mang (Latency)**: Request phai qua them 1 buoc nhay (hop) qua BFF. Tuy nhien vi BFF va Backend chay cung mang Docker noi bo nen do tre tang them la khong dang ke (< 3ms).
+
+## 4. Bang chung & Kiem chung Tu dong (Automated Verification)
+
+Quyet dinh kien truc nay duoc bao ve va giam sat boi cac bo test tu dong sau:
+
+1. **Bo test xac thuc & Proxy BFF**:
+   - `bff/src/auth/auth.controller.spec.ts`: Kiem tra luong uy quyen dang nhap tu BFF sang Backend, dam bao token duoc dong goi an toan vao cookie.
+   - `bff/src/common/cookies.spec.ts`: Kiem tra cac thuoc tinh cua cookie (`httpOnly: true`, `sameSite: 'lax'`).
+2. **Kiem tra tan suat (Rate Limiting)**:
+   - `ThrottlerModule` duoc cau hinh voi nguong 200 req/min tai `bff/src/app.module.ts`.
+3. **Lenh kiem chung**:
+   ```bash
+   cd bff && npm test
+   # 19/19 tests pass
+   ```

@@ -54,3 +54,20 @@ Khi chuyen sang dung cookie tu dong gui kem theo request, ung dung co nguy co bi
 ### Yeu cau nghiem ngat khi lap trinh:
 - Khi thuc hien cac loi goi etch o Frontend, bat buoc phai khai bao credentials: 'include' de trinh duyet gui kem cookie qua cac origin (vi du frontend 3001 va BFF 4000).
 - Tat ca cac endpoint thay doi du lieu phai duoc bao ve boi CsrfGuard.
+
+## 4. Bang chung & Kiem chung Tu dong (Automated Verification)
+
+Quyet dinh bao mat phien duoc bao ve boi cac ca kiem thu tu dong:
+
+1. **Bo test CsrfGuard tai BFF**:
+   - `bff/src/common/csrf.guard.spec.ts`:
+     - Test case 1: Cho phep cac phuong thuc doc (GET, HEAD, OPTIONS) di qua ma khong can kiem tra header CSRF.
+     - Test case 2: Tu choi voi ma loi 403 Forbidden khi client gui request POST/PUT/DELETE ma thieu header `X-XSRF-TOKEN`.
+     - Test case 3: Chap thuan request khi gia tri cua header `X-XSRF-TOKEN` khop chinh xac voi gia tri cookie `XSRF-TOKEN`.
+2. **Kiem tra ma nguon Frontend**:
+   - `frontend/src/api/client.ts`: Khai bao `withCredentials: true` va `xsrfHeaderName: 'X-XSRF-TOKEN'`.
+   - `frontend/src/api/http.ts`: Khai bao `credentials: 'include'` va ham bo sung header CSRF truoc khi fetch.
+3. **Lenh kiem chung**:
+   ```bash
+   cd bff && npm test -- csrf.guard.spec.ts
+   ```

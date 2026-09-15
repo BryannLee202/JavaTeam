@@ -53,3 +53,22 @@ awScore) ve diem chuan hoa:
 ### Danh doi / Thach thuc:
 - **Khoi luong thao tac cua giam khao tang**: Thay vi chi nhap 1 o diem, giam khao can nhap diem cho 3-5 tieu chi va viet nhan xet cho tung tieu chi.
 - Giao dien cham diem tren web phai duoc thiet ke toi uu, ho tro luu nhap va tinh toan tong diem tuc thi (da duoc giai quyet tai JudgePage.tsx).
+
+## 4. Bang chung & Kiem chung Tu dong (Automated Verification)
+
+Quyet dinh ve Rubric va Calibration duoc kiem chung bang 16 unit tests trong backend:
+
+1. **Bo test chinh sach trong so tieu chi (CriterionWeightPolicyTest)**:
+   - `backend/src/test/java/com/seal/hackathon/service/CriterionWeightPolicyTest.java`:
+     - `shouldPassWhenTotalWeightIs100`: Xac thuc tong trong so bang 100% duoc chap nhan.
+     - `shouldFailWhenTotalWeightLessThan100`: Nem `BusinessRuleException` khi tong < 100.
+     - `shouldFailWhenTotalWeightGreaterThan100`: Nem `BusinessRuleException` khi tong > 100.
+     - `shouldFailWhenAnyWeightIsZeroOrNegative`: Nem ngoai le khi trong so <= 0.
+2. **Bo test cham diem va xep hang**:
+   - `backend/src/test/java/com/seal/hackathon/service/ScoreServiceTest.java`: Kiem tra tinh toan tong diem co trong so va khoa sua doi khi `finalized = true`.
+   - `backend/src/test/java/com/seal/hackathon/service/RankingServiceTest.java`: Kiem tra thu tu xep hang dua tren diem tong hop sau danh gia.
+3. **Lenh kiem chung**:
+   ```bash
+   cd backend && mvn test -Dtest=CriterionWeightPolicyTest,ScoreServiceTest,RankingServiceTest
+   # 16/16 tests pass
+   ```
