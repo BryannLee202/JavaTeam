@@ -1,35 +1,88 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import FeedbackThread from "../../components/FeedbackThread";
-
-type Team = {
-    id: number;
-    name: string;
-    memberCount: number;
-    members: string[];
-};
+import {
+    mentorApi,
+    type FeedbackMessage,
+    type MentorTeam,
+} from "@/api/mentorApi";
 
 function Mentor() {
-    const [assignedTrack] = useState<{
-    id: number;
-    name: string;
-} | null>(null);
+    const [teams, setTeams] = useState<MentorTeam[]>([]);
+    const [selectedTeam, setSelectedTeam] = useState<MentorTeam | null>(null);
+    const [messages, setMessages] = useState<FeedbackMessage[]>([]);
 
-const [teams] = useState<Team[]>([]);
+    const [loadingTeams, setLoadingTeams] = useState(true);
+    const [loadingMessages, setLoadingMessages] = useState(false);
+    const [sending, setSending] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const [selectedTeam, setSelectedTeam] =
-        useState<Team | null>(null);
+    // Mentor duoc phan cong theo hang muc, nen moi doi tra ve deu cung mot
+    // hang muc. Lay tu doi dau tien thay vi goi them mot API rieng.
+    const assignedTrackName = teams[0]?.trackName ?? null;
 
-        type FeedbackMessage = {
-            id: number;
-            sender: "Mentor";
-            content: string;
-            time: string;
-            date: string;
+    useEffect(() => {
+        let huy = false;
+
+        mentorApi
+            .listMyTeams()
+            .then((data) => {
+                if (huy) return;
+                setTeams(data);
+                setError(null);
+            })
+            .catch(() => {
+                if (!huy) setError("Khong tai duoc danh sach doi thi.");
+            })
+            .finally(() => {
+                if (!huy) setLoadingTeams(false);
+            });
+
+        return () => {
+            huy = true;
         };
-        
-        const [feedbackByTeam, setFeedbackByTeam] = useState<
-        Record<number, FeedbackMessage[]>
-        >({});
+    }, []);
+
+    // Doi doi thi thi tai lai tin nhan cua doi do.
+    useEffect(() => {
+        if (!selectedTeam) {
+            setMessages([]);
+            return;
+        }
+
+        let huy = false;
+        setLoadingMessages(true);
+
+        mentorApi
+            .listMessages(selectedTeam.id)
+            .then((data) => {
+                if (!huy) setMessages(data);
+            })
+            .catch(() => {
+                if (!huy) setError("Khong tai duoc tin nhan cua doi nay.");
+            })
+            .finally(() => {
+                if (!huy) setLoadingMessages(false);
+            });
+
+        return () => {
+            huy = true;
+        };
+    }, [selectedTeam]);
+
+    async function handleSend(body: string) {
+        if (!selectedTeam || sending) return;
+
+        setSending(true);
+        try {
+            const saved = await mentorApi.sendMessage(selectedTeam.id, body);
+            setMessages((prev) => [...prev, saved]);
+            setError(null);
+        } catch {
+            setError("Gui phan hoi that bai, thu lai sau.");
+        } finally {
+            setSending(false);
+        }
+    }
 
     return (
         <div className="team-dashboard">
@@ -99,13 +152,13 @@ const [teams] = useState<Team[]>([]);
                                 </span>
 
                                 <h2>
-                                    {assignedTrack ? assignedTrack.name : "Not assigned"}
+                                    {assignedTrackName ?? "Chua duoc phan cong"}
                                 </h2>
 
                                 <p>
-                                    {assignedTrack
-                                    ? "You are mentoring teams in this track."
-                                    : "No track has been assigned yet."}
+                                    {assignedTrackName
+                                        ? "Ban dang huong dan cac doi trong hang muc nay."
+                                        : "Ban chua duoc phan cong hang muc nao."}
                                 </p>
                             </div>
                         </section>
@@ -164,7 +217,7 @@ const [teams] = useState<Team[]>([]);
                 <div className="mentor-team-info">
                     <strong>{team.name}</strong>
                     <span>
-                        {team.memberCount} / 5 members
+                        {team.members.length} / 5 thanh vien
                     </span>
                 </div>
             </div>
@@ -221,10 +274,7 @@ const [teams] = useState<Team[]>([]);
                                     </span>
 
                                     <h3>
-                                        {
-                                            selectedTeam.memberCount
-                                        }{" "}
-                                        / 5
+                                        {selectedTeam.members.length} / 5
                                     </h3>
                                 </div>
                             </div>
@@ -233,59 +283,34 @@ const [teams] = useState<Team[]>([]);
                                 <h3>Members</h3>
 
                                 <div className="mentor-member-list">
-                                    {selectedTeam.members.map(
-                                        (member, index) => (
-                                            <div
-                                                className="mentor-member-item"
-                                                key={index}
-                                            >
-                                                <div className="member-avatar">
-                                                    {member
-                                                        .charAt(0)
-                                                        .toUpperCase()}
-                                                </div>
-
-                                                <span>
-                                                    {member}
-                                                </span>
+                                    {selectedTeam.members.map((member) => (
+                                        <div
+                                            className="mentor-member-item"
+                                            key={member.userId}
+                                        >
+                                            <div className="member-avatar">
+                                                {member.fullName.charAt(0).toUpperCase()}
                                             </div>
-                                        )
-                                    )}
+
+                                            <span>
+                                                {member.fullName}
+                                                {member.roleInTeam === "LEADER" && " (doi truong)"}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
-                            <FeedbackThread
-                            teamName={selectedTeam.name}
-                            messages={feedbackByTeam[selectedTeam.id] || []}
-                            onSend={(content) => {
-                                const now = new Date();
-
-                                const newMessage: FeedbackMessage = {
-                                    id: Date.now(),
-                                    sender: "Mentor",
-                                    content,
-
-                                    time: new Date().toLocaleString("vi-VN", {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    }),
-
-                                    date: now.toLocaleDateString("vi-VN", {
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                        year: "numeric",
-                                    }),
-                                };
-
-                                setFeedbackByTeam((prev) => ({
-                                    ...prev,
-                                    [selectedTeam.id]: [
-                                        ...(prev[selectedTeam.id] || []),
-                                        newMessage,
-                                    ],
-                                }));
-                                }}
-                            />
+                            {loadingMessages ? (
+                                <p className="muted">Dang tai tin nhan...</p>
+                            ) : (
+                                <FeedbackThread
+                                    teamName={selectedTeam.name}
+                                    messages={messages}
+                                    onSend={handleSend}
+                                    sending={sending}
+                                />
+                            )}
                         </section>
                     )}
                 </div>
