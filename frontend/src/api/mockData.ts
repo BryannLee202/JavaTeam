@@ -27,7 +27,7 @@ let events: HackathonEvent[] = [
     endDate: "2026-08-24",
     trackCount: 3,
     roundCount: 2,
-    teamCount: 18,
+    teamCount: 6,
     createdAt: "2026-06-01T09:00:00Z",
     updatedAt: "2026-07-20T09:00:00Z",
   },
@@ -47,15 +47,15 @@ let events: HackathonEvent[] = [
 ];
 
 let tracks: Track[] = [
-  { id: "trk-1", eventId: "evt-1", name: "Web & Mobile", description: "Ứng dụng web / di động end-to-end.", mentorId: "men-1", mentorName: "TS. Nguyễn Văn A", teamCount: 7 },
-  { id: "trk-2", eventId: "evt-1", name: "AI/ML", description: "Sản phẩm ứng dụng trí tuệ nhân tạo.", mentorId: "men-2", mentorName: "TS. Trần Thị B", teamCount: 6 },
-  { id: "trk-3", eventId: "evt-1", name: "IoT & Hệ thống nhúng", description: "Giải pháp phần cứng kết hợp phần mềm.", mentorId: null, mentorName: null, teamCount: 5 },
+  { id: "trk-1", eventId: "evt-1", name: "AI / Machine Learning", description: "Các giải pháp ứng dụng trí tuệ nhân tạo.", mentorId: "men-1", mentorName: "TS. Nguyễn Văn A", teamCount: 2 },
+  { id: "trk-2", eventId: "evt-1", name: "Web / Cloud", description: "Nền tảng web và hệ thống điện toán đám mây.", mentorId: "men-2", mentorName: "TS. Trần Thị B", teamCount: 2 },
+  { id: "trk-3", eventId: "evt-1", name: "Mobile / IoT", description: "Ứng dụng di động và thiết bị thông minh kết nối.", mentorId: null, mentorName: null, teamCount: 2 },
 ];
 
 let teams: Team[] = [
   {
-    id: "tm-1", eventId: "evt-1", trackId: "trk-1", trackName: "Web & Mobile",
-    name: "Đội Alpha", status: "registered", createdAt: "2026-08-02T09:00:00Z",
+    id: "tm-1", eventId: "evt-1", trackId: "trk-1", trackName: "AI / Machine Learning",
+    name: "Alpha AI", status: "registered", createdAt: "2026-08-02T09:00:00Z",
     members: [
       { id: "mem-1", fullName: "Nguyễn Minh Anh", email: "anh.nm@example.com", isLeader: true },
       { id: "mem-2", fullName: "Lê Quốc Bảo", email: "bao.lq@example.com", isLeader: false },
@@ -63,21 +63,47 @@ let teams: Team[] = [
     ],
   },
   {
-    id: "tm-2", eventId: "evt-1", trackId: "trk-2", trackName: "AI/ML",
-    name: "Đội Beta", status: "registered", createdAt: "2026-08-03T14:20:00Z",
+    id: "tm-2", eventId: "evt-1", trackId: "trk-1", trackName: "AI / Machine Learning",
+    name: "Neural Vision", status: "registered", createdAt: "2026-08-03T14:20:00Z",
     members: [
       { id: "mem-4", fullName: "Trần Gia Huy", email: "huy.tg@example.com", isLeader: true },
       { id: "mem-5", fullName: "Đỗ Khánh Linh", email: "linh.dk@example.com", isLeader: false },
       { id: "mem-6", fullName: "Vũ Nhật Minh", email: "minh.vn@example.com", isLeader: false },
-      { id: "mem-7", fullName: "Hoàng Yến Nhi", email: "nhi.hy@example.com", isLeader: false },
     ],
   },
   {
-    id: "tm-3", eventId: "evt-1", trackId: "trk-1", trackName: "Web & Mobile",
-    name: "Đội Gamma", status: "forming", createdAt: "2026-08-05T08:45:00Z",
+    id: "tm-3", eventId: "evt-1", trackId: "trk-2", trackName: "Web / Cloud",
+    name: "Cloud Scale", status: "registered", createdAt: "2026-08-03T16:10:00Z",
     members: [
-      { id: "mem-8", fullName: "Bùi Tuấn Kiệt", email: "kiet.bt@example.com", isLeader: true },
+      { id: "mem-7", fullName: "Hoàng Yến Nhi", email: "nhi.hy@example.com", isLeader: true },
+      { id: "mem-8", fullName: "Bùi Tuấn Kiệt", email: "kiet.bt@example.com", isLeader: false },
       { id: "mem-9", fullName: "Ngô Phương Thảo", email: "thao.np@example.com", isLeader: false },
+    ],
+  },
+  {
+    id: "tm-4", eventId: "evt-1", trackId: "trk-2", trackName: "Web / Cloud",
+    name: "Dev Nexus", status: "registered", createdAt: "2026-08-04T08:30:00Z",
+    members: [
+      { id: "mem-10", fullName: "Đặng Hải Long", email: "long.dh@example.com", isLeader: true },
+      { id: "mem-11", fullName: "Vương Bích Ngọc", email: "ngoc.vb@example.com", isLeader: false },
+      { id: "mem-12", fullName: "Tạ Quang Vinh", email: "vinh.tq@example.com", isLeader: false },
+    ],
+  },
+  {
+    id: "tm-5", eventId: "evt-1", trackId: "trk-3", trackName: "Mobile / IoT",
+    name: "Smart IoT", status: "registered", createdAt: "2026-08-04T13:45:00Z",
+    members: [
+      { id: "mem-13", fullName: "Lý Gia Bảo", email: "bao.lg@example.com", isLeader: true },
+      { id: "mem-14", fullName: "Trịnh Khánh Vy", email: "vy.tk@example.com", isLeader: false },
+      { id: "mem-15", fullName: "Cao Minh Đức", email: "duc.cm@example.com", isLeader: false },
+    ],
+  },
+  {
+    id: "tm-6", eventId: "evt-1", trackId: "trk-3", trackName: "Mobile / IoT",
+    name: "Mobile Next", status: "forming", createdAt: "2026-08-05T08:45:00Z",
+    members: [
+      { id: "mem-16", fullName: "Phan Thuỳ Dương", email: "duong.pt@example.com", isLeader: true },
+      { id: "mem-17", fullName: "Hồ Đăng Khoa", email: "khoa.hd@example.com", isLeader: false },
     ],
   },
 ];
@@ -90,23 +116,23 @@ let rounds: Round[] = [
     order: 1,
     submissionDeadline: "2026-08-15T23:59:00Z",
     criteria: [
-      { id: "c1", name: "Tính khả thi kỹ thuật", weight: 40 },
-      { id: "c2", name: "Trải nghiệm người dùng", weight: 30 },
-      { id: "c3", name: "Thuyết trình", weight: 30 },
+      { id: "c1", name: "Tính sáng tạo", weight: 30 },
+      { id: "c2", name: "Kỹ thuật & Kiến trúc", weight: 40 },
+      { id: "c3", name: "Thuyết trình & Demo", weight: 30 },
     ],
-    promotionRule: { topNPerTrack: 3 },
+    promotionRule: { topNPerTrack: 5 },
     judgeIds: ["jud-1", "jud-2"],
   },
   {
     id: "rnd-2",
     eventId: "evt-1",
-    name: "Vòng chung kết",
+    name: "Chung kết",
     order: 2,
     submissionDeadline: "2026-08-23T23:59:00Z",
     criteria: [
-      { id: "c1", name: "Tính khả thi kỹ thuật", weight: 35 },
-      { id: "c2", name: "Tác động / Đổi mới", weight: 35 },
-      { id: "c3", name: "Thuyết trình", weight: 30 },
+      { id: "c1", name: "Tính sáng tạo", weight: 30 },
+      { id: "c2", name: "Kỹ thuật & Kiến trúc", weight: 40 },
+      { id: "c3", name: "Thuyết trình & Demo", weight: 30 },
     ],
     promotionRule: { topNPerTrack: 1 },
     judgeIds: ["jud-1"],
