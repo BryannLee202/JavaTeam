@@ -961,3 +961,22 @@ select:focus {
     animation: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Sửa chữ đen trên nền đen ở ba trang công khai
+   --------------------------------------------------------------------------
+   <EmptyState /> dùng chung cho cả khu vận hành (nền sáng) lẫn ba trang công
+   khai (nền tối). index.css đặt màu tiêu đề của nó là var(--color-text) —
+   gần như đen — nên ở /vote và /rankings dòng "Chưa có hạng mục thi đấu"
+   biến mất hẳn, chỉ còn đọc được dòng mô tả bên dưới.
+
+   Chỉ ghi đè trong phạm vi .landing để khu vận hành giữ nguyên.
+   -------------------------------------------------------------------------- */
+
+.landing .empty-state-rich .title {
+  color: #f4f2ff;
+}
+
+.landing .empty-state-rich .desc {
+  color: rgba(244, 242, 255, 0.72);
+}
