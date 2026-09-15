@@ -1,0 +1,66 @@
+﻿# =============================================================================
+# Traceability & Docs CI — Gac chat luong va kiem tra toan ven ma tran truy xuat
+# =============================================================================
+# Trigger: moi PR vao main va push len main co dong vao docs/, scripts/ hoac code
+# Actions:
+#   1. Cai Python 3.12 va thu vien PyYAML
+#   2. Chay unit test cong cu traceability: python -m unittest scripts/test_traceability.py
+#   3. Kiem tra toan ven 100% lien ket ma nguon: python scripts/traceability.py --verify
+#
+# Muc dich: Dam bao moi Use Case trong dac ta deu co Controllers, Services,
+# Tests va UI thuc su ton tai tren dia. Neu doi ten file hay xoa ma khong cap nhat
+# tai lieu thi CI se bao do ngay lap tuc de chan merge.
+# =============================================================================
+
+name: "Traceability & Docs CI"
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "scripts/**"
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/traceability-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "scripts/**"
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/traceability-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: traceability-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-traceability:
+    name: Kiem tra toan ven Ma tran Truy xuat
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ma nguon
+        uses: actions/checkout@v4
+
+      - name: Cai dat Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Cai dat dependencies
+        run: pip install pyyaml
+
+      - name: Chay bo kiem thu unit test cong cu traceability
+        run: python -m unittest scripts/test_traceability.py
+
+      - name: Xac thuc 100% duong dan ma nguon va test case tren o dia
+        run: python scripts/traceability.py --verify
