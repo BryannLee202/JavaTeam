@@ -1,7 +1,12 @@
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { IconGavel, IconHome, IconLogOut, IconTrophy } from "./icons";
+import {
+  IconGavel,
+  IconHome,
+  IconLogOut,
+  IconTrophy,
+} from "./icons";
 
 interface NavItem {
   to: string;
@@ -13,13 +18,45 @@ export function Layout({ children }: { children: ReactNode }) {
   const { user, hasRole, logout } = useAuth();
   const navigate = useNavigate();
 
-  const navItems: NavItem[] = [{ to: "/app", label: "Trang chủ", icon: <IconHome /> }];
-  if (hasRole("JUDGE")) {
-    navItems.push({ to: "/judge", label: "Chấm điểm", icon: <IconGavel /> });
+  const navItems: NavItem[] = [
+    {
+      to: "/app",
+      label: "Trang chủ",
+      icon: <IconHome />,
+    },
+  ];
+
+  if (
+    hasRole("TEAM_MEMBER") ||
+    hasRole("TEAM_LEADER")
+  ) {
+    navItems.push({
+      to: "/team",
+      label: "Đội của tôi",
+      icon: <IconTrophy />,
+    });
   }
+
+  if (hasRole("JUDGE")) {
+    navItems.push({
+      to: "/judge",
+      label: "Chấm điểm",
+      icon: <IconGavel />,
+    });
+  }
+
   if (hasRole("COORDINATOR")) {
-    navItems.push({ to: "/coordinator/events", label: "Quản lý cuộc thi", icon: <IconTrophy /> });
-	navItems.push({ to: "/coordinator/audit-logs", label: "Nhật ký thao tác", icon: <IconGavel /> });
+    navItems.push({
+      to: "/coordinator/events",
+      label: "Quản lý cuộc thi",
+      icon: <IconTrophy />,
+    });
+
+    navItems.push({
+      to: "/coordinator/audit-logs",
+      label: "Nhật ký thao tác",
+      icon: <IconGavel />,
+    });
   }
 
   async function handleLogout() {
@@ -31,7 +68,7 @@ export function Layout({ children }: { children: ReactNode }) {
     .split(" ")
     .filter(Boolean)
     .slice(-2)
-    .map((w) => w[0])
+    .map((word) => word[0])
     .join("")
     .toUpperCase();
 
@@ -40,15 +77,25 @@ export function Layout({ children }: { children: ReactNode }) {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <div className="sidebar-brand-mark">SH</div>
+
           <div className="sidebar-brand-text">
             SEAL Hackathon
             <small>Chấm điểm</small>
           </div>
         </div>
 
-        <div className="nav-section-label">Điều hướng</div>
+        <div className="nav-section-label">
+          Điều hướng
+        </div>
+
         {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to} className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              `nav-link${isActive ? " active" : ""}`
+            }
+          >
             {item.icon}
             {item.label}
           </NavLink>
@@ -56,18 +103,33 @@ export function Layout({ children }: { children: ReactNode }) {
 
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <div className="sidebar-user-avatar">{initials}</div>
+            <div className="sidebar-user-avatar">
+              {initials}
+            </div>
+
             <div className="sidebar-user-info">
-              <div className="sidebar-user-name">{user?.fullName}</div>
-              <div className="sidebar-user-email">{user?.email}</div>
+              <div className="sidebar-user-name">
+                {user?.fullName}
+              </div>
+
+              <div className="sidebar-user-email">
+                {user?.email}
+              </div>
             </div>
           </div>
-          <button className="btn secondary small sidebar-logout-btn" onClick={handleLogout}>
+
+          <button
+            className="btn secondary small sidebar-logout-btn"
+            onClick={handleLogout}
+          >
             <IconLogOut width={15} height={15} />
-            <span className="btn-label">Đăng xuất</span>
+            <span className="btn-label">
+              Đăng xuất
+            </span>
           </button>
         </div>
       </aside>
+
       <main className="main">{children}</main>
     </div>
   );

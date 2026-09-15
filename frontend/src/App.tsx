@@ -1,6 +1,12 @@
+import MyTeam from "./pages/team/MyTeam";
+import Mentor from "./pages/mentor/Mentor";
+
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LandingPage } from "./pages/LandingPage";
+import { VotingPage } from "./pages/public/VotingPage";
+import { RankingPage } from "./pages/public/RankingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { JudgePage } from "./pages/judge/JudgePage";
@@ -11,6 +17,9 @@ import { DEFAULT_TAB } from "@/pages/tabConfig";
 import { ToastContainer } from "./components/Toast";
 import AuditLogPage from "./pages/coordinator/AuditLogPage";
 import "@/styles/global.css";
+import "@/styles/team-mentor.css";
+import { RegisterPage } from "./pages/RegisterPage";
+import UsersApprovalPage from "./pages/coordinator/UsersApprovalPage";
 
 // /coordinator/events/:eventId (khong co doan tab) -> nhay ve tab mac dinh.
 // Tach thanh component rieng de khong lam roi doan :eventId khi resolve duong dan.
@@ -19,18 +28,12 @@ function DefaultTabRedirect() {
   return <Navigate to={`/coordinator/events/${eventId}/${DEFAULT_TAB}`} replace />;
 }
 
-function RootRedirect() {
-  const { user, loading } = useAuth();
-  if (loading) {
-    return <div className="empty-state">Đang tải...</div>;
-  }
-  return <Navigate to={user ? "/app" : "/login"} replace />;
-}
-
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<RootRedirect />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/vote" element={<VotingPage />} />
+      <Route path="/rankings" element={<RankingPage />} />
       <Route path="/login" element={<LoginPage />} />
 
       <Route
@@ -83,6 +86,25 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/team"
+        element={
+          <ProtectedRoute requireRole={["TEAM_MEMBER", "TEAM_LEADER"]}>
+            <MyTeam />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mentor"
+        element={
+          <ProtectedRoute requireRole="MENTOR">
+            <Mentor />
+          </ProtectedRoute>
+        }
+      />
+
+	    <Route path="/register" element={<RegisterPage />} />
+	    <Route path="/coordinator/users" element={<UsersApprovalPage />} />
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

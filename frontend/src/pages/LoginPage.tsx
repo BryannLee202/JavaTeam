@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { IconArrowRight, IconGavel } from "../components/icons";
 
@@ -52,6 +52,9 @@ export function LoginPage() {
               {submitting ? "Đang đăng nhập..." : "Đăng nhập"}
               {!submitting && <IconArrowRight width={15} height={15} />}
             </button>
+			<p style={{ marginTop: '1rem', textAlign: 'center' }}>
+			              Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
+			            </p>
           </form>
         </div>
       </div>
