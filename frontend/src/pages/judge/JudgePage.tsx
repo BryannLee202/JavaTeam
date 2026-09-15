@@ -1,3 +1,5 @@
+import { aiApi, type AiSubmissionAnalysis, type AiFeedbackSuggestion } from "../../api/aiApi";
+import { Modal, Badge } from "../../components/ui";
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
@@ -176,6 +178,15 @@ function SubmissionScoreCard({ submission, criteria }: { submission: SubmissionI
   const [finalized, setFinalized] = useState(true);
   const [expanded, setExpanded] = useState(false);
 
+  // AI Assistant States
+  const [aiAnalysis, setAiAnalysis] = useState<AiSubmissionAnalysis | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+
+  const [aiFeedback, setAiFeedback] = useState<AiFeedbackSuggestion | null>(null);
+  const [isGeneratingFeedback, setIsGeneratingFeedback] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
   useEffect(() => {
     api.get<ScoreItem[]>(`/api/submissions/${submission.id}/scores`).then((res) => {
       setExistingScores(res.data);
@@ -197,6 +208,60 @@ function SubmissionScoreCard({ submission, criteria }: { submission: SubmissionI
     const weight = Number(c.weight);
     return sum + (max > 0 ? (v / max) * weight : 0);
   }, 0);
+
+  async function handleAnalyzeAi() {
+    setIsAnalyzing(true);
+    try {
+      const result = await aiApi.analyzeSubmission(submission.id, {
+        teamName: submission.teamName,
+        repoUrl: submission.repoUrl,
+        docUrl: submission.docUrl ?? undefined,
+      });
+      setAiAnalysis(result);
+      setShowAiModal(true);
+    } catch (err) {
+      toast.error("Không thể tải phân tích AI: " + (err as Error).message);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
+  async function handleSuggestFeedback() {
+    setIsGeneratingFeedback(true);
+    try {
+      const critScores: Record<string, number> = {};
+      criteria.forEach((c) => {
+        critScores[c.name] = values[c.id] ?? 0;
+      });
+      const notes = Object.values(comments).filter(Boolean).join("; ");
+      const result = await aiApi.suggestRubricFeedback({
+        submissionId: submission.id,
+        teamName: submission.teamName,
+        totalScore: Math.round(totalWeighted * 10) / 10,
+        criterionScores: critScores,
+        judgeNotes: notes || undefined,
+      });
+      setAiFeedback(result);
+      setShowFeedbackModal(true);
+    } catch (err) {
+      toast.error("Không thể sinh nhận xét AI: " + (err as Error).message);
+    } finally {
+      setIsGeneratingFeedback(false);
+    }
+  }
+
+  function handleApplyFeedback() {
+    if (!aiFeedback) return;
+    if (criteria.length > 0) {
+      const firstCrit = criteria[0];
+      setComments((prev) => ({
+        ...prev,
+        [firstCrit.id]: (prev[firstCrit.id] ? prev[firstCrit.id] + " | " : "") + aiFeedback.generalComment,
+      }));
+      toast.success("Đã điền nhận xét AI vào ô tiêu chí!");
+    }
+    setShowFeedbackModal(false);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -233,7 +298,7 @@ function SubmissionScoreCard({ submission, criteria }: { submission: SubmissionI
 
       {expanded && (
         <div className="section-gap">
-          <div className="flex wrap">
+          <div className="flex wrap" style={{ gap: 8, alignItems: "center" }}>
             <a href={submission.repoUrl} target="_blank" rel="noreferrer" className="btn small secondary">
               Xem Repo
             </a>
@@ -247,6 +312,31 @@ function SubmissionScoreCard({ submission, criteria }: { submission: SubmissionI
                 Xem Slide
               </a>
             )}
+
+            {/* AI Assistant Buttons */}
+            <button
+              type="button"
+              className="btn small"
+              onClick={handleAnalyzeAi}
+              disabled={isAnalyzing}
+              style={{
+                background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+                color: "#ffffff",
+                border: "none",
+                fontWeight: 600,
+              }}
+            >
+              {isAnalyzing ? "✨ Đang phân tích..." : "✨ Trợ lý AI"}
+            </button>
+            <button
+              type="button"
+              className="btn small secondary"
+              onClick={handleSuggestFeedback}
+              disabled={isGeneratingFeedback}
+              style={{ borderColor: "var(--color-primary)", color: "var(--color-primary-dark)", fontWeight: 600 }}
+            >
+              {isGeneratingFeedback ? "✨ Đang sinh..." : "✨ AI Gợi ý nhận xét"}
+            </button>
           </div>
 
           <form onSubmit={submit} className="section-gap">
@@ -293,6 +383,99 @@ function SubmissionScoreCard({ submission, criteria }: { submission: SubmissionI
               Lưu điểm
             </button>
           </form>
+
+          {/* Modal Phân tích AI */}
+          <Modal
+            isOpen={showAiModal}
+            onClose={() => setShowAiModal(false)}
+            title={`✨ Phân tích Trợ lý AI — ${submission.teamName}`}
+            size="lg"
+          >
+            {aiAnalysis && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <strong>Tóm tắt giải pháp:</strong>
+                    <Badge variant={aiAnalysis.source === "AI_LIVE" ? "success" : "info"}>
+                      {aiAnalysis.source === "AI_LIVE" ? "AI Trực tiếp" : "Mô phỏng Phân tích"}
+                    </Badge>
+                  </div>
+                  <p style={{ lineHeight: 1.6, background: "var(--color-bg)", padding: 12, borderRadius: 8 }}>
+                    {aiAnalysis.summary}
+                  </p>
+                </div>
+
+                <div>
+                  <strong style={{ color: "var(--color-success-dark, #16a34a)" }}>✓ Điểm mạnh kỹ thuật:</strong>
+                  <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+                    {aiAnalysis.strengths.map((s, idx) => (
+                      <li key={idx}>{s}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <strong style={{ color: "var(--color-warning-dark, #d97706)" }}>⚠ Rủi ro & Điểm cần làm rõ:</strong>
+                  <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+                    {aiAnalysis.concerns.map((c, idx) => (
+                      <li key={idx}>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div style={{ background: "rgba(79, 70, 229, 0.06)", padding: 14, borderRadius: 8, border: "1px solid rgba(79, 70, 229, 0.2)" }}>
+                  <strong style={{ color: "#4338ca", display: "block", marginBottom: 8 }}>
+                    🎯 Gợi ý câu hỏi phản biện cho Giám khảo:
+                  </strong>
+                  <ol style={{ paddingLeft: 20, margin: 0, lineHeight: 1.6 }}>
+                    {aiAnalysis.counterQuestions.map((q, idx) => (
+                      <li key={idx} style={{ marginBottom: 6 }}>{q}</li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            )}
+          </Modal>
+
+          {/* Modal Gợi ý nhận xét AI */}
+          <Modal
+            isOpen={showFeedbackModal}
+            onClose={() => setShowFeedbackModal(false)}
+            title={`✨ Gợi ý Nhận xét Đánh giá — ${submission.teamName}`}
+            size="md"
+          >
+            {aiFeedback && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <p style={{ lineHeight: 1.5, background: "var(--color-bg)", padding: 12, borderRadius: 8 }}>
+                  {aiFeedback.generalComment}
+                </p>
+
+                <div>
+                  <strong>Bản nháp nhận xét tổng hợp:</strong>
+                  <pre style={{
+                    marginTop: 6,
+                    padding: 12,
+                    background: "var(--color-bg)",
+                    borderRadius: 8,
+                    whiteSpace: "pre-wrap",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                  }}>
+                    {aiFeedback.formattedDraft}
+                  </pre>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 10 }}>
+                  <button type="button" className="btn small secondary" onClick={() => setShowFeedbackModal(false)}>
+                    Đóng
+                  </button>
+                  <button type="button" className="btn small primary" onClick={handleApplyFeedback}>
+                    Áp dụng vào nhận xét
+                  </button>
+                </div>
+              </div>
+            )}
+          </Modal>
         </div>
       )}
     </div>
