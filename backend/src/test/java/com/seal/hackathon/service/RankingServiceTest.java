@@ -272,4 +272,40 @@ class RankingServiceTest {
         assertThat(highResp.promoted()).isTrue();
         assertThat(lowResp.promoted()).isFalse();
     }
+
+    @Test
+    void compute_shouldApplyTenPercentPenalty_whenSubmissionIsLate() {
+        UUID roundId = UUID.randomUUID();
+        UUID actorId = UUID.randomUUID();
+        Round round = Round.builder().promotionTopN(null).build();
+        round.setId(roundId);
+
+        Team team = Team.builder().name("Team Late").build();
+        team.setId(UUID.randomUUID());
+
+        Submission subLate = Submission.builder().team(team).round(round).build();
+        subLate.setId(UUID.randomUUID());
+        subLate.setLate(true);
+
+        Criterion c1 = Criterion.builder().round(round).name("C1").weight(BigDecimal.valueOf(100)).maxScore(BigDecimal.TEN).build();
+        c1.setId(UUID.randomUUID());
+
+        // Điểm đạt tối đa 10/10 -> điểm trọng số = 100.00
+        Score score = buildScore(subLate, c1, BigDecimal.TEN, true);
+
+        when(roundService.findOrThrow(roundId)).thenReturn(round);
+        when(submissionRepository.findByRoundIdWithTeam(roundId)).thenReturn(List.of(subLate));
+        when(criterionRepository.findByRoundId(roundId)).thenReturn(List.of(c1));
+        when(disqualificationRepository.findByTeamIdInAndRevokedFalse(anyList())).thenReturn(List.of());
+        when(disqualificationRepository.findBySubmissionIdInAndRevokedFalse(anyList())).thenReturn(List.of());
+        when(scoreRepository.findBySubmissionIdIn(anyList())).thenReturn(List.of(score));
+        when(rankingRepository.findByRoundIdOrderByRankOverallAsc(roundId)).thenReturn(List.of());
+        when(rankingRepository.save(org.mockito.ArgumentMatchers.any(Ranking.class))).thenAnswer(this::saveAnswer);
+
+        List<RankingResponse> result = rankingService.compute(roundId, actorId);
+
+        assertThat(result).hasSize(1);
+        // 100 * 0.90 = 90.00
+        assertThat(result.get(0).totalWeightedScore()).isEqualByComparingTo(BigDecimal.valueOf(90));
+    }
 }

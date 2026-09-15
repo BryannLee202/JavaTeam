@@ -97,6 +97,9 @@ public class RankingService {
             }
             List<Score> scores = finalizedScoresBySubmission.getOrDefault(submission.getId(), List.of());
             BigDecimal total = computeWeightedTotal(scores, criteria);
+            if (submission.isLate()) {
+                total = total.multiply(BigDecimal.valueOf(0.90)).setScale(2, RoundingMode.HALF_UP);
+            }
             entries.add(new Entry(submission, total));
         }
 
