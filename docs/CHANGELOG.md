@@ -5,6 +5,36 @@ Dinh dang nhat ky tuan thu chat che theo chuan [Keep a Changelog](https://keepac
 
 ---
 
+## [1.5.0] - 2026-09-16
+
+### Added (Them moi)
+- **Tang AI Core Service & REST API phong thu (PR #72)**:
+  - Xay dung `AiConfigurationProperties.java` ho tro doc `AI_API_KEY`, `app.ai.model`, `app.ai.endpoint` an toan qua bien moi truong.
+  - Xay dung `AiAssistantService.java` goi client HTTP Java 21 nguyen ban toi LLM chat completions voi nhiet do thap `0.1` kem co che Heuristic Fallback tu dong khi offline.
+  - Cung cap REST API `/api/ai/status` va `/api/ai/submissions/{submissionId}/analyze`.
+  - Bao ve boi bo test `AiAssistantServiceTest.java` (3 unit tests).
+- **AI Goi y Nhan xet Cham thi theo Rubric (PR #73)**:
+  - Cung cap DTOs `AiFeedbackSuggestionRequestDto` va `AiFeedbackSuggestionResponseDto`.
+  - Trien khai logic sinh nhan xet phan cap theo muc diem (>= 85, >= 70, < 70) voi diem noi bat va de xuat cai tien tai endpoint `/api/ai/rubric-feedback/suggest`.
+  - Bao ve boi cac unit test danh gia diem cao/trung binh (tong 5 unit tests backend AI).
+- **Dong co AI Offline Fallback & Tien trinh Phan tich da giai doan (PR #74)**:
+  - `mockAiEngine.ts`: Dong co sinh phan tich, goi y nhan xet va hoi dap the le cuoc thi offline 100%.
+  - `useAiProgress.ts`: Hook quan ly 4 giai doan phan tich truc quan (`READING` -> `EVALUATING` -> `FORMULATING` -> `COMPLETED`).
+  - `aiApi.ts`: Client API hybrid an toan tuyet doi.
+  - Bo test Vitest `mockAiEngine.test.ts` pass 100%.
+- **Tich hop Tro ly Giam khao AI tren JudgePage (PR #75)**:
+  - Trang bi nut `✨ Trợ lý AI` va `✨ AI Gợi ý nhận xét` ngay tren tung the cham thi `SubmissionScoreCard`.
+  - Hop thoai Modal phan tich giai phap, diem manh, rui ro va danh sach cau hoi phan bien chuyen sau giup giam khao van dap thi sinh.
+  - Tinh nang dien tu dong ban nhap nhan xet AI vao o danh gia cua giam khao.
+- **Hop thoai SEAL Mascot Chatbot Tu van The le (PR #76)**:
+  - Nâng cap mascot thanh `MascotChatDrawer.tsx` gan xuyen suot thanh dieu huong `Layout.tsx`.
+  - Ho tro cac nut hoi dap nhanh the le: BR-01 (quy mo doi), BR-02 (nop muon), BR-03 (xung dot loi ich), BR-04 (rubric), BR-06 (xuat CSV).
+- **Tai lieu Kien truc ADR-004 & Dac ta API AI (PR #77)**:
+  - Bo sung `ADR-004: Kien truc Tich hop Tri tue Nhan tao Hybrid va Co che Phong thu Da lop`.
+  - Bo sung dac ta ky thuat `docs/05-api/ai-api.md`.
+
+---
+
 ## [1.4.0] - 2026-09-16
 
 ### Added (Them moi)
