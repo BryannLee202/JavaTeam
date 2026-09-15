@@ -1,23 +1,33 @@
 import { useState } from "react";
+import type { FeedbackMessage } from "@/api/mentorApi";
 
-type Message = {
-    id: number;
-    sender: "Mentor";
-    content: string;
-    time: string;
-    date: string;
+const ROLE_LABEL: Record<FeedbackMessage["authorRole"], string> = {
+    MENTOR: "Mentor",
+    TEAM_LEADER: "Doi truong",
+    TEAM_MEMBER: "Thanh vien",
 };
+
+/** Backend tra ve createdAt la mot chuoi ISO; man hinh can tach rieng gio va ngay. */
+function splitTimestamp(createdAt: string) {
+    const d = new Date(createdAt);
+    return {
+        time: d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+        date: d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }),
+    };
+}
 
 type Props = {
     teamName: string;
-    messages: Message[];
+    messages: FeedbackMessage[];
     onSend: (content: string) => void;
+    sending?: boolean;
 };
 
 function FeedbackThread({
     teamName,
     messages,
     onSend,
+    sending = false,
 }: Props) {
     const [newMessage, setNewMessage] = useState("");
 
@@ -72,37 +82,42 @@ function FeedbackThread({
                     </div>
                 ) : (
                     messages.map((message, index) => {
-    const previousMessage =
-        index > 0 ? messages[index - 1] : null;
+    const { time, date } = splitTimestamp(message.createdAt);
 
-    const showDate =
-        !previousMessage ||
-        previousMessage.date !== message.date;
+    const previousDate =
+        index > 0 ? splitTimestamp(messages[index - 1].createdAt).date : null;
+
+    const showDate = previousDate !== date;
+    const isMentor = message.authorRole === "MENTOR";
 
     return (
         <div key={message.id}>
             {showDate && (
                 <div className="feedback-date-divider">
-                    <span>{message.date}</span>
+                    <span>{date}</span>
                 </div>
             )}
 
-            <div className="feedback-row mentor-message">
+            <div
+                className={`feedback-row ${
+                    isMentor ? "mentor-message" : "team-message"
+                }`}
+            >
                 <div className="feedback-avatar">
-                    M
+                    {message.authorName.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="feedback-message-content">
                     <span className="feedback-sender">
-                        Mentor
+                        {message.authorName} · {ROLE_LABEL[message.authorRole]}
                     </span>
 
                     <div className="feedback-bubble">
-                        {message.content}
+                        {message.body}
                     </div>
 
                     <span className="feedback-time">
-                        {message.time}
+                        {time}
                     </span>
                 </div>
             </div>
@@ -127,9 +142,9 @@ function FeedbackThread({
                 <button
                     className="feedback-send-btn"
                     onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
+                    disabled={!newMessage.trim() || sending}
                 >
-                    Send ➤
+                    {sending ? "Đang gửi..." : "Gửi ➤"}
                 </button>
             </div>
         </div>
