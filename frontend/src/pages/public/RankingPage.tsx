@@ -5,10 +5,12 @@ import type { EventItem, RankingItem, RoundItem } from "../../api/types";
 import { EmptyState } from "../../components/EmptyState";
 import { IconDownload, IconTrophy } from "../../components/icons";
 import { toast } from "../../components/Toast";
+import { useAuth } from "../../context/AuthContext";
 
 const MEDALS = ["gold", "silver", "bronze"] as const;
 
 export function RankingPage() {
+  const { user } = useAuth();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [eventId, setEventId] = useState("");
   const [rounds, setRounds] = useState<RoundItem[]>([]);
@@ -27,9 +29,9 @@ export function RankingPage() {
         if (res.data.length > 0) setEventId(res.data[0].id);
       })
       .catch((err) => {
-        // Fallback to /api/events if needed
+        // Fallback to /api/public/rankings/events if needed
         api
-          .get<EventItem[]>("/api/events")
+          .get<EventItem[]>("/api/public/rankings/events")
           .then((res) => {
             setEvents(res.data);
             if (res.data.length > 0) setEventId(res.data[0].id);
@@ -46,7 +48,7 @@ export function RankingPage() {
       return;
     }
     api
-      .get<RoundItem[]>(`/api/events/${eventId}/rounds`)
+      .get<RoundItem[]>(`/api/public/rankings/events/${eventId}/rounds`)
       .then((res) => {
         setRounds(res.data);
         if (res.data.length > 0) {
@@ -67,7 +69,7 @@ export function RankingPage() {
     }
     setLoadingRankings(true);
     api
-      .get<RankingItem[]>(`/api/rounds/${roundId}/rankings`)
+      .get<RankingItem[]>(`/api/public/rankings/rounds/${roundId}`)
       .then((res) => setRankings(res.data))
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoadingRankings(false));
@@ -153,15 +155,17 @@ export function RankingPage() {
             </p>
           </div>
 
-          <button
-            className="l-btn-primary"
-            style={{ padding: "10px 18px", gap: 8 }}
-            disabled={isExporting || rankings.length === 0}
-            onClick={handleExportExcel}
-          >
-            <IconDownload width={16} height={16} />
-            {isExporting ? "Đang xuất file..." : "Tải Bảng Điểm Excel (.xlsx)"}
-          </button>
+          {user && (
+            <button
+              className="l-btn-primary"
+              style={{ padding: "10px 18px", gap: 8 }}
+              disabled={isExporting || rankings.length === 0}
+              onClick={handleExportExcel}
+            >
+              <IconDownload width={16} height={16} />
+              {isExporting ? "Đang xuất file..." : "Tải Bảng Điểm Excel (.xlsx)"}
+            </button>
+          )}
         </div>
 
         {error && <div className="alert error" style={{ marginBottom: 20 }}>{error}</div>}

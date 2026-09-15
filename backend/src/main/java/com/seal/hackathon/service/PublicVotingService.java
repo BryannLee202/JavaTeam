@@ -88,12 +88,9 @@ public class PublicVotingService {
             throw ApiException.badRequest("Mã Hạng mục không được để trống");
         }
         Map<UUID, Long> counts = voteRepository.countGroupedByTeamForTrack(trackId).stream()
-                .filter(c -> c.getTeamId() != null)
                 .collect(Collectors.toMap(
                         VoteRepository.TeamVoteCount::getTeamId,
-                        c -> c.getVoteCount() == null ? 0L : c.getVoteCount(),
-                        (existing, replacement) -> existing
-                ));
+                        item -> item.getVoteCount() != null ? item.getVoteCount() : 0L));
         return teamRepository.findByTrackId(trackId).stream()
                 .map(t -> new TeamVoteTallyResponse(t.getId(), t.getName(), counts.getOrDefault(t.getId(), 0L)))
                 .sorted(Comparator.comparingLong(TeamVoteTallyResponse::voteCount).reversed())

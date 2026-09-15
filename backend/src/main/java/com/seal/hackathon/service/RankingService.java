@@ -134,6 +134,12 @@ public class RankingService {
                 .map(RankingResponse::from).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<RankingResponse> listByRound(UUID roundId) {
+        return rankingRepository.findByRoundIdOrderByRankOverallAsc(roundId).stream()
+                .map(RankingResponse::from).collect(Collectors.toList());
+    }
+
     private BigDecimal computeWeightedTotal(List<Score> scores, List<Criterion> criteria) {
         BigDecimal total = BigDecimal.ZERO;
         for (Criterion criterion : criteria) {
