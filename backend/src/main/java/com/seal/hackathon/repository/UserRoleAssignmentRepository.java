@@ -12,4 +12,5 @@ public interface UserRoleAssignmentRepository extends JpaRepository<UserRoleAssi
     List<UserRoleAssignment> findByUserId(UUID userId);
     List<UserRoleAssignment> findByRoleNameAndScopeTypeAndScopeId(RoleName roleName, ScopeType scopeType, UUID scopeId);
     boolean existsByUserIdAndRoleNameAndScopeTypeAndScopeId(UUID userId, RoleName roleName, ScopeType scopeType, UUID scopeId);
+    boolean existsByUserIdAndRoleNameAndScopeTypeAndScopeIdIn(UUID userId, RoleName roleName, ScopeType scopeType, List<UUID> scopeIds);
 }
