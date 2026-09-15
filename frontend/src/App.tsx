@@ -15,6 +15,7 @@ import EventsPage from "@/pages/EventsPage";
 import EventDetailPage from "@/pages/EventDetailPage";
 import { DEFAULT_TAB } from "@/pages/tabConfig";
 import { ToastContainer } from "./components/Toast";
+import AuditLogPage from "./pages/coordinator/AuditLogPage";
 import "@/styles/global.css";
 import "@/styles/team-mentor.css";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -69,6 +70,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+	  <Route
+	    path="/coordinator/audit-logs"
+	    element={
+	      <ProtectedRoute requireRole="COORDINATOR">
+	        <AuditLogPage />
+	      </ProtectedRoute>
+	    }
+	  />
       <Route
         path="/coordinator/events/:eventId/:tab"
         element={

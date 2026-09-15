@@ -51,6 +51,12 @@ export function Layout({ children }: { children: ReactNode }) {
       label: "Quản lý cuộc thi",
       icon: <IconTrophy />,
     });
+
+    navItems.push({
+      to: "/coordinator/audit-logs",
+      label: "Nhật ký thao tác",
+      icon: <IconGavel />,
+    });
   }
 
   async function handleLogout() {
