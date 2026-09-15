@@ -33,25 +33,11 @@
   --shadow-modal: 0 24px 60px -20px rgba(23, 27, 38, 0.35);
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  background: var(--c-bg);
-  color: var(--c-ink);
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
+/* Phần reset nền (`*`, `html/body/#root`, `body`) đã bỏ khỏi đây.
+   index.css khai báo y hệt những selector này và được nạp trước (main.tsx),
+   còn file này nạp sau (App.tsx) nên nó đè lên — kéo theo nền và cỡ chữ của
+   TOÀN bộ ứng dụng đổi theo, kể cả những màn hình không dùng file này.
+   Từ giờ index.css là nơi duy nhất khai báo phần nền. */
 
 h1,
 h2,
