@@ -148,4 +148,26 @@ describe("JudgePage", () => {
       );
     });
   });
+
+  it("hien thi nut Tro ly AI va nut AI Goi y nhan xet khi mo rong submission", async () => {
+    setupApiMocks();
+    renderJudgePage();
+
+    await waitFor(() => {
+      expect(screen.getByText("Team Rocket")).toBeInTheDocument();
+    });
+
+    const expandButton = screen.getByText("Chấm điểm ▼");
+    await userEvent.click(expandButton);
+
+    expect(screen.getByText("✨ Trợ lý AI")).toBeInTheDocument();
+    expect(screen.getByText("✨ AI Gợi ý nhận xét")).toBeInTheDocument();
+
+    // Click Tro ly AI button -> opens modal
+    await userEvent.click(screen.getByText("✨ Trợ lý AI"));
+    await waitFor(() => {
+      expect(screen.getByText(/Phân tích Trợ lý AI/i)).toBeInTheDocument();
+      expect(screen.getByText(/Gợi ý câu hỏi phản biện cho Giám khảo/i)).toBeInTheDocument();
+    });
+  });
 });

@@ -51,6 +51,15 @@ export const translations = {
     "language.vi": "Tieng Viet",
     "language.en": "English",
     "language.switch": "Chuyen doi ngon ngu",
+    // AI Assistant
+    "ai.assistant": "Tro ly AI",
+    "ai.analyze": "Phan tich AI",
+    "ai.suggest_feedback": "AI Goi y nhan xet",
+    "ai.counter_questions": "Cau hoi phan bien",
+    "ai.strengths": "Diem manh ky thuat",
+    "ai.concerns": "Diem can lam ro",
+    "ai.apply_draft": "Ap dung vao nhan xet",
+    "ai.analyzing": "Dang phan tich...",
   },
   en: {
     // Navigation
