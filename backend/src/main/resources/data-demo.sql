@@ -64,6 +64,23 @@ VALUES ('10000000-0000-0000-0000-000000000103', CURRENT_TIMESTAMP, CURRENT_TIMES
 INSERT INTO user_role_assignment (id, created_at, updated_at, user_id, role_name, scope_type, scope_id)
 VALUES ('10000000-0000-0000-0000-000000000104', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000004', 'MENTOR', 'TRACK', '30000000-0000-0000-0000-000000000001');
 
+-- Phan cong giam khao vao TUNG VONG THI.
+--
+-- Hai dong 'JUDGE'/'GLOBAL' o tren chi cho tai khoan mang vai tro giam khao
+-- (de hien muc "Cham diem" trong thanh dieu huong). Ban than viec CHAM BAI thi
+-- backend luu duoi dang JUDGE + ROUND + scope_id = id vong thi - xem
+-- JudgeAssignmentService.assignJudge(). Man /judge cung doc dung dang do.
+--
+-- Thieu bon dong duoi day thi giam khao dang nhap vao /judge se thay
+-- "Chua co vong thi nao duoc phan cong", du du lieu mau da co 42 luot cham
+-- cua chinh ho.
+INSERT INTO user_role_assignment (id, created_at, updated_at, user_id, role_name, scope_type, scope_id)
+VALUES
+('10000000-0000-0000-0000-000000000105', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000002', 'JUDGE', 'ROUND', '40000000-0000-0000-0000-000000000001'),
+('10000000-0000-0000-0000-000000000106', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000002', 'JUDGE', 'ROUND', '40000000-0000-0000-0000-000000000002'),
+('10000000-0000-0000-0000-000000000107', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000003', 'JUDGE', 'ROUND', '40000000-0000-0000-0000-000000000001'),
+('10000000-0000-0000-0000-000000000108', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '10000000-0000-0000-0000-000000000003', 'JUDGE', 'ROUND', '40000000-0000-0000-0000-000000000002');
+
 -- 1. Hackathon Event (status ONGOING de mo binh chon va xem danh sach)
 INSERT INTO hackathon_event (id, created_at, updated_at, name, description, start_date, end_date, status, rbl_enabled)
 VALUES (
