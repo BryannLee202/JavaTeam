@@ -85,7 +85,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/mentor" element={<Mentor />} />
+      <Route
+        path="/mentor"
+        element={
+          <ProtectedRoute requireRole="MENTOR">
+            <Mentor />
+          </ProtectedRoute>
+        }
+      />
 
 	    <Route path="/register" element={<RegisterPage />} />
 	    <Route path="/coordinator/users" element={<UsersApprovalPage />} />
