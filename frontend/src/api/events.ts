@@ -1,9 +1,34 @@
-// P3 — api/events.ts
-// Single entry point the UI (and P4 / P6's tabs) import from. Internally this
-// either calls the real BFF over HTTP or falls back to the in-memory mock,
-// controlled by VITE_USE_MOCK — so nothing in the component tree needs to
-// know which one is active. Flip VITE_USE_MOCK=false once the backend
-// endpoints below exist.
+// api/events.ts — cửa vào duy nhất cho bốn tab khu điều phối
+// (Sự kiện / Hạng mục / Vòng thi / Đội thi).
+//
+// Chạy dữ liệu giả hay gọi backend thật là do VITE_USE_MOCK quyết định, nên
+// không component nào cần biết đang ở chế độ nào.
+//
+// ---------------------------------------------------------------------------
+// TẠI SAO VẪN CÒN ĐỂ MẶC ĐỊNH LÀ DỮ LIỆU GIẢ
+// ---------------------------------------------------------------------------
+// Đường dẫn trong file này viết theo tiền tố /coordinator/... nhưng backend
+// KHÔNG có controller nào mang tiền tố đó. Đối chiếu từng lời gọi với backend
+// thì được: 4 đường đọc trùng khớp, 12 đường chỉ sai đường dẫn (sửa được), và
+// 11 thao tác dưới đây backend CHƯA CÓ ENDPOINT NÀO:
+//
+//   - xoá sự kiện                   (EventController chỉ có create/list/get/update/status)
+//   - xoá vòng thi                  (RoundController chỉ có create/list/get/update)
+//   - sửa đội, đổi trạng thái đội, xoá đội
+//   - gỡ giám khảo khỏi vòng        (JudgeAssignmentController chỉ có POST gán)
+//   - gỡ mentor khỏi hạng mục       (chỉ có POST /api/tracks/{trackId}/mentors)
+//   - danh bạ giám khảo / danh bạ mentor để chọn khi phân công
+//   - bảng phân công của cả sự kiện (/assignments)
+//   - danh sách bài nộp theo sự kiện, có phân trang
+//     (backend chỉ có theo vòng: /api/rounds/{roundId}/submissions)
+//
+// Bật VITE_USE_MOCK=false lúc này thì bốn tab đọc được dữ liệu thật nhưng mọi
+// nút Thêm / Sửa / Xoá sẽ hỏng — tức là tệ hơn trạng thái hiện tại. Phải viết
+// nốt 11 endpoint trên rồi mới bật.
+//
+// Phần backend đã làm xong để chuẩn bị cho việc đó: EventResponse nay trả
+// trackCount/roundCount/teamCount/createdAt/updatedAt, TrackResponse trả
+// mentorId/mentorName/teamCount — đúng những trường @/types đang đọc.
 
 import { http } from "@/api/http";
 import { mockApi } from "@/api/mockData";
