@@ -2,7 +2,18 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
-import type { AuditLogItem, EventItem, Page, RoleName, UserSummary } from "../api/types";
+import type {
+  AuditLogItem,
+  CalibrationRoundItem,
+  CriterionItem,
+  EventItem,
+  Page,
+  RoleName,
+  RoundItem,
+  ScoreItem,
+  SubmissionItem,
+  UserSummary,
+} from "../api/types";
 import { IconGavel, IconHome } from "../components/icons";
 import type { ReactNode } from "react";
 import {
@@ -12,12 +23,19 @@ import {
   SectionLabel,
 } from "../components/dashboard/DashboardSections";
 import { coordinatorMetrics, coordinatorPriorities } from "../lib/coordinatorDashboard";
+import {
+  judgeMetrics,
+  judgePriorities,
+  recentJudgeActivity,
+  type JudgeRoundView,
+} from "../lib/judgeDashboard";
 import { actionLabel } from "../lib/auditLog";
 
 export function DashboardPage() {
   const { user, hasRole, refreshPermissions } = useAuth();
 
   const isCoordinator = hasRole("COORDINATOR");
+  const isJudge = hasRole("JUDGE");
 
   return (
     <div>
@@ -27,7 +45,9 @@ export function DashboardPage() {
           <p className="page-subtitle">
             {isCoordinator
               ? "Tổng quan Ban tổ chức"
-              : "Đây là vai trò hiện tại của bạn trong hệ thống"}
+              : isJudge
+                ? "Tổng quan chấm điểm"
+                : "Đây là vai trò hiện tại của bạn trong hệ thống"}
           </p>
         </div>
         <button className="btn secondary small" onClick={refreshPermissions}>
@@ -35,7 +55,13 @@ export function DashboardPage() {
         </button>
       </div>
 
-      {isCoordinator ? <CoordinatorOverview /> : <RoleBadges />}
+      {isCoordinator ? (
+        <CoordinatorOverview />
+      ) : isJudge ? (
+        <JudgeOverview />
+      ) : (
+        <RoleBadges />
+      )}
     </div>
   );
 }
@@ -126,6 +152,119 @@ function CoordinatorOverview() {
         entries={activities}
         moreTo="/coordinator/audit-logs"
         moreLabel="Xem toàn bộ nhật ký"
+      />
+    </>
+  );
+}
+
+/**
+ * Trang chủ của Giám khảo.
+ *
+ * Gom dữ liệu từ nhiều lời gọi lồng nhau (vòng → bài nộp → điểm), nên gọi
+ * song song ở từng tầng bằng Promise.all thay vì await trong vòng lặp: một
+ * giám khảo hai vòng, mỗi vòng sáu bài thì cách tuần tự là mười hai lượt chờ
+ * nối đuôi nhau.
+ */
+function JudgeOverview() {
+  const { user } = useAuth();
+  const [snapshot, setSnapshot] = useState<{
+    rounds: JudgeRoundView[];
+    openCalibrationCount: number;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const judgeUserId = user?.userId;
+  const roundIds = (user?.roles ?? [])
+    .filter((r) => r.roleName === "JUDGE" && r.scopeType === "ROUND" && r.scopeId)
+    .map((r) => r.scopeId as string);
+
+  // roundIds là mảng mới mỗi lần render nên không dùng trực tiếp làm phụ thuộc
+  // của useEffect — sẽ gọi lại API vô hạn. Nối thành chuỗi để so sánh theo giá trị.
+  const roundKey = roundIds.join(",");
+
+  useEffect(() => {
+    let huy = false;
+
+    if (!judgeUserId || roundKey === "") {
+      setSnapshot({ rounds: [], openCalibrationCount: 0 });
+      return;
+    }
+
+    const ids = roundKey.split(",");
+
+    (async () => {
+      const roundInfos = await Promise.all(ids.map((id) => api.get<RoundItem>(`/api/rounds/${id}`)));
+
+      const rounds = await Promise.all(
+        ids.map(async (roundId) => {
+          const [criteria, submissions] = await Promise.all([
+            api.get<CriterionItem[]>(`/api/rounds/${roundId}/criteria`),
+            api.get<Page<SubmissionItem>>(`/api/rounds/${roundId}/submissions`),
+          ]);
+
+          const views = await Promise.all(
+            submissions.data.content.map(async (submission) => {
+              const scores = await api.get<ScoreItem[]>(`/api/submissions/${submission.id}/scores`);
+              const mine = scores.data.filter((sc) => sc.judgeId === judgeUserId);
+
+              return {
+                submissionId: submission.id,
+                teamName: submission.teamName,
+                myFinalizedCount: mine.filter((sc) => sc.finalized).length,
+                myLastScoredAt: mine.reduce<string | null>(
+                  (max, sc) => (sc.scoredAt && (!max || sc.scoredAt > max) ? sc.scoredAt : max),
+                  null,
+                ),
+              };
+            }),
+          );
+
+          return { roundId, criterionCount: criteria.data.length, submissions: views };
+        }),
+      );
+
+      // Một giám khảo có thể chấm nhiều vòng của cùng một sự kiện — lọc trùng
+      // để không hỏi cùng một sự kiện hai lần.
+      const eventIds = Array.from(new Set(roundInfos.map((r) => r.data.eventId)));
+      const calibrations = await Promise.all(
+        eventIds.map((eventId) =>
+          api.get<CalibrationRoundItem[]>(`/api/events/${eventId}/calibration-rounds`),
+        ),
+      );
+      const openCalibrationCount = calibrations
+        .flatMap((res) => res.data)
+        .filter((cr) => cr.active).length;
+
+      if (!huy) setSnapshot({ rounds, openCalibrationCount });
+    })().catch(() => {
+      if (!huy) setError("Không tải được dữ liệu chấm điểm.");
+    });
+
+    return () => {
+      huy = true;
+    };
+  }, [judgeUserId, roundKey]);
+
+  return (
+    <>
+      {error && (
+        <div className="alert error" role="alert">
+          {error}
+        </div>
+      )}
+
+      <SectionLabel>Cần chú ý</SectionLabel>
+      <PrioritySection items={snapshot ? judgePriorities(snapshot) : null} />
+
+      <SectionLabel>Tổng quan</SectionLabel>
+      <MetricGrid metrics={snapshot ? judgeMetrics(snapshot) : null} />
+
+      <SectionLabel>Hoạt động gần đây</SectionLabel>
+      <ActivityList
+        entries={snapshot ? recentJudgeActivity(snapshot.rounds) : null}
+        emptyText="Bạn chưa chấm bài nào."
+        moreTo="/judge"
+        moreLabel="Tới màn chấm điểm"
       />
     </>
   );
