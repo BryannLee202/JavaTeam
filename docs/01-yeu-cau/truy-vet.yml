@@ -1,0 +1,304 @@
+# Nguồn sự thật cho ma trận truy vết yêu cầu.
+#
+# Mỗi use case trong SRS khai ở đây kèm ĐƯỜNG DẪN THẬT tới code và test thực
+# hiện nó. File markdown `ma-tran-truy-vet.md` sinh ra từ file này — đừng sửa
+# file markdown, sửa ở đây rồi chạy:
+#
+#     node scripts/sinh-ma-tran-truy-vet.mjs
+#
+# CI gọi script này với cờ --check. Nếu một đường dẫn dưới đây không còn tồn
+# tại (đổi tên, xoá, gộp file) thì CI HỎNG. Nhờ vậy bảng không thể mục dần mà
+# không ai biết — đây là điểm khác với cách viết bảng bằng tay.
+#
+# trang_thai:
+#   xong         — làm đủ, có code chạy được
+#   mot_phan     — có phần chính nhưng còn thiếu nhánh phụ SRS mô tả
+#   chua_lam     — chưa có dòng code nào
+
+meta:
+  nguon: docs/01-yeu-cau/SRS.md
+  kiem_lan_cuoi: "2026-09-15"
+
+use_cases:
+  - id: UC-01
+    ten: Đăng ký tài khoản
+    module: Đăng ký & Xác thực
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/AuthController.java
+      - backend/src/main/java/com/seal/hackathon/service/AuthService.java
+      - frontend/src/pages/RegisterPage.tsx
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/AuthServiceTest.java
+
+  - id: UC-02
+    ten: Phê duyệt tài khoản
+    module: Đăng ký & Xác thực
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/AdminUserController.java
+      - frontend/src/pages/coordinator/UsersApprovalPage.tsx
+    test: []
+    ghi_chu: Chưa có test riêng cho luồng duyệt/từ chối.
+
+  - id: UC-03
+    ten: Đăng nhập (JWT)
+    module: Đăng ký & Xác thực
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/service/AuthService.java
+      - backend/src/main/java/com/seal/hackathon/security/JwtAuthFilter.java
+      - bff/src/auth/auth.controller.ts
+      - frontend/src/pages/LoginPage.tsx
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/AuthServiceTest.java
+      - bff/src/auth/auth.controller.spec.ts
+      - frontend/src/context/AuthContext.test.tsx
+
+  - id: UC-04
+    ten: Khởi tạo tài khoản Giám khảo khách mời
+    module: Đăng ký & Xác thực
+    trang_thai: mot_phan
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/AdminUserController.java
+      - backend/src/main/java/com/seal/hackathon/dto/auth/CreateGuestJudgeRequest.java
+    test: []
+    ghi_chu: >-
+      Tạo được tài khoản và ghi guestAccessExpiresAt, nhưng KHÔNG chỗ nào kiểm
+      tra hạn đó khi đăng nhập — tài khoản khách mời không bao giờ hết hạn.
+      Xem docs/02-phan-tich/rang-buoc-nghiep-vu.md mục 4.
+
+  - id: UC-05
+    ten: Tạo và quản lý sự kiện Hackathon
+    module: Sự kiện & Vòng thi
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/EventController.java
+      - backend/src/main/java/com/seal/hackathon/service/EventService.java
+      - frontend/src/pages/EventsPage.tsx
+    test: []
+
+  - id: UC-06
+    ten: Cấu hình nhiều vòng thi trong sự kiện
+    module: Sự kiện & Vòng thi
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/RoundController.java
+      - backend/src/main/java/com/seal/hackathon/service/RoundService.java
+      - frontend/src/pages/tabs/RoundsTab.tsx
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/RoundServiceTest.java
+
+  - id: UC-07
+    ten: Duy trì mẫu tiêu chí mặc định
+    module: Tiêu chí chấm điểm
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/CriteriaTemplateController.java
+      - backend/src/main/java/com/seal/hackathon/service/CriteriaTemplateService.java
+    test: []
+
+  - id: UC-08
+    ten: Tùy chỉnh tiêu chí theo sự kiện
+    module: Tiêu chí chấm điểm
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/RoundCriterionController.java
+      - backend/src/main/java/com/seal/hackathon/service/CriterionWeightPolicy.java
+      - frontend/src/pages/coordinator/CriteriaTab.tsx
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/CriterionWeightPolicyTest.java
+
+  - id: UC-09
+    ten: Tạo Hạng mục thi đấu
+    module: Hạng mục
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/TrackController.java
+      - backend/src/main/java/com/seal/hackathon/service/TrackService.java
+      - frontend/src/pages/tabs/TracksTab.tsx
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/TrackServiceTest.java
+
+  - id: UC-10
+    ten: Phân công Mentor cho Hạng mục
+    module: Hạng mục
+    trang_thai: mot_phan
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/JudgeAssignmentController.java
+      - backend/src/main/java/com/seal/hackathon/service/JudgeAssignmentService.java
+    test: []
+    ghi_chu: >-
+      Phân công được, nhưng chưa có endpoint gỡ mentor khỏi hạng mục, và chưa
+      chặn xung đột lợi ích mentor/giám khảo cùng hạng mục.
+
+  - id: UC-11
+    ten: Thành lập đội thi
+    module: Đội thi
+    trang_thai: mot_phan
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/TeamController.java
+      - backend/src/main/java/com/seal/hackathon/service/TeamService.java
+      - frontend/src/pages/team/MyTeam.tsx
+    test:
+      - frontend/src/api/teams.test.ts
+    ghi_chu: >-
+      Giới hạn 3-5 thành viên chỉ chặn ở frontend, backend không đếm số thành
+      viên. Xem docs/02-phan-tich/rang-buoc-nghiep-vu.md mục 1.
+
+  - id: UC-12
+    ten: Đăng ký đội vào Hạng mục
+    module: Đội thi
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/service/TeamService.java
+    test: []
+
+  - id: UC-13
+    ten: Nộp bài dự thi theo vòng
+    module: Nộp bài
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/SubmissionController.java
+      - backend/src/main/java/com/seal/hackathon/service/SubmissionService.java
+      - backend/src/main/java/com/seal/hackathon/domain/enums/SubmissionStatus.java
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/SubmissionServiceTest.java
+
+  - id: UC-14
+    ten: Tự động lấy metadata repository
+    module: Nộp bài
+    trang_thai: chua_lam
+    code: []
+    test: []
+    ghi_chu: SRS đánh dấu là tuỳ chọn. Chưa có dòng code nào.
+
+  - id: UC-15
+    ten: Phân công Giám khảo cho vòng thi
+    module: Đánh giá
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/JudgeAssignmentController.java
+      - backend/src/main/java/com/seal/hackathon/service/JudgeAssignmentService.java
+    test: []
+
+  - id: UC-16
+    ten: Chấm điểm bài nộp
+    module: Đánh giá
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/ScoreController.java
+      - backend/src/main/java/com/seal/hackathon/service/ScoreService.java
+      - frontend/src/pages/judge/JudgePage.tsx
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/ScoreServiceTest.java
+      - frontend/src/pages/judge/JudgePage.test.tsx
+
+  - id: UC-17
+    ten: Tự động xếp hạng đội thi
+    module: Xếp hạng & Loại
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/RankingController.java
+      - backend/src/main/java/com/seal/hackathon/service/RankingService.java
+      - frontend/src/pages/public/RankingPage.tsx
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/RankingServiceTest.java
+      - backend/src/test/java/com/seal/hackathon/controller/RankingControllerTest.java
+
+  - id: UC-18
+    ten: Tính toán thăng vòng
+    module: Xếp hạng & Loại
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/service/RankingService.java
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/RankingServiceTest.java
+
+  - id: UC-19
+    ten: Loại đội / bài nộp vi phạm quy chế
+    module: Xếp hạng & Loại
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/DisqualificationController.java
+      - backend/src/main/java/com/seal/hackathon/service/DisqualificationService.java
+      - frontend/src/pages/coordinator/DisqualificationsTab.tsx
+    test: []
+
+  - id: UC-20
+    ten: Nhật ký kiểm tra chấm điểm & loại đội
+    module: Xếp hạng & Loại
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/AuditLogController.java
+      - backend/src/main/java/com/seal/hackathon/service/AuditService.java
+      - frontend/src/pages/coordinator/AuditLogPage.tsx
+      - frontend/src/lib/auditLog.ts
+    test: []
+
+  - id: UC-21
+    ten: Ghi điểm chi tiết từng giám khảo/tiêu chí
+    module: Nghiên cứu RBL
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/domain/entity/Score.java
+      - backend/src/main/java/com/seal/hackathon/service/ScoreService.java
+    test:
+      - backend/src/test/java/com/seal/hackathon/service/ScoreServiceTest.java
+
+  - id: UC-22
+    ten: Vòng hiệu chuẩn (Calibration Round)
+    module: Nghiên cứu RBL
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/CalibrationController.java
+      - backend/src/main/java/com/seal/hackathon/service/CalibrationService.java
+      - frontend/src/pages/judge/JudgePage.tsx
+    test: []
+
+  - id: UC-23
+    ten: Xuất dữ liệu chấm điểm đã ẩn danh (CSV)
+    module: Nghiên cứu RBL
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/RblController.java
+      - backend/src/main/java/com/seal/hackathon/service/RblExportService.java
+    test: []
+
+  - id: UC-24
+    ten: Dashboard phương sai điểm giữa các giám khảo
+    module: Nghiên cứu RBL
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/service/VarianceDashboardService.java
+    test: []
+
+  - id: UC-25
+    ten: Trao giải dựa trên kết quả xếp hạng
+    module: Giải thưởng
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/PrizeController.java
+      - backend/src/main/java/com/seal/hackathon/service/PrizeService.java
+      - frontend/src/pages/coordinator/PrizesTab.tsx
+    test: []
+
+  - id: UC-26
+    ten: Thông báo & công bố kết quả
+    module: Giải thưởng
+    trang_thai: mot_phan
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/PublicRankingController.java
+      - frontend/src/pages/LandingPage.tsx
+    test: []
+    ghi_chu: Công bố công khai thì có, nhưng chưa có cơ chế gửi thông báo tới người dùng.
+
+  - id: UC-27
+    ten: Xuất báo cáo xếp hạng và điểm (CSV/Excel)
+    module: Giải thưởng
+    trang_thai: xong
+    code:
+      - backend/src/main/java/com/seal/hackathon/controller/ReportExportController.java
+      - backend/src/main/java/com/seal/hackathon/service/ReportExportService.java
+    test:
+      - backend/src/test/java/com/seal/hackathon/controller/ReportExportControllerTest.java
