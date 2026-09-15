@@ -1,4 +1,4 @@
-﻿# =============================================================================
+# =============================================================================
 # Traceability & Docs CI — Gac chat luong va kiem tra toan ven ma tran truy xuat
 # =============================================================================
 # Trigger: moi PR vao main va push len main co dong vao docs/, scripts/ hoac code
@@ -54,10 +54,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Cai dat dependencies
-        run: pip install pyyaml
+        run: pip install -r requirements.txt
 
       - name: Chay bo kiem thu unit test cong cu traceability
         run: python -m unittest scripts/test_traceability.py
