@@ -24,3 +24,6 @@ Thumbs.db
 
 # Redundant source archive (backend/ folder already tracked)
 backend.zip
+
+__pycache__/
+*.pyc
