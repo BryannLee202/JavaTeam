@@ -46,6 +46,7 @@ export function DashboardPage() {
   const isCoordinator = hasRole("COORDINATOR");
   const isJudge = hasRole("JUDGE");
   const isTeam = hasRole("TEAM_LEADER") || hasRole("TEAM_MEMBER");
+  const isMentor = hasRole("MENTOR");
 
   return (
     <div>
@@ -69,6 +70,8 @@ export function DashboardPage() {
         <CoordinatorOverview />
       ) : isJudge ? (
         <JudgeOverview />
+      ) : isMentor ? (
+        <MentorOverview />
       ) : isTeam ? (
         <TeamOverview />
       ) : (
@@ -356,6 +359,203 @@ function TeamOverview() {
     </>
   );
 }
+
+function MentorOverview() {
+  const [teams, setTeams] = useState<
+    Awaited<ReturnType<typeof mentorApi.listMyTeams>> | null
+  >(null);
+
+  const [teamMessages, setTeamMessages] = useState<
+    {
+      team: Awaited<ReturnType<typeof mentorApi.listMyTeams>>[number];
+      messages: Awaited<ReturnType<typeof mentorApi.listMessages>>;
+    }[] | null
+  >(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let huy = false;
+
+    mentorApi
+      .listMyTeams()
+      .then((data) => {
+        if (!huy) {
+          setTeams(data);
+        }
+      })
+      .catch(() => {
+        if (!huy) {
+          setError("Không tải được danh sách đội.");
+        }
+      });
+
+    return () => {
+      huy = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let huy = false;
+
+    if (teams === null) {
+      return;
+    }
+
+    if (teams.length === 0) {
+      setTeamMessages([]);
+      return;
+    }
+
+    Promise.all(
+      teams.map(async (team) => ({
+        team,
+        messages: await mentorApi.listMessages(team.id),
+      })),
+    )
+      .then((data) => {
+        if (!huy) {
+          setTeamMessages(data);
+        }
+      })
+      .catch(() => {
+        if (!huy) {
+          setError("Không tải được trao đổi của các đội.");
+        }
+      });
+
+    return () => {
+      huy = true;
+    };
+  }, [teams]);
+
+  let priorities: PriorityItem[] | null = null;
+
+  if (teams !== null && teamMessages !== null) {
+    priorities = [];
+
+    // 1. Mentor chưa được phân công đội nào
+    if (teams.length === 0) {
+      priorities.push({
+        key: "no-assigned-team",
+        tone: "info",
+        text: "Chưa được phân công hạng mục nào",
+        to: "/mentor",
+      });
+    }
+
+    // 2. Kiểm tra đội nào đang chờ Mentor phản hồi
+    teamMessages.forEach(({ team, messages }) => {
+      const latestMessage = [...messages].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() -
+          new Date(a.createdAt).getTime(),
+      )[0];
+
+      if (latestMessage && latestMessage.authorRole !== "MENTOR") {
+        priorities!.push({
+          key: `waiting-reply-${team.id}`,
+          tone: "warning",
+          text: `Đội ${team.name} đang chờ phản hồi của bạn`,
+          to: "/mentor",
+        });
+      }
+    });
+  }
+
+  const metrics =
+    teams !== null && teamMessages !== null
+      ? [
+        {
+          label: "Đội được phân công",
+          value: teams.length,
+        },
+        {
+          label: "Cần phản hồi",
+          value: teamMessages.filter(({ messages }) => {
+            const latestMessage = [...messages].sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime(),
+            )[0];
+
+            return (
+              latestMessage !== undefined &&
+              latestMessage.authorRole !== "MENTOR"
+            );
+          }).length,
+        },
+        {
+          label: "Tổng thành viên",
+          value: teams.reduce(
+            (total, team) => total + team.members.length,
+            0,
+          ),
+        },
+        {
+          label: "Tổng trao đổi",
+          value: teamMessages.reduce(
+            (total, item) => total + item.messages.length,
+            0,
+          ),
+        },
+      ]
+      : null;
+
+  const activities =
+    teamMessages === null
+      ? null
+      : teamMessages
+        .flatMap(({ team, messages }) =>
+          messages.map((message) => ({
+            id: message.id,
+            text:
+              message.body.length > 60
+                ? `${message.body.slice(0, 57)}...`
+                : message.body,
+            actor:
+              message.authorRole === "MENTOR"
+                ? "Bạn"
+                : `Đội ${team.name}`,
+            at: message.createdAt,
+          })),
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.at).getTime() -
+            new Date(a.at).getTime(),
+        )
+        .slice(0, 5);
+
+  return (
+    <>
+      {error && (
+        <div className="alert error" role="alert">
+          {error}
+        </div>
+      )}
+
+      <SectionLabel>Cần chú ý</SectionLabel>
+      <PrioritySection
+        items={priorities}
+        emptyText="Hiện không có việc nào cần chú ý."
+      />
+
+      <SectionLabel>Tổng quan</SectionLabel>
+      <MetricGrid metrics={metrics} />
+
+      <SectionLabel>Hoạt động gần đây</SectionLabel>
+      <ActivityList
+        entries={activities}
+        emptyText="Chưa có hoạt động nào."
+        
+        moreTo="/mentor"
+        moreLabel="Xem tất cả đội được phân công →"
+      />
+    </>
+  );
+}
+
 
 /**
  * Trang chủ của Ban tổ chức.
