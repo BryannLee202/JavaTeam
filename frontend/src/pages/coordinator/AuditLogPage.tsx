@@ -1,41 +1,12 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import type { AuditLogItem, Page } from "../../api/types";
+import { ACTION_LABEL, ACTION_TONE } from "../../lib/auditLog";
 
 // Component giả định (nếu nhóm đã có thì import từ đúng đường dẫn, nếu chưa có thì dùng tạm tag div)
 // import { EmptyState } from "../../components/Feedback"; 
 // import { Pagination } from "../../components/Pagination";
 
-const ACTION_LABEL: Record<string, string> = {
-  ACCOUNT_REGISTER: "Đăng ký tài khoản",
-  ACCOUNT_APPROVE: "Duyệt tài khoản",
-  ACCOUNT_REJECT: "Từ chối tài khoản",
-  GUEST_JUDGE_CREATE: "Tạo giám khảo khách",
-  SCORE_CREATE: "Chấm điểm",
-  SCORE_UPDATE: "Sửa điểm",
-  SCORE_FINALIZE: "Chốt điểm",
-  TEAM_DISQUALIFY: "Loại đội thi",
-  SUBMISSION_DISQUALIFY: "Hủy bài nộp",
-  JUDGE_ASSIGN: "Phân công giám khảo",
-  MENTOR_ASSIGN: "Phân công mentor",
-  RANKING_COMPUTE: "Tính xếp hạng",
-  PROMOTION_COMPUTE: "Xét thăng hạng",
-  PRIZE_AWARD: "Trao giải",
-  RESULT_PUBLISH: "Công bố kết quả",
-  MENTOR_MESSAGE_SEND: "Gửi tin nhắn mentor",
-  VOTE_CAST: "Bình chọn khán giả",
-};
-
-const ACTION_TONE: Record<string, string> = {
-  ACCOUNT_APPROVE: "success",
-  TEAM_DISQUALIFY: "danger",
-  SUBMISSION_DISQUALIFY: "danger",
-  SCORE_UPDATE: "warning",
-  VOTE_CAST: "primary",
-  ACCOUNT_REJECT: "danger",
-  SCORE_FINALIZE: "success",
-  PRIZE_AWARD: "success",
-};
 
 export default function AuditLogPage() {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
