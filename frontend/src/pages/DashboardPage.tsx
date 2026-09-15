@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import { Button, Card } from "../components/ui";
 import { api } from "../api/client";
 import { teamApi } from "../api/teamApi";
 import { mentorApi } from "../api/mentorApi";
@@ -42,6 +44,8 @@ import {
 
 export function DashboardPage() {
   const { user, hasRole, refreshPermissions } = useAuth();
+  const { t, language } = useLanguage();
+  const isEn = language === "en";
 
   const isCoordinator = hasRole("COORDINATOR");
   const isJudge = hasRole("JUDGE");
@@ -52,18 +56,18 @@ export function DashboardPage() {
     <div>
       <div className="topbar">
         <div>
-          <h1 className="page-title">Xin chào, {user?.fullName} 👋</h1>
+          <h1 className="page-title">{t("dashboard.welcome", { name: user?.fullName || "" })} 👋</h1>
           <p className="page-subtitle">
             {isCoordinator
-              ? "Tổng quan Ban tổ chức"
+              ? (isEn ? "Coordinator Overview" : "Tổng quan Ban tổ chức")
               : isJudge
-                ? "Tổng quan chấm điểm"
-                : "Đây là vai trò hiện tại của bạn trong hệ thống"}
+                ? (isEn ? "Judging Overview" : "Tổng quan chấm điểm")
+                : (isEn ? "Your active roles in the system" : "Đây là vai trò hiện tại của bạn trong hệ thống")}
           </p>
         </div>
-        <button className="btn secondary small" onClick={refreshPermissions}>
-          Làm mới quyền truy cập
-        </button>
+        <Button variant="secondary" size="sm" onClick={refreshPermissions}>
+          {isEn ? "Refresh permissions" : "Làm mới quyền truy cập"}
+        </Button>
       </div>
 
       {isCoordinator ? (
@@ -783,7 +787,7 @@ function RoleBadges() {
         ))}
       </div>
 
-      <div className="card section-gap">
+      <Card className="section-gap">
         <div className="card-title">Lối tắt</div>
         <div className="flex wrap">
           {(hasRole("TEAM_MEMBER") || hasRole("TEAM_LEADER")) && (
@@ -805,7 +809,7 @@ function RoleBadges() {
             Bảng xếp hạng
           </Link>
         </div>
-      </div>
+      </Card>
     </>
   );
 }

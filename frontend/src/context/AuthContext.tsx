@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { api, onUnauthorized } from "../api/client";
 import type { CurrentUser, RoleName } from "../api/types";
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: CurrentUser | null;
   loading: boolean;
   hasRole: (role: RoleName) => boolean;
@@ -22,7 +22,7 @@ interface AuthContextValue {
   refreshPermissions: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);

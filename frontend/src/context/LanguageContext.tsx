@@ -10,7 +10,23 @@ export interface LanguageContextType {
 
 const STORAGE_KEY = "shms-language";
 
-export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const defaultLanguageContext: LanguageContextType = {
+  language: "vi",
+  setLanguage: () => {},
+  toggleLanguage: () => {},
+  t: (key: TranslationKey | string, params?: Record<string, string | number>) => {
+    const fallbackDict = translations.vi as Record<string, string>;
+    let text = fallbackDict[key] || key;
+    if (params) {
+      Object.entries(params).forEach(([k, val]) => {
+        text = text.replace(new RegExp(`\\{${k}\\}`, "g"), String(val));
+      });
+    }
+    return text;
+  },
+};
+
+export const LanguageContext = createContext<LanguageContextType>(defaultLanguageContext);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
@@ -61,8 +77,5 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
 export function useLanguage() {
   const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error("useLanguage phai duoc dung ben trong LanguageProvider");
-  }
-  return context;
+  return context || defaultLanguageContext;
 }

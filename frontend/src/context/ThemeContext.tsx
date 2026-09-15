@@ -11,7 +11,14 @@ export interface ThemeContextType {
 
 const STORAGE_KEY = "shms-theme";
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const defaultThemeContext: ThemeContextType = {
+  theme: "system",
+  resolvedTheme: "light",
+  setTheme: () => {},
+  toggleTheme: () => {},
+};
+
+export const ThemeContext = createContext<ThemeContextType>(defaultThemeContext);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -82,8 +89,5 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme() {
   const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme phai duoc dung ben trong ThemeProvider");
-  }
-  return context;
+  return context || defaultThemeContext;
 }
