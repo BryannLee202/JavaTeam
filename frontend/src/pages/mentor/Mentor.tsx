@@ -86,47 +86,7 @@ function Mentor() {
 
     return (
         <div className="team-dashboard">
-            <aside className="team-sidebar">
-                <div className="tm-sidebar-brand">
-                    <div className="brand-icon">🏆</div>
-
-                    <div>
-                        <h2>Hackathon</h2>
-                        <span>Management</span>
-                    </div>
-                </div>
-
-                <nav className="sidebar-menu">
-                    <button className="sidebar-item">
-                        <span>👥</span>
-                        My Team
-                    </button>
-
-                    <button className="sidebar-item active">
-                        <span>🧑‍🏫</span>
-                        Mentor
-                    </button>
-                </nav>
-
-                <button className="sidebar-logout">
-                    <span>↪</span>
-                    Logout
-                </button>
-            </aside>
-
             <main className="team-main">
-                {/* Topbar */}
-                <header className="team-topbar">
-                    <div className="topbar-user">
-
-                        <div className="user-avatar">
-                            M
-                        </div>
-
-                        <strong>Mentor</strong>
-                    </div>
-                </header>
-
                 <div className="team-content">
                     {error && (
                         <div className="alert error" role="alert">
