@@ -63,6 +63,10 @@ public class SubmissionService {
         if (!round.getEvent().getId().equals(team.getEvent().getId())) {
             throw ApiException.badRequest("Vòng thi không thuộc sự kiện của đội");
         }
+        long memberCount = teamMemberRepository.countByTeamId(teamId);
+        if (memberCount < 3) {
+            throw ApiException.badRequest("Đội thi phải có tối thiểu 3 thành viên mới đủ điều kiện nộp bài");
+        }
 
         Instant submittedAt = Instant.now();
         boolean isLate = submittedAt.isAfter(round.getSubmissionDeadline());

@@ -76,6 +76,18 @@ class SubmissionServiceTest {
 
         org.mockito.Mockito.lenient().when(teamRepository.findById(teamId)).thenReturn(Optional.of(team));
         org.mockito.Mockito.lenient().when(roundService.findOrThrow(roundId)).thenReturn(round);
+        org.mockito.Mockito.lenient().when(teamMemberRepository.countByTeamId(teamId)).thenReturn(3L);
+    }
+
+    @Test
+    void submit_shouldThrowBadRequest_whenTeamHasLessThanThreeMembers() {
+        TeamMember member = TeamMember.builder().team(team).roleInTeam(TeamMemberRole.LEADER).build();
+        when(teamMemberRepository.findByTeamIdAndUserId(teamId, userId)).thenReturn(Optional.of(member));
+        when(teamMemberRepository.countByTeamId(teamId)).thenReturn(2L);
+
+        assertThatThrownBy(() -> submissionService.submit(teamId, roundId, request, userId))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("tối thiểu 3 thành viên");
     }
 
     @Test
