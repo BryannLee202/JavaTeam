@@ -1,6 +1,7 @@
-services:
+﻿services:
   postgres:
     image: postgres:16-alpine
+    container_name: seal-postgres
     environment:
       POSTGRES_DB: seal_hackathon
       POSTGRES_USER: seal_admin
@@ -12,9 +13,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   backend:
     build: ./backend
+    container_name: seal-backend
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: jdbc:postgresql://postgres:5432/seal_hackathon
@@ -33,9 +47,22 @@ services:
       timeout: 5s
       retries: 10
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 1024M
+        reservations:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   bff:
     build: ./bff
+    container_name: seal-bff
     environment:
       PORT: 4000
       BACKEND_URL: http://backend:8080
@@ -52,17 +79,42 @@ services:
       timeout: 5s
       retries: 10
       start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
   frontend:
     build:
       context: ./frontend
       args:
         VITE_BFF_URL: http://localhost:4000
+    container_name: seal-frontend
     ports:
       - "3000:80"
     depends_on:
       bff:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
 
 volumes:
   postgres_data:
