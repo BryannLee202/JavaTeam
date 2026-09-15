@@ -143,6 +143,42 @@ public class RankingService {
                 .map(RankingResponse::from).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public String exportCsv(UUID roundId, AuthenticatedPrincipal principal) {
+        roundService.findOrThrowVisibleForRankings(roundId, principal);
+        return generateCsv(rankingRepository.findByRoundIdOrderByRankOverallAsc(roundId));
+    }
+
+    @Transactional(readOnly = true)
+    public String exportCsvByRound(UUID roundId) {
+        return generateCsv(rankingRepository.findByRoundIdOrderByRankOverallAsc(roundId));
+    }
+
+    private String generateCsv(List<Ranking> rankings) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Hang,Doi thi,Hang muc,Diem tong hop,Trang thai\n");
+        for (Ranking r : rankings) {
+            String teamName = escapeCsv(r.getTeam().getName());
+            String trackName = r.getTeam().getTrack() != null ? escapeCsv(r.getTeam().getTrack().getName()) : "Khong xac dinh";
+            String score = r.getTotalWeightedScore() != null ? r.getTotalWeightedScore().toString() : "0.00";
+            String status = r.isPromoted() ? "Vao vong trong" : "Dung buoc";
+            sb.append(r.getRankOverall()).append(",")
+              .append(teamName).append(",")
+              .append(trackName).append(",")
+              .append(score).append(",")
+              .append(status).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
+    }
+
     private BigDecimal computeWeightedTotal(List<Score> scores, List<Criterion> criteria) {
         BigDecimal total = BigDecimal.ZERO;
         for (Criterion criterion : criteria) {

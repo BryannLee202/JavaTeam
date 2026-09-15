@@ -308,4 +308,34 @@ class RankingServiceTest {
         // 100 * 0.90 = 90.00
         assertThat(result.get(0).totalWeightedScore()).isEqualByComparingTo(BigDecimal.valueOf(90));
     }
+
+    @Test
+    void exportCsv_shouldGenerateCorrectCsvFormat() {
+        UUID roundId = UUID.randomUUID();
+        Round round = Round.builder().build();
+        round.setId(roundId);
+
+        Track track = Track.builder().name("AI Track").build();
+        track.setId(UUID.randomUUID());
+
+        Team team = Team.builder().name("Team Alpha").track(track).build();
+        team.setId(UUID.randomUUID());
+
+        Ranking ranking = Ranking.builder()
+                .team(team)
+                .round(round)
+                .totalWeightedScore(BigDecimal.valueOf(95.50))
+                .rankOverall(1)
+                .promoted(true)
+                .build();
+        ranking.setId(UUID.randomUUID());
+
+        when(roundService.findOrThrowVisibleForRankings(roundId, principal)).thenReturn(round);
+        when(rankingRepository.findByRoundIdOrderByRankOverallAsc(roundId)).thenReturn(List.of(ranking));
+
+        String csv = rankingService.exportCsv(roundId, principal);
+
+        assertThat(csv).contains("Hang,Doi thi,Hang muc,Diem tong hop,Trang thai");
+        assertThat(csv).contains("1,Team Alpha,AI Track,95.5,Vao vong trong");
+    }
 }
