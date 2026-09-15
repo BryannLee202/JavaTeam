@@ -33,8 +33,8 @@
   /* Một bộ font cho cả ứng dụng. Trước đây trang công khai dùng Space Grotesk
      + Inter + IBM Plex Mono, còn khu vận hành dùng Lexend + Plus Jakarta Sans
      — năm bộ font tải về chỉ để hiện cùng một sản phẩm. */
-  --font-display: "Lexend", "Plus Jakarta Sans", sans-serif;
-  --font-body: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Lexend Variable", "Lexend", "Plus Jakarta Sans Variable", "Plus Jakarta Sans", sans-serif;
+  --font-body: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   /* --radius-sm và --radius-lg cũng do index.css khai báo, với giá trị khác
