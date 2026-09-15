@@ -2,6 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
+import { teamApi } from "../api/teamApi";
+import { mentorApi } from "../api/mentorApi";
+import {
+  closingPhrase,
+  daysUntil,
+  type PriorityItem,
+} from "../lib/dashboardPriority";
+import { actionLabel } from "../lib/auditLog";
+
+
 import type {
   AuditLogItem,
   CalibrationRoundItem,
@@ -29,13 +39,13 @@ import {
   recentJudgeActivity,
   type JudgeRoundView,
 } from "../lib/judgeDashboard";
-import { actionLabel } from "../lib/auditLog";
 
 export function DashboardPage() {
   const { user, hasRole, refreshPermissions } = useAuth();
 
   const isCoordinator = hasRole("COORDINATOR");
   const isJudge = hasRole("JUDGE");
+  const isTeam = hasRole("TEAM_LEADER") || hasRole("TEAM_MEMBER");
 
   return (
     <div>
@@ -59,10 +69,291 @@ export function DashboardPage() {
         <CoordinatorOverview />
       ) : isJudge ? (
         <JudgeOverview />
+      ) : isTeam ? (
+        <TeamOverview />
       ) : (
         <RoleBadges />
       )}
     </div>
+  );
+}
+
+function TeamOverview() {
+  const [teams, setTeams] = useState<Awaited<ReturnType<typeof teamApi.getMyTeams>> | null>(null);
+
+  const [invites, setInvites] = useState<Awaited<ReturnType<typeof teamApi.getMyInvites>> | null>(null);
+
+  const [rounds, setRounds] = useState<RoundItem[] | null>(null);
+
+  const [submissionStatuses, setSubmissionStatuses] = useState<
+    Awaited<ReturnType<typeof teamApi.getSubmissionStatus>>[] | null
+  >(null);
+
+  const [messages, setMessages] = useState<
+    Awaited<ReturnType<typeof mentorApi.listMessages>> | null
+  >(null);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const team = teams?.[0] ?? null;
+  const teamId = team?.id ?? null;
+  const eventId = team?.eventId ?? null;
+
+  useEffect(() => {
+    let huy = false;
+
+    Promise.all([
+      teamApi.getMyTeams(),
+      teamApi.getMyInvites(),
+    ])
+      .then(([teamData, inviteData]) => {
+        if (huy) return;
+
+        setTeams(teamData);
+        setInvites(inviteData);
+      })
+      .catch(() => {
+        if (!huy) {
+          setError("Không tải được dữ liệu đội thi.");
+        }
+      });
+
+    return () => {
+      huy = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let huy = false;
+
+    if (teams === null) {
+      return;
+    }
+
+    if (!teamId || !eventId) {
+      setRounds([]);
+      setSubmissionStatuses([]);
+      setMessages([]);
+      return;
+    }
+
+    api
+      .get<RoundItem[]>(`/api/events/${eventId}/rounds`)
+      .then((res) => {
+        if (!huy) {
+          setRounds(res.data);
+        }
+      })
+      .catch(() => {
+        if (!huy) {
+          setError("Không tải được danh sách vòng thi.");
+        }
+      });
+
+    return () => {
+      huy = true;
+    };
+  }, [teams, teamId, eventId]);
+
+
+  useEffect(() => {
+    let huy = false;
+
+    if (!teamId || rounds === null) {
+      return;
+    }
+
+    if (rounds.length === 0) {
+      setSubmissionStatuses([]);
+      return;
+    }
+
+    Promise.all(
+      rounds.map((round) =>
+        teamApi.getSubmissionStatus(teamId, round.id),
+      ),
+    )
+      .then((statuses) => {
+        if (!huy) {
+          setSubmissionStatuses(statuses);
+        }
+      })
+      .catch(() => {
+        if (!huy) {
+          setError("Không tải được trạng thái nộp bài.");
+        }
+      });
+
+    return () => {
+      huy = true;
+    };
+  }, [teamId, rounds]);
+
+  useEffect(() => {
+    let huy = false;
+
+    if (!teamId) {
+      return;
+    }
+
+    mentorApi
+      .listMessages(teamId)
+      .then((data) => {
+        if (!huy) {
+          setMessages(data);
+        }
+      })
+      .catch(() => {
+        if (!huy) {
+          setError("Không tải được hoạt động gần đây.");
+        }
+      });
+
+    return () => {
+      huy = true;
+    };
+  }, [teamId]);
+
+  const metrics =
+    teams !== null &&
+      invites !== null &&
+      submissionStatuses !== null
+      ? [
+        {
+          label: "Thành viên",
+          value: team ? `${team.members.length}/5` : "0/5",
+        },
+        {
+          label: "Vòng đã nộp",
+          value: submissionStatuses.filter(
+            (status) =>
+              status.status === "ON_TIME" ||
+              status.status === "LATE",
+          ).length,
+        },
+        {
+          label: "Vòng chưa nộp",
+          value: submissionStatuses.filter(
+            (status) =>
+              status.status === "PENDING" ||
+              status.status === "MISSING",
+          ).length,
+        },
+        {
+          label: "Lời mời đang chờ",
+          value: invites.length,
+        },
+      ]
+      : null;
+
+  let priorities: PriorityItem[] | null = null;
+
+  if (
+    teams !== null &&
+    invites !== null &&
+    rounds !== null &&
+    submissionStatuses !== null
+  ) {
+    priorities = [];
+
+    // 1. Người dùng chưa có đội
+    if (!team) {
+      priorities.push({
+        key: "no-team",
+        tone: "warning",
+        text: "Bạn chưa có đội thi nào",
+        to: "/team",
+      });
+    }
+
+    // 2. Có lời mời tham gia đội đang chờ
+    if (invites.length > 0) {
+      priorities.push({
+        key: "pending-invites",
+        tone: "info",
+        text: `${invites.length} lời mời tham gia đội đang chờ`,
+        to: "/team",
+      });
+    }
+
+    // 3. Các vòng chưa nộp và sắp hết hạn
+    if (team) {
+      rounds.forEach((round) => {
+        const submissionStatus = submissionStatuses.find(
+          (status) => status.roundId === round.id,
+        );
+
+        const isNotSubmitted =
+          submissionStatus?.status === "PENDING" ||
+          submissionStatus?.status === "MISSING";
+
+        if (!isNotSubmitted || !round.submissionDeadline) {
+          return;
+        }
+
+        const daysLeft = daysUntil(round.submissionDeadline);
+
+        // Deadline đã qua thì không hiện cảnh báo này
+        if (daysLeft === null || daysLeft < 0 || daysLeft > 3) {
+          return;
+        }
+
+        priorities!.push({
+          key: `round-deadline-${round.id}`,
+          tone: daysLeft <= 1 ? "danger" : "warning",
+          text: `Chưa nộp bài vòng ${round.name}, hạn ${closingPhrase(daysLeft)}`,
+          to: "/team",
+        });
+      });
+    }
+  }
+
+  const activities =
+    messages === null
+      ? null
+      : [...messages]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime(),
+        )
+        .slice(0, 5)
+        .map((message) => ({
+          id: message.id,
+          actor:
+            message.authorRole === "MENTOR"
+              ? "Mentor"
+              : "Đội của bạn",
+          text:
+            message.body.length > 60
+              ? `${message.body.slice(0, 57)}...`
+              : message.body,
+          at: message.createdAt,
+        }));
+  return (
+    <>
+
+      {error && (
+        <div className="alert error" role="alert">
+          {error}
+        </div>
+      )}
+
+      <SectionLabel>Cần chú ý</SectionLabel>
+      <PrioritySection
+        items={priorities}
+        emptyText="Hiện không có việc nào cần chú ý."
+      />
+
+      <SectionLabel>Tổng quan</SectionLabel>
+      <MetricGrid metrics={metrics} />
+
+      <SectionLabel>Hoạt động gần đây</SectionLabel>
+      <ActivityList
+        entries={activities}
+        moreTo="/team"
+      />
+    </>
   );
 }
 
@@ -72,6 +363,7 @@ export function DashboardPage() {
  * Ba lời gọi API độc lập nhau nên để chạy song song và giữ ba ô state riêng:
  * hỏng một cái thì hai khối kia vẫn hiện, thay vì cả trang trắng.
  */
+
 function CoordinatorOverview() {
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const [events, setEvents] = useState<EventItem[] | null>(null);
@@ -126,11 +418,11 @@ function CoordinatorOverview() {
 
   const activities = recentLogs
     ? recentLogs.map((log) => ({
-        id: log.id,
-        text: actionLabel(log.action),
-        actor: log.actorName,
-        at: log.timestamp,
-      }))
+      id: log.id,
+      text: actionLabel(log.action),
+      actor: log.actorName,
+      at: log.timestamp,
+    }))
     : null;
 
   return (
