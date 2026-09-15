@@ -998,3 +998,151 @@ html {
   font-weight: 600;
   color: var(--l-text-muted, #b3a9d4);
 }
+
+/* ---------- Trang chu (/app): ba khoi Can chu y / Tong quan / Hoat dong ---------- */
+
+.dashboard-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  margin: 26px 0 10px;
+}
+
+.dashboard-section-label:first-of-type {
+  margin-top: 0;
+}
+
+.dashboard-priority {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--color-border-soft);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.dashboard-priority-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 17px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 13.6px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.dashboard-priority-item:hover {
+  background: var(--color-surface-2);
+}
+
+.dashboard-priority-item svg {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.dashboard-priority-text {
+  min-width: 0;
+}
+
+/* Cham tron bao muc do gap. Vien mo ben ngoai de van phan biet duoc khi in
+   den trang hoac khi nguoi dung khong phan biet duoc mau. */
+.dashboard-priority-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dashboard-priority-dot.danger {
+  background: var(--color-danger);
+  box-shadow: 0 0 0 3px var(--color-danger-soft);
+}
+
+.dashboard-priority-dot.warning {
+  background: var(--color-warning);
+  box-shadow: 0 0 0 3px var(--color-warning-soft);
+}
+
+.dashboard-priority-dot.info {
+  background: var(--color-info);
+  box-shadow: 0 0 0 3px var(--color-info-soft);
+}
+
+.dashboard-priority-empty {
+  padding: 16px 18px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+  font-size: 13.3px;
+}
+
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.dashboard-metric {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-xs);
+}
+
+.dashboard-metric-value {
+  font-family: "Lexend", "Plus Jakarta Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-metric-label {
+  font-size: 12.3px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.dashboard-activity-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  font-size: 13.3px;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.dashboard-activity-item:last-of-type {
+  border-bottom: none;
+}
+
+.dashboard-activity-item time {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-activity-more {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
